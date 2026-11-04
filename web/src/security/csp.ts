@@ -48,7 +48,7 @@ export function consoleSecurityHeaders(opts: CspOptions): Record<string, string>
     // `allow` attribute says. Gamepad, fullscreen and autoplay are left at their
     // defaults so the player iframe's `allow` attribute can delegate them.
     "Permissions-Policy":
-      "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=(), clipboard-read=(), display-capture=()",
+      "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), clipboard-read=(), display-capture=()",
     // Wallet SDKs such as Coinbase Wallet talk to their own popup windows.
     "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
   };

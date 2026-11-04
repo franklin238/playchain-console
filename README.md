@@ -83,7 +83,6 @@ Fill in after the mainnet deploy (see `DEPLOY.md`).
 | List Neon Tide (1,000 WIF burned) | |
 | List Hollow Kingdom | |
 | List Signal Lost | |
-| List Rise of Gamdom Man | |
 | Votes 1 to 10 (3+ wallets) | |
 | Self-vote (developer share burned) | |
 | Epoch rollover: first Spotlight winner | |
@@ -102,7 +101,7 @@ web/         Vite, React 19, TypeScript, Tailwind, wagmi core + viem
   src/web3/          wallet, RPC with fallback, exact-amount approvals, transactions
   src/games/         meta.json validation, sandboxed game bridge
   src/screens/       Home, Game, Player, Developers, Activity, About, Settings
-  public/games/      Neon Tide, Hollow Kingdom, Signal Lost, Rise of Gamdom Man
+  public/games/      Neon Tide, Hollow Kingdom, Signal Lost
   tests/unit/        Spotlight and race logic, meta validation, bridge, security headers
   tests/e2e/         mainnet-fork setup + browser test of the full vote flow
 ```
@@ -181,7 +180,7 @@ Full end-to-end rehearsal on a mainnet fork (real $WIF, local test wallets): see
 
 ## 8. What existed before, and what was built during the hackathon
 
-**Existed before the hackathon:** Robinhood Chain, $WIF, OpenZeppelin, Foundry, viem, wagmi, React, Vite, Tailwind. From Steeve's main PlayChain project (a separate, Solana-first console): the console shell this build starts from (keyboard and gamepad focus navigation, boot screen, wallpapers, settings and UI controls), the three cover artworks, and the game **Rise of Gamdom Man** (only its integration here is new).
+**Existed before the hackathon:** Robinhood Chain, $WIF, OpenZeppelin, Foundry, viem, wagmi, React, Vite, Tailwind. From Steeve's main PlayChain project (a separate, Solana-first console): the console shell this build starts from (keyboard and gamepad focus navigation, boot screen, wallpapers, settings and UI controls) and the three cover artworks.
 
 **Built during the hackathon (this repo):** the `PlayChainArcade` contract and all its tests and scripts; the Robinhood Chain wallet, data and transaction layer; the Spotlight, Live Race, vote sheet, Developers, Activity and About screens; the sandboxed game player and bridge; the security headers for the single-origin deploy; and the three games **Neon Tide**, **Hollow Kingdom** and **Signal Lost**, built from their design specs.
 

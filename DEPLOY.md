@@ -8,9 +8,9 @@ Claude never sees a private key. You run every command that signs. These steps w
 - Node.js 20 or newer.
 - A deployer wallet with a little ETH on Robinhood Chain for gas.
 - $WIF for the demo. With the default prices:
-  - 4 game listings: 4 × 1,000 = **4,000 WIF** (all burned)
+  - 3 game listings: 3 × 1,000 = **3,000 WIF** (all burned)
   - at least 10 demo votes across 3 wallets: 10 × 150 = **1,500 WIF**
-  - total about **5,500 WIF** plus a buffer, split across your 3 voting wallets.
+  - total about **4,500 WIF** plus a buffer, split across your 3 voting wallets.
 - A treasury wallet address (public address only).
 
 ## 1. Get the code
@@ -91,7 +91,7 @@ forge verify-contract $ARCADE src/PlayChainArcade.sol:PlayChainArcade \
 
 If your Vercel URL is not `https://playchain-flat.vercel.app`, update the `cover` and `playUrl` lines in each `web/public/games/*/meta.json` to your URL and redeploy before step 9, because the listing stores the meta.json URL onchain.
 
-## 9. List the four games (burns 4,000 WIF)
+## 9. List the three games (burns 3,000 WIF)
 
 ```bash
 export SITE_URL=https://playchain-flat.vercel.app    # your live URL, no trailing slash

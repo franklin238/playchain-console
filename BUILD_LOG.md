@@ -13,4 +13,4 @@ Dated entries of what was built. Building for the World is Flat hackathon starte
 - Built the console screens: Spotlight hero, game shelf, Live Race, vote sheet with live split preview, Developers (list and edit), Activity feed with totals, About with flywheel diagram, disclaimer footer.
 - Built a sandboxed game player with a validated postMessage bridge (ready, score, exit, save, load).
 - End-to-end test on a local fork of mainnet: deployed the arcade, listed 3 games, voted 500 WIF through the UI with a test wallet. Onchain: 250 burned, 200 to developer, 50 to treasury.
-- Games: Neon Tide, Hollow Kingdom and Signal Lost built from their specs as single-file browser games. Rise of Gamdom Man (made before the event) added to the shelf.
+- Games: Neon Tide, Hollow Kingdom and Signal Lost built from their specs as single-file browser games. Rise of Gamdom Man was left out: it uses a third-party brand without permission (rule 13).

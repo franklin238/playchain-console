@@ -157,7 +157,7 @@ export function fetchMeta(uri: string): Promise<MetaCheck> {
 }
 
 /** Games that ship with this site. Shown in preview mode before anything is listed onchain. */
-export const LOCAL_SLUGS = ["neon-tide", "hollow-kingdom", "signal-lost", "rise-of-gamdom-man"] as const;
+export const LOCAL_SLUGS = ["neon-tide", "hollow-kingdom", "signal-lost"] as const;
 
 export function localMetaUrl(slug: string): string {
   return `${consoleConfig.siteOrigin}/games/${slug}/meta.json`;
