@@ -102,7 +102,7 @@ web/         Vite, React 19, TypeScript, Tailwind, wagmi core + viem
   src/games/         meta.json validation, sandboxed game bridge
   src/screens/       Home, Game, Player, Developers, Activity, About, Settings
   public/games/      Neon Tide, Hollow Kingdom, Signal Lost
-  tests/unit/        Spotlight and race logic, meta validation, bridge, security headers
+  tests/unit/        Spotlight and race logic, meta validation, bridge, security headers, every game's meta.json and cover
   tests/e2e/         mainnet-fork setup + browser test of the full vote flow
 ```
 

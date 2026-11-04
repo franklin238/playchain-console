@@ -109,6 +109,7 @@ body.rm #banner.show{animation:none}
 .item .val{font:600 12px var(--mono);color:var(--teal);min-width:46px;text-align:right}
 .item .ctl{display:flex;align-items:center;gap:10px}
 .credit{margin-top:14px;font:500 11px var(--mono);color:rgba(255,255,255,.4);text-align:center;letter-spacing:.06em}
+@media (max-width:600px){#modeTag{display:none}#gap{width:56vw}}
 @media (max-height:520px){#logo{top:12px}#logo h1{font-size:44px}#logo p{margin-top:4px}.item{padding:9px 14px}.panel{padding:16px 20px}#title .foot{display:none}}
 </style>
 </head>
@@ -643,6 +644,7 @@ body.rm #banner.show{animation:none}
     this.applyVolumes();
     this.started = true;
     this.nextT = c.currentTime + 0.08;
+    if (this.pending) this.switchNow();
     this.timer = setInterval(function () { self.tick(); }, 25);
   };
 
@@ -684,7 +686,7 @@ body.rm #banner.show{animation:none}
   P.play = function (name) {
     if (name === this.songName && !this.pending) return;
     this.pending = name;
-    if (!this.ctx) { this.songName = name; this.pending = null; return; }
+    if (!this.ctx) return;
     if (this.songName === 'none' || this.songName === 'caught') this.switchNow();
   };
   P.switchNow = function () {
@@ -1338,7 +1340,7 @@ body.rm #banner.show{animation:none}
   function getMesh(type) {
     var p = pools[type] || (pools[type] = []);
     var m = p.pop();
-    if (!m) { m = makers[type](); scene.add(m); }
+    if (!m) { m = makers[type](); m.userData.type = type; scene.add(m); }
     m.visible = true; return m;
   }
   function releaseAll() { for (var id in live) { var m = live[id]; m.visible = false; pools[m.userData.type].push(m); } live = {}; }
@@ -1746,7 +1748,7 @@ body.rm #banner.show{animation:none}
           if (!isDemo) { audio.sfx('orb', e.chain); if (e.full) toast(isTouch ? 'BOOST READY  ·  two-finger tap' : 'BOOST READY  ·  SHIFT / B'); }
           break;
         case 'gate':
-          var gm = live[e.id]; if (gm) gm.userData.flash = 1;
+          var gm = live[OT.GATE * 1e7 + e.id]; if (gm) gm.userData.flash = 1;
           if (!isDemo) { audio.sfx('gate'); popText(elPop2, 'GATE +300', 'small teal'); }
           break;
         case 'hit': burst(g.s, x, g.y + 1, 20, C.violet, 8, 0.8, 0.6, 8, g.v * 0.2); break;
@@ -1806,7 +1808,9 @@ body.rm #banner.show{animation:none}
     skyU.uSunTop.value.copy(curLook.top); skyU.uSunBot.value.copy(curLook.bot); skyU.uHorizon.value.copy(curLook.hor);
     waterU.uSunCol.value.copy(curLook.bot).lerp(curLook.top, 0.3);
   }
+  var lastRendered = null;
   function render(dt, alpha, g, playing) {
+    if (g !== lastRendered) { releaseAll(); lastRendered = g; }
     timeAcc += dt;
     var td = g.tide, tick = g.tick - 1 + alpha;
     if (state === 'dying' || state === 'pause') tick = g.tick;
@@ -1868,9 +1872,9 @@ body.rm #banner.show{animation:none}
       var ob = g.objs[i], ds = ob.s - base;
       if (ob.type === OT.WHIRL || ds < -20 || ds > 430) continue;
       if (ob.dead && ob.type !== OT.GATE) continue;
-      var m = live[ob.id];
-      if (!m) { m = getMesh(ob.type); m.userData.type = ob.type; m.userData.flash = 0; live[ob.id] = m; }
-      used[ob.id] = 1;
+      var key = ob.type * 1e7 + ob.id, m = live[key];
+      if (!m) { m = getMesh(ob.type); m.userData.flash = 0; live[key] = m; }
+      used[key] = 1;
       var ox = g.roadX(ob.s) + ob.lx, oh = td.height(ob.s, ox, tT);
       m.position.set(ox, oh + ob.yo, -ds);
       if (ob.type === OT.ORB) { m.position.y += Math.sin(timeAcc * 3 + ob.id) * 0.25; m.userData.spin.rotation.y = timeAcc * 2 + ob.id; m.userData.e.rotation.y = m.userData.spin.rotation.y; }
@@ -1937,11 +1941,12 @@ body.rm #banner.show{animation:none}
 
     // camera: behind and slightly above, lags on turns, dips on dives, rises on launches
     var sp = g.speedPct();
-    var camBack = 9.5 + sp * 2.5, camS = s - camBack;
+    var portrait = Math.max(0, Math.min(1, (H / W - 0.8) / 1.2));
+    var camBack = 9.5 + sp * 2.5 + portrait * 6, camS = s - camBack;
     var kx = 1 - Math.exp(-dt * 5);
     run.camX += (cx - run.camX) * kx;
     var camWater = td.height(camS, g.roadX(camS) + lx, tT);
-    var wantY = y + 3.3 + (g.diving && g.ground ? -0.9 : 0) + (!g.ground ? 0.8 + Math.min(2.5, g.air * 1.8) : 0);
+    var wantY = y + 3.3 + portrait * 2.2 + (g.diving && g.ground ? -0.9 : 0) + (!g.ground ? 0.8 + Math.min(2.5, g.air * 1.8) : 0);
     run.camY += (wantY - run.camY) * (1 - Math.exp(-dt * 4.5));
     var cY = Math.max(run.camY, camWater + 1.6);
     run.camLookY += (y + 0.6 - run.camLookY) * (1 - Math.exp(-dt * 7));
@@ -1951,17 +1956,18 @@ body.rm #banner.show{animation:none}
     camera.position.set(camX + shx, cY + shy, camBack);
     var lookS = 18;
     camera.lookAt(g.roadX(s + lookS) + lx * 0.85, run.camLookY + 0.2, -lookS);
-    var wantFov = 62 + (S.reduceMotion ? 5 : 16) * sp + (boosting ? (S.reduceMotion ? 2 : 7) : 0);
+    var wantFov = 62 + portrait * 22 + (S.reduceMotion ? 5 : 16) * sp + (boosting ? (S.reduceMotion ? 2 : 7) : 0);
     run.fov += (wantFov - run.fov) * (1 - Math.exp(-dt * 3));
     camera.fov = run.fov; camera.updateProjectionMatrix();
 
     // backdrop follows camera
     sky.position.copy(camera.position);
     var el = SUN_EL, sd = SUN_DIST;
-    sun.position.set(camera.position.x, Math.sin(el) * sd, camera.position.z - Math.cos(el) * sd);
+    var lookX = g.roadX(s + lookS) + lx * 0.85 - camera.position.x, sunX = camera.position.x + lookX / lookS * sd * 0.55;
+    sun.position.set(sunX, Math.sin(el) * sd, camera.position.z - Math.cos(el) * sd);
     sun.lookAt(camera.position.x, camera.position.y, camera.position.z);
     sunU.uTime.value = timeAcc;
-    skyU.uSunDir.value.set(0, Math.sin(el), -Math.cos(el)).normalize(); skyU.uTime.value = timeAcc;
+    skyU.uSunDir.value.set(sunX - camera.position.x, Math.sin(el) * sd, -Math.cos(el) * sd).normalize(); skyU.uTime.value = timeAcc;
     mountains.position.set(camera.position.x, 202, camera.position.z);
     mtU.uScroll.value = timeAcc * 0.004 + base * 0.00002;
     gridPlane.position.set(camera.position.x, -14, camera.position.z - 1250);
@@ -1979,7 +1985,7 @@ body.rm #banner.show{animation:none}
     if (state === 'dying') storm = Math.min(1.25, 1 + dyingT);
     PU.uStorm.value = storm;
     PU.uScan.value = S.scanlines ? 1 : 0;
-    PU.uGrain.value = S.reduceMotion ? 0.02 : 0.045;
+    PU.uGrain.value = window.__noGrain ? 0 : S.reduceMotion ? 0.02 : 0.045;
     PU.uFlash.value = run.flash; run.flash = Math.max(0, run.flash - dt * 3.5);
     composer.render(dt);
     return storm;
@@ -2096,7 +2102,7 @@ body.rm #banner.show{animation:none}
   show('title');
   song('title');
   post({ type: 'playchain:ready' });
-  window.__nt = { advance: function (n) { for (var i = 0; i < n && state === 'play'; i++) { snap(game); game.step(NT.botInput(game)); handleEvents(game, false); } }, apply: function () { applySettings(); }, state: function () { return state; }, game: function () { return game; }, start: startRun, results: showResults, S: S, save: save };
+  window.__nt = { audio: audio, advance: function (n) { for (var i = 0; i < n && state === 'play'; i++) { snap(game); game.step(NT.botInput(game)); handleEvents(game, false); } }, apply: function () { applySettings(); }, state: function () { return state; }, game: function () { return game; }, start: startRun, results: showResults, S: S, save: save };
   requestAnimationFrame(function (t) { last = t; frame(t); });
 })();
 
