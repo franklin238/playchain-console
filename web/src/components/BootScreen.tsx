@@ -3,7 +3,7 @@ import { consoleConfig } from "../config/console.config";
 import { useInputLayer } from "../input/hooks";
 import { prefersReducedMotion } from "../stores/settings";
 
-const STEPS = ["Starting console", "Preparing sandbox", "Loading library", "Ready"];
+const STEPS = ["Starting console", "Reaching Robinhood Chain", "Reading the arcade", "Ready"];
 
 /** Logo animation and short loading sequence. Under 4 seconds, skippable. */
 export function BootScreen({ onDone }: { onDone: () => void }) {
@@ -43,7 +43,7 @@ export function BootScreen({ onDone }: { onDone: () => void }) {
   return (
     <div
       role="status"
-      aria-label="Starting PLAYCHAIN. Press any button to skip."
+      aria-label="Starting PlayChain Flat. Press any button to skip."
       data-testid="boot-screen"
       className={`fixed inset-0 z-[100] grid place-items-center bg-bg transition-opacity duration-300 ${leaving ? "opacity-0" : "opacity-100"}`}
     >
@@ -52,8 +52,8 @@ export function BootScreen({ onDone }: { onDone: () => void }) {
         <svg viewBox="0 0 64 64" className="size-20" aria-hidden="true">
           <defs>
             <linearGradient id="boot-g" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#b31b34" />
-              <stop offset="1" stopColor="#ff5a6e" />
+              <stop offset="0" stopColor="#4de1c1" />
+              <stop offset="1" stopColor="#c8ff4d" />
             </linearGradient>
           </defs>
           <path
@@ -65,10 +65,10 @@ export function BootScreen({ onDone }: { onDone: () => void }) {
             className="boot-draw"
           />
         </svg>
-        <div className="flex font-display text-4xl font-extrabold tracking-[0.3em] sm:text-5xl">
-          {consoleConfig.name.split("").map((ch, i) => (
+        <div className="flex font-display text-3xl font-extrabold tracking-[0.22em] sm:text-5xl">
+          {consoleConfig.name.toUpperCase().split("").map((ch, i) => (
             <span key={i} className="boot-letter" style={{ animationDelay: `${300 + i * 70}ms` }}>
-              {ch}
+              {ch === " " ? "\u00a0" : ch}
             </span>
           ))}
         </div>

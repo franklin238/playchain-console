@@ -1,6 +1,5 @@
 import { useMemo, type CSSProperties } from "react";
-import { consoleConfig } from "../config/console.config";
-import { useCatalog } from "../stores/catalog";
+import { useArcade } from "../arcade/store";
 import { useSettings } from "../stores/settings";
 import { useWallpaper } from "../stores/wallpaper";
 import { DEFAULT_WALLPAPER, isWallpaperId, type WallpaperId } from "./catalog";
@@ -178,7 +177,7 @@ export function WallpaperView({
 }) {
   const customUrl = useWallpaper((s) => s.customUrl);
   const artUrl = useWallpaper((s) => s.artUrl);
-  const featuredCover = useCatalog((s) => s.games.find((g) => g.id === consoleConfig.featuredGameId)?.manifest.cover);
+  const featuredCover = useArcade((s) => s.games.find((g) => g.key === s.spotlight?.key)?.meta?.cover);
   const art = artUrl ?? featuredCover ?? "/covers/rise-of-gamdom-man.webp";
 
   const className = id === "custom" ? (customUrl ? "wp-image" : "wp-empty") : id === "game-art" ? "wp-art" : `wp-${id}`;

@@ -5,7 +5,7 @@ type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const VARIANTS: Record<Variant, string> = {
   // Solid brand red, like the reference's "Hire us".
-  primary: "bg-accent text-white hover:bg-accent-hover border-2 border-transparent",
+  primary: "bg-accent text-on-accent hover:bg-accent-hover border-2 border-transparent",
   // Outlined, like the reference's "Ask a question".
   secondary: "border-2 border-fg/85 text-fg hover:bg-white/[0.06]",
   ghost: "border-2 border-transparent text-fg hover:bg-surface-2",

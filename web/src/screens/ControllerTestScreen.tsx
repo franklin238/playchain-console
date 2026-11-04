@@ -71,7 +71,7 @@ export default function ControllerTestScreen() {
                   <span
                     key={name}
                     className={`rounded-md px-3 py-1.5 text-sm font-bold transition-colors ${
-                      pad.buttons[i] ? "bg-accent text-white" : "bg-white/8 text-muted"
+                      pad.buttons[i] ? "bg-accent text-on-accent" : "bg-white/8 text-muted"
                     }`}
                   >
                     {name}

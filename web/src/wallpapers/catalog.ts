@@ -12,7 +12,7 @@ export const WALLPAPERS = [
 
 export type WallpaperId = (typeof WALLPAPERS)[number]["id"];
 
-export const DEFAULT_WALLPAPER: WallpaperId = "aurora";
+export const DEFAULT_WALLPAPER: WallpaperId = "charcoal";
 
 export function isWallpaperId(value: unknown): value is WallpaperId {
   return WALLPAPERS.some((w) => w.id === value);

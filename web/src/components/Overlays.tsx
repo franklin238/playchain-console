@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import { useNavigate } from "react-router";
 import { useAutoFocus, useRestoreFocus } from "../input/hooks";
-import { useIsOwner } from "../stores/session";
 import { useSettings } from "../stores/settings";
 import { useUi } from "../stores/ui";
 import { Icon, type IconName } from "./Icon";
@@ -10,7 +9,6 @@ import { Icon, type IconName } from "./Icon";
 export function GuideMenu() {
   const { guideOpen, setGuideOpen } = useUi();
   const navigate = useNavigate();
-  const isOwner = useIsOwner();
   const { muted, set } = useSettings();
   const ref = useRef<HTMLDivElement>(null);
   useRestoreFocus(guideOpen);
@@ -25,14 +23,12 @@ export function GuideMenu() {
 
   const items: { icon: IconName; label: string; to: string }[] = [
     { icon: "home", label: "Home", to: "/" },
-    { icon: "library", label: "Library", to: "/library" },
-    { icon: "store", label: "Store", to: "/store" },
-    { icon: "wallet", label: "Wallet", to: "/wallet" },
-    { icon: "user", label: "Profile", to: "/profile" },
-    { icon: "upload", label: "Submit a game", to: "/submit" },
-    ...(isOwner ? [{ icon: "admin" as IconName, label: "Admin queue", to: "/admin" }] : []),
+    { icon: "upload", label: "Developers", to: "/developers" },
+    { icon: "clock", label: "Activity", to: "/activity" },
+    { icon: "eye", label: "About", to: "/about" },
     { icon: "settings", label: "Settings", to: "/settings" },
   ];
+
 
   return (
     <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Menu">
@@ -175,7 +171,7 @@ export function HintBar() {
         <Key>A</Key> Select <Key>B</Key> Back <Key>☰</Key> Menu
       </span>
       <span className="hidden items-center gap-2 [html[data-input=keyboard]_&]:flex">
-        <Key>Enter</Key> Select <Key>Esc</Key> Back <Key>M</Key> Menu
+        <Key>Arrows</Key> Move <Key>Enter</Key> Open <Key>V</Key> Vote <Key>Esc</Key> Back
       </span>
     </div>
   );

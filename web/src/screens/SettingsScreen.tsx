@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router";
-import { Button, Section, Segmented, Slider, Toggle } from "../components/controls";
+import { Button, Section, Slider, Toggle } from "../components/controls";
 import { Screen } from "../components/Screen";
 import { WallpaperPicker } from "../components/WallpaperPicker";
-import type { ChainKind } from "../config/console.config";
 import { useSettings } from "../stores/settings";
 
 export default function SettingsScreen() {
@@ -14,18 +13,6 @@ export default function SettingsScreen() {
       <div className="grid max-w-4xl gap-2">
         <Section title="Background">
           <WallpaperPicker />
-        </Section>
-
-        <Section title="Wallet">
-          <Segmented<ChainKind>
-            label="Default chain"
-            value={s.defaultChain}
-            onChange={(defaultChain) => s.set({ defaultChain })}
-            options={[
-              { value: "solana", label: "Solana" },
-              { value: "evm", label: "Ethereum (EVM)" },
-            ]}
-          />
         </Section>
 
         <Section title="Sound">

@@ -1,11 +1,9 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { consoleConfig, type ChainKind } from "../config/console.config";
 import { safeLocalStorage } from "../lib/storage";
 import { DEFAULT_WALLPAPER, type WallpaperId } from "../wallpapers/catalog";
 
 export interface SettingsState {
-  defaultChain: ChainKind;
   /** 0 to 100 */
   musicVolume: number;
   /** 0 to 100 */
@@ -23,7 +21,6 @@ export interface SettingsState {
 export const useSettings = create<SettingsState>()(
   persist(
     (set) => ({
-      defaultChain: consoleConfig.defaultChain,
       musicVolume: 40,
       sfxVolume: 60,
       muted: false,
@@ -34,7 +31,7 @@ export const useSettings = create<SettingsState>()(
       set: (patch) => set(patch),
     }),
     {
-      name: "playchain.settings",
+      name: "pcf.settings",
       version: 1,
       storage: createJSONStorage(() => safeLocalStorage),
       partialize: ({ set: _set, ...rest }) => rest,

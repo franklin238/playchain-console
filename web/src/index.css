@@ -2,21 +2,24 @@
 
 @theme {
   /* Charcoal surfaces with thin borders. */
-  --color-bg: #151515;
-  --color-bg-2: #1b1b1b;
-  --color-surface: #1e1e1e;
-  --color-surface-2: #282828;
-  --color-line: #2f2f2f;
-  --color-line-strong: #4b4b4b;
+  --color-bg: #0b0d0c;
+  --color-bg-2: #111513;
+  --color-surface: #151a17;
+  --color-surface-2: #1e2521;
+  --color-line: #253029;
+  --color-line-strong: #3d4c43;
   --color-fg: #f3f3f3;
   --color-muted: #a8a8a8;
 
   /* Brand red for the main action (solid buttons); a lighter red for red text on dark. */
-  --color-accent: #b31b34;
-  --color-accent-hover: #cc2340;
-  --color-accent-text: #ff5a6e;
-  /* Secondary accent: warm gold. */
-  --color-accent-2: #d4aa5c;
+  /* One bold accent: electric lime, with dark text on solid fills. */
+  --color-accent: #c8ff4d;
+  --color-accent-hover: #d8ff7a;
+  --color-accent-text: #c8ff4d;
+  --color-on-accent: #0b0d0c;
+  /* Burn orange for the burned share of every vote. */
+  --color-accent-2: #ff7a3d;
+  --color-teal: #4de1c1;
 
   --color-danger: #ff4d5e;
   --color-warn: #ff9f1c;
@@ -64,7 +67,7 @@ body {
 :where(button, a[href], input, textarea, select, [tabindex]:not([tabindex="-1"])):focus {
   outline: 2px solid #fff;
   outline-offset: 3px;
-  box-shadow: 0 0 0 7px rgb(179 27 52 / 0.35);
+  box-shadow: 0 0 0 7px rgb(200 255 77 / 0.25);
   transition:
     outline-offset 140ms var(--ease-console),
     box-shadow 140ms var(--ease-console);
@@ -177,4 +180,15 @@ html[data-motion="reduce"] .boot-draw {
 }
 html[data-motion="reduce"] .boot-letter {
   opacity: 1;
+}
+
+/* Focused tile glows in the accent. */
+.tile:focus {
+  box-shadow: 0 0 0 1px rgb(200 255 77 / 0.6), 0 18px 50px -18px rgb(200 255 77 / 0.45);
+}
+.glow-text {
+  text-shadow: 0 0 24px rgb(200 255 77 / 0.35);
+}
+.bar-fill {
+  transition: width 400ms var(--ease-console);
 }
