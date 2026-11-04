@@ -1,0 +1,12 @@
+{
+  "name": "Hollow Kingdom",
+  "slug": "hollow-kingdom",
+  "tagline": "Rebuild a kingdom one empty hall at a time.",
+  "description": "Rebuild a kingdom one empty hall at a time. Gather by day, defend your walls by night, and light the windows of a castle the dark forgot. Every hall you restore brings back new villagers, new powers and a new voice to the music.",
+  "genre": "Strategy",
+  "developer": { "name": "Steeve", "x": "gamersteeve" },
+  "cover": "https://playchain-flat.vercel.app/games/hollow-kingdom/cover.png",
+  "playUrl": "https://playchain-flat.vercel.app/games/hollow-kingdom/index.html",
+  "controls": "Mouse/touch: tap halls, drag to pan, wheel/pinch to zoom. Space: speed/pause, 1-4: powers, H: halls, Esc: menu. Gamepad supported.",
+  "version": "1.0.0"
+}

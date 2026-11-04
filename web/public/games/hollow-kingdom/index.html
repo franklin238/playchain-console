@@ -1,0 +1,2510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Hollow Kingdom</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  --sky-top:#2C343B;--sky-bot:#14181C;--stone:#121214;--hills:#22272B;--moon:#DCD8CA;
+  --gold:#D6A94A;--maroon:#5A1E2A;--violet:#6E5A8C;--ts:1;
+  --panel:rgba(20,24,28,.92);--line:rgba(220,216,202,.14);
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --serif:"Palatino Linotype","Book Antiqua",Palatino,"URW Palladio L",Georgia,"Times New Roman",serif;
+}
+html{font-size:calc(15px * var(--ts))}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#14181C;color:var(--moon);font-family:var(--ui);user-select:none;-webkit-user-select:none;touch-action:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:grab}
+canvas#c.drag{cursor:grabbing}
+canvas#c.target{cursor:crosshair}
+button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:rgba(44,52,59,.85);border-radius:.5rem;padding:.45rem .8rem;transition:background .15s,border-color .15s,transform .1s}
+button:hover:not(:disabled){border-color:rgba(214,169,74,.6);background:rgba(60,64,66,.9)}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:var(--gold);color:#1b1408;border-color:var(--gold);font-weight:700}
+button.primary:hover:not(:disabled){background:#e4b95a}
+button.danger{border-color:rgba(160,60,75,.6)}
+.hidden{display:none!important}
+.serif{font-family:var(--serif)}
+
+/* HUD */
+#hud{position:fixed;inset:0;pointer-events:none}
+#hud > *{pointer-events:auto}
+#topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;padding:.55rem .7rem;pointer-events:none;background:linear-gradient(rgba(20,24,28,.85),rgba(20,24,28,0))}
+#topbar > *{pointer-events:auto}
+#res{display:flex;flex-wrap:wrap;gap:.3rem .7rem;align-items:center;max-width:44%}
+.r{display:flex;align-items:center;gap:.3rem;font-weight:700;font-variant-numeric:tabular-nums;font-size:1rem;padding:.15rem .1rem;border-radius:.4rem;transition:transform .15s,color .15s}
+.r svg{width:1.2rem;height:1.2rem;flex:none}
+.r.bump{transform:scale(1.25);color:#fff}
+.r.short{color:#e07a6a}
+.r small{font-weight:500;opacity:.6;font-size:.75rem}
+#clock{display:flex;align-items:center;gap:.6rem;background:rgba(20,24,28,.7);border:1px solid var(--line);border-radius:2rem;padding:.25rem .6rem .25rem .3rem}
+#dial{width:2.4rem;height:2.4rem}
+#clockText b{display:block;font-family:var(--serif);font-size:1.05rem;letter-spacing:.02em}
+#clockText span{font-size:.78rem;opacity:.75;font-variant-numeric:tabular-nums}
+#speed{display:flex;gap:.2rem}
+#speed button{padding:.2rem .45rem;font-size:.8rem;border-radius:1rem;min-width:2rem}
+#speed button.on{background:var(--gold);color:#1b1408;border-color:var(--gold)}
+#tr{display:flex;gap:.35rem}
+#tr button{padding:.4rem .7rem}
+#goal{position:absolute;top:3.6rem;left:.7rem;background:var(--panel);border:1px solid rgba(214,169,74,.35);border-radius:.6rem;padding:.5rem .7rem;min-width:13rem;max-width:17rem;cursor:pointer}
+#goal h4{margin:0 0 .3rem;font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);font-weight:700}
+#goal .gn{font-family:var(--serif);font-size:1.1rem;margin-bottom:.3rem}
+.bar{height:.36rem;background:rgba(255,255,255,.08);border-radius:1rem;overflow:hidden;margin:.18rem 0}
+.bar i{display:block;height:100%;background:var(--gold);border-radius:1rem;transition:width .3s}
+.costrow{display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-variant-numeric:tabular-nums}
+.costrow svg{width:.95rem;height:.95rem;flex:none}
+.costrow .bar{flex:1}
+.costrow.ok{color:#cfd9b0}
+#preview{position:absolute;top:3.6rem;right:.7rem;background:var(--panel);border:1px solid var(--line);border-radius:.6rem;padding:.45rem .7rem;font-size:.8rem;max-width:15rem}
+#preview b{color:#b9a6d9}
+#preview.blood{border-color:#8c2c3c}
+#bottom{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:.6rem;pointer-events:none;background:linear-gradient(rgba(20,24,28,0),rgba(20,24,28,.8))}
+#bottom > *{pointer-events:auto}
+#jobs,#powers{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center;align-items:stretch}
+.job{background:var(--panel);border:1px solid var(--line);border-radius:.6rem;padding:.35rem .45rem;display:flex;flex-direction:column;align-items:center;gap:.2rem;min-width:5.6rem}
+.job .jn{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;opacity:.8;display:flex;gap:.3rem;align-items:center}
+.job .jn svg{width:.9rem;height:.9rem}
+.job .jc{display:flex;align-items:center;gap:.35rem}
+.job .jc b{font-size:1.15rem;min-width:1.4rem;text-align:center;font-variant-numeric:tabular-nums}
+.job .jc button{padding:.1rem .5rem;font-weight:700;border-radius:.4rem}
+.job.idle{justify-content:center;opacity:.85}
+.job .side{display:flex;gap:.25rem;font-size:.72rem;align-items:center}
+.job .side button{padding:0 .35rem;font-size:.75rem}
+.pw{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:.6rem;padding:.4rem .7rem;min-width:5.8rem;display:flex;flex-direction:column;align-items:center;gap:.1rem;overflow:hidden}
+.pw .k{position:absolute;top:.2rem;left:.35rem;font-size:.65rem;opacity:.5}
+.pw .pn{font-family:var(--serif);font-size:1rem}
+.pw .pc{font-size:.72rem;opacity:.8;display:flex;align-items:center;gap:.2rem}
+.pw .pc svg{width:.8rem;height:.8rem}
+.pw .cd{position:absolute;left:0;bottom:0;height:3px;background:var(--gold)}
+.pw.locked{opacity:.35}
+.pw.armed{border-color:var(--gold);box-shadow:0 0 0 2px rgba(214,169,74,.4)}
+#guardsBox{background:var(--panel);border:1px solid var(--line);border-radius:.6rem;padding:.35rem .6rem;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.75rem;gap:.2rem}
+#guardsBox .side{display:flex;gap:.3rem;align-items:center}
+#guardsBox button{padding:0 .4rem}
+#walls{display:flex;gap:.6rem;font-size:.7rem;opacity:.85}
+#walls .bar{width:3.5rem}
+#walls .bar i{background:#9aa3a8}
+
+/* side panel */
+#panel{position:absolute;right:.7rem;top:7.2rem;max-height:calc(100% - 15rem);width:21rem;max-width:calc(100% - 1.4rem);background:var(--panel);border:1px solid var(--line);border-radius:.8rem;padding:.9rem 1rem;overflow:auto;backdrop-filter:blur(4px)}
+#panel h2{font-family:var(--serif);font-weight:400;margin:0 0 .2rem;font-size:1.5rem;color:#f0e6cc}
+#panel .x{position:absolute;top:.5rem;right:.5rem;padding:.1rem .5rem}
+#panel .st{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.6rem}
+#panel .st.lit{color:var(--gold)}#panel .st.dark{opacity:.6}#panel .st.building{color:#c9a27a}
+#panel p{margin:.4rem 0;font-size:.88rem;line-height:1.45}
+#panel .lore{font-family:var(--serif);font-style:italic;color:#e8d9b0;border-left:2px solid var(--gold);padding-left:.6rem}
+#panel .req{font-size:.8rem;opacity:.85}
+#panel .req .no{color:#e07a6a}
+#panel .btns{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem}
+.hl-list{display:flex;flex-direction:column;gap:.3rem;margin-top:.4rem}
+.hrow{display:flex;align-items:center;gap:.5rem;padding:.4rem .5rem;border:1px solid var(--line);border-radius:.5rem;cursor:pointer;background:rgba(255,255,255,.02)}
+.hrow:hover{border-color:rgba(214,169,74,.5)}
+.hrow .dot{width:.7rem;height:.7rem;border-radius:2px;background:#2a2b2e;flex:none;border:1px solid #444}
+.hrow .dot.lit{background:var(--gold);box-shadow:0 0 6px var(--gold);border-color:var(--gold)}
+.hrow .dot.building{background:#8a6a3a}
+.hrow .nm{font-family:var(--serif);flex:1}
+.hrow .dep{font-size:.7rem;opacity:.6}
+
+#toasts{position:absolute;top:4.2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.4rem;pointer-events:none;width:min(36rem,90%)}
+.toast{background:rgba(20,24,28,.9);border:1px solid rgba(214,169,74,.4);border-radius:.6rem;padding:.55rem 1rem;font-size:.9rem;text-align:center;animation:tin .4s ease-out;transition:opacity .8s}
+.toast.lore{font-family:var(--serif);font-style:italic;font-size:1rem;color:#f0e2bc}
+.toast.bad{border-color:#8c2c3c}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+#banner{position:fixed;left:0;right:0;top:34%;text-align:center;pointer-events:none;font-family:var(--serif);font-size:3rem;color:#f0e6cc;text-shadow:0 0 30px rgba(0,0,0,.8);opacity:0;transition:opacity 1s}
+#banner small{display:block;font-size:1rem;font-family:var(--ui);letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-top:.4rem}
+#banner.show{opacity:1}
+#banner.blood{color:#e5a0a8}
+
+#tip{position:fixed;z-index:30;max-width:17rem;background:#f2e6c4;color:#1b1408;border-radius:.6rem;padding:.65rem .8rem;font-size:.88rem;line-height:1.35;box-shadow:0 6px 24px rgba(0,0,0,.5);pointer-events:auto}
+#tip b{display:block;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;opacity:.65;margin-bottom:.2rem}
+#tip button{margin-top:.45rem;padding:.15rem .5rem;font-size:.72rem;background:transparent;color:#1b1408;border-color:rgba(0,0,0,.25)}
+#tip:after{content:"";position:absolute;left:var(--ax,50%);width:12px;height:12px;background:#f2e6c4;transform:translateX(-50%) rotate(45deg)}
+#tip.below:after{top:-6px}#tip.above:after{bottom:-6px}
+.hl{box-shadow:0 0 0 2px var(--gold),0 0 18px 4px rgba(214,169,74,.55)!important;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 2px var(--gold),0 0 8px 1px rgba(214,169,74,.3)}}
+
+/* screens */
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20}
+#title{justify-content:flex-end;padding-bottom:7vh;background:linear-gradient(rgba(20,24,28,0) 55%,rgba(17,18,20,.9) 80%)}
+#title h1{font-family:var(--ui);font-weight:800;font-size:clamp(2.4rem,7vw,4.6rem);margin:0;color:#fff;letter-spacing:-.01em;text-shadow:0 4px 30px rgba(0,0,0,.6)}
+#title .tag{margin:.4rem 0 .2rem;font-size:1.05rem;color:#cfcac0}
+#title .line{font-family:var(--serif);font-style:italic;color:var(--gold);margin:.3rem 0 1.3rem;font-size:1.05rem;opacity:.9}
+#title .menu{display:flex;flex-direction:column;gap:.5rem;min-width:15rem}
+#title .menu button{padding:.7rem 1rem;font-size:1rem}
+#title .reign{font-size:.75rem;opacity:.6;margin-top:.8rem;letter-spacing:.1em;text-transform:uppercase}
+#title .credit{position:absolute;bottom:.6rem;right:.8rem;font-size:.7rem;opacity:.4}
+#modal{background:rgba(10,12,14,.55);backdrop-filter:blur(3px)}
+.card{background:#181c20;border:1px solid var(--line);border-radius:1rem;padding:1.4rem 1.6rem;min-width:18rem;max-width:min(30rem,92vw);max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.card h2{font-family:var(--serif);font-weight:400;font-size:1.8rem;margin:0 0 .3rem;color:#f0e6cc}
+.card h3{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:0 0 .8rem}
+.card .menu{display:flex;flex-direction:column;gap:.45rem;margin-top:1rem}
+.card .menu button{padding:.6rem 1rem}
+.card table{width:100%;border-collapse:collapse;font-size:.9rem;margin:.4rem 0}
+.card td{padding:.32rem 0;border-bottom:1px solid var(--line)}
+.card td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.card td.bad{color:#e07a6a}.card td.good{color:#cfd9b0}
+.set{display:grid;grid-template-columns:7rem 1fr 2.5rem;align-items:center;gap:.5rem;margin:.45rem 0;font-size:.9rem}
+.set input[type=range]{width:100%;accent-color:var(--gold)}
+.seg{display:flex;gap:.3rem}
+.seg button{padding:.25rem .6rem;font-size:.82rem}
+.seg button.on{background:var(--gold);color:#1b1408;border-color:var(--gold)}
+#cursor{position:fixed;width:22px;height:22px;margin:-11px 0 0 -11px;border:2px solid var(--gold);border-radius:50%;pointer-events:none;z-index:50;box-shadow:0 0 10px rgba(214,169,74,.6)}
+#cursor:after{content:"";position:absolute;left:8px;top:8px;width:2px;height:2px;background:var(--gold)}
+@media (max-width:720px){
+  #res{max-width:58%;gap:.2rem .5rem}
+  .r{font-size:.85rem}
+  #clock{padding:.15rem .4rem .15rem .2rem;gap:.35rem}
+  #dial{width:1.9rem;height:1.9rem}
+  #speed button{min-width:1.6rem;padding:.15rem .3rem}
+  #clockText span{display:none}
+  #goal{top:auto;bottom:9.5rem;min-width:0;max-width:11rem;padding:.4rem .5rem}
+  #goal .costrow span{display:none}
+  #preview{display:none}
+  #topbar{flex-wrap:wrap}
+  #panel{top:auto;bottom:8.6rem;max-height:46vh;width:auto;left:.7rem}
+  .job{min-width:4.2rem;padding:.25rem .3rem}
+  .pw{min-width:4.4rem;padding:.3rem .4rem}
+  #banner{font-size:2rem}
+}
+@media (max-width:420px){ #tr button{padding:.3rem .45rem} #clock{order:3} }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="topbar">
+    <div id="res"></div>
+    <div id="clock">
+      <svg id="dial" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="rgba(0,0,0,.35)" stroke="rgba(220,216,202,.2)" stroke-width="2"/><circle id="dialArc" cx="20" cy="20" r="17" fill="none" stroke="#D6A94A" stroke-width="3" stroke-dasharray="106.8" stroke-dashoffset="0" transform="rotate(-90 20 20)" stroke-linecap="round"/><g id="dialIcon"></g></svg>
+      <div id="clockText"><b id="dayLabel">Day 1</b><span id="timeLeft">2:30</span></div>
+      <div id="speed"><button data-s="0" title="Pause (Space)">II</button><button data-s="1">1x</button><button data-s="2">2x</button><button data-s="3">3x</button></div>
+    </div>
+    <div id="tr"><button id="btnHalls" title="Halls (H)">Halls</button><button id="btnMenu" title="Menu (Esc)">&#9776;</button></div>
+  </div>
+  <div id="goal"></div>
+  <div id="preview"></div>
+  <div id="bottom"><div id="jobs"></div><div id="powers" class="hidden"></div></div>
+  <div id="panel" class="hidden"></div>
+  <div id="toasts"></div>
+</div>
+<div id="banner"></div>
+<div id="tip" class="hidden"></div>
+
+<div id="title" class="screen">
+  <h1>Hollow Kingdom</h1>
+  <div class="tag">Rebuild a kingdom one empty hall at a time.</div>
+  <div class="line">The halls remember. Light them again.</div>
+  <div class="menu">
+    <button id="tContinue" class="primary hidden">Continue</button>
+    <button id="tNew">New Reign</button>
+    <button id="tSettings">Settings</button>
+  </div>
+  <div class="reign" id="tReign"></div>
+  <div class="credit">A PlayChain game by Steeve</div>
+</div>
+<div id="modal" class="screen hidden"><div class="card" id="mcard"></div></div>
+<div id="cursor" class="hidden"></div>
+<script>
+'use strict';
+/* =====================================================================
+   CONTENT: every balance number, hall, enemy and lore line lives here.
+   Tune freely. Costs: st=stone tb=timber gr=grain em=ember co=coin.
+   ===================================================================== */
+const CONTENT = {
+  version: 1,
+  timing: { dayLen: 150, nightLen: 90, bellAt: 30, duskWalkHome: 9, nightFade: 3 },
+  start: { villagers: 5, res: { stone: 6, timber: 4, grain: 14, ember: 5, coin: 4 }, wallHp: 160 },
+  economy: {
+    gatherPerSec: { quarry: 0.34, wood: 0.34, fields: 0.16 },
+    loadSize: 3,                     // units carried per floating number
+    upkeepPerVillager: 1,            // grain per villager per day
+    hungryWorkMult: 0.6,
+    taxPerVillager: 1,             // coin per villager at dawn
+    repairHpPerSec: 1.2,             // wall duty by day, per guard
+    stonePerRepairHp: 1 / 6,
+    dawnWallRegen: 0.2,
+    walkSpeed: 120, buildRate: 1,
+    sellswordCost: 6, sellswordMax: 3,
+    trades: [ { give: 'grain', n: 10, get: 'coin', m: 4 }, { give: 'coin', n: 6, get: 'stone', m: 12 }, { give: 'coin', n: 6, get: 'timber', m: 12 }, { give: 'stone', n: 15, get: 'coin', m: 4 } ]
+  },
+  // Halls. slot = room rect in world units (y is negative upwards). deps = halls required.
+  halls: [
+    { id: 'great', name: 'Great Hall', slot: [-120, -130, 240, 130], cost: {}, work: 0, deps: [], villagers: 0, layer: 'lead',
+      unlock: 'Villager housing and the heart of the castle. Unlocks Flare.',
+      lore: 'Here the last king ate alone, and the fire went out because no one thought to feed it.' },
+    { id: 'kitchen', name: 'Kitchen', slot: [-360, -130, 240, 130], cost: { st: 20, tb: 15 }, work: 12, deps: [], villagers: 1, layer: 'drum',
+      unlock: 'Grain feeds 2 villagers per unit instead of 1.',
+      lore: 'The cooks left first. A kingdom starves long before it falls.' },
+    { id: 'granary', name: 'Granary', slot: [-520, -130, 160, 130], cost: { st: 30, tb: 30 }, work: 15, deps: ['kitchen'], villagers: 1, layer: 'lute',
+      unlock: 'Fields yield 50% more grain.',
+      lore: 'The grain was sold to pay for the walls. The walls did not need it.' },
+    { id: 'forge', name: 'Forge', slot: [120, -130, 240, 130], cost: { st: 45, tb: 25, em: 3 }, work: 18, deps: ['kitchen'], villagers: 1, layer: 'anvil',
+      unlock: 'Guards hit 50% harder. Unlocks Mend (repair a wall at night).',
+      lore: "The smith refused to forge the king's last sword. He said steel cannot fix what silence broke." },
+    { id: 'barracks', name: 'Barracks', slot: [360, -130, 160, 130], cost: { st: 45, tb: 40, gr: 10 }, work: 18, deps: ['kitchen'], villagers: 2, layer: 'brass',
+      unlock: 'Guards train as archers and shoot from range. Unlocks Rally and sellswords.',
+      lore: 'The guards were sent home one by one, until the gate had only a lock.' },
+    { id: 'chapel', name: 'Chapel', slot: [-520, -390, 160, 130], cost: { st: 55, tb: 35, em: 6 }, work: 20, deps: ['granary'], villagers: 1, layer: 'choir',
+      unlock: '+3 Ember every dawn. Unlocks Light (big area damage).',
+      lore: 'The candles kept burning a week after the last prayer. Light outlasts the hands that lit it.' },
+    { id: 'watchtower', name: 'Watchtower', slot: [360, -390, 160, 130], cost: { st: 65, tb: 50, co: 10 }, work: 22, deps: ['barracks'], villagers: 1, layer: 'stringsLow',
+      unlock: "See the next night's Hollow in advance. Archer towers on both walls.",
+      lore: 'From here they watched the Hollow gather for a year, and rang no bell.' },
+    { id: 'market', name: 'Market', slot: [-360, -260, 360, 130], cost: { st: 50, tb: 60, gr: 20 }, work: 20, deps: ['granary'], villagers: 2, layer: 'flute',
+      unlock: '+6 Coin every dawn and trading of resources.',
+      lore: 'Trade stopped when coins grew heavier than promises.' },
+    { id: 'library', name: 'Library', slot: [0, -260, 360, 130], cost: { st: 70, tb: 60, co: 20 }, work: 24, deps: ['market'], villagers: 1, layer: 'musicbox',
+      unlock: 'Research: every job works 20% faster and builds go quicker.',
+      lore: 'Every book here was a warning. The pages were burned for warmth.' },
+    { id: 'infirmary', name: 'Infirmary', slot: [-520, -260, 160, 130], cost: { st: 60, tb: 50, gr: 30, em: 5 }, work: 22, deps: ['chapel'], villagers: 1, layer: 'stringsHigh',
+      unlock: 'Fallen guards return the next day instead of dying.',
+      lore: 'The Hollow were never invaders. They were the ones nobody came back for.' },
+    { id: 'vault', name: 'Vault', slot: [360, -260, 160, 130], cost: { st: 90, tb: 60, co: 30 }, work: 24, deps: ['market'], villagers: 1, layer: 'bells',
+      unlock: 'Thieves and breaches steal half as much.',
+      lore: 'The treasure was always here. The king guarded it from his own people.' },
+    { id: 'throne', name: 'Throne Room', slot: [-110, -400, 220, 140], cost: { st: 140, tb: 110, em: 12, co: 50 }, work: 30, deps: ['kitchen', 'granary', 'forge', 'barracks', 'chapel', 'watchtower', 'market', 'library', 'infirmary', 'vault'], villagers: 3, layer: 'throne',
+      unlock: 'Crowns the kingdom. Unlocks Endless Nights and a New Reign bonus.',
+      lore: 'A crown is only a ring of promises. Keep them, and the halls never go hollow again.' }
+  ],
+  repairCostFrac: 0.4,
+  // Hollow. hp, speed (u/s), wall damage per hit, hit interval (s), ember drop chance, budget cost, first night.
+  hollow: {
+    wisp:    { name: 'Wisp',    hp: 5,   speed: 62, dmg: 1,  rate: 2.0, ember: 0.12, cost: 1, from: 1, size: 12 },
+    husk:    { name: 'Husk',    hp: 36,  speed: 22, dmg: 4,  rate: 1.6, ember: 0.5,  cost: 3, from: 1, size: 22 },
+    thief:   { name: 'Thief',   hp: 9,   speed: 58, dmg: 0,  rate: 1.0, ember: 0.35, cost: 2, from: 2, size: 14, pick: 2.2, steal: 6 },
+    climber: { name: 'Climber', hp: 14,  speed: 40, dmg: 3,  rate: 1.0, ember: 0.35, cost: 3, from: 3, size: 16, climb: 2.5 },
+    wailer:  { name: 'Wailer',  hp: 22,  speed: 26, dmg: 0,  rate: 1.0, ember: 0.6,  cost: 4, from: 5, size: 18, range: 240 },
+    knight:  { name: 'Hollow Knight', hp: 320, speed: 15, dmg: 14, rate: 1.6, ember: 1, cost: 0, from: 7, size: 44, emberBonus: 8 }
+  },
+  night: { baseBudget: 6, perNight: 4, perHall: 3.2, bloodMult: 1.6, bloodEvery: 7, waves: [4, 20, 38, 56], waveShare: [0.16, 0.24, 0.3, 0.3], spawnX: 1450, oneSideUntil: 2, knightHpPerBlood: 80 },
+  guards: { hp: 34, melee: 3, meleeRate: 0.8, meleeRange: 60, bow: 1.6, bowRate: 1.2, bowRange: 270, forgeMult: 1.5, rallyMult: 2, wailMult: 0.5 },
+  tower: { dmg: 3, rate: 1.5, range: 360, hp: 60 },
+  powers: [
+    { id: 'flare', key: '1', name: 'Flare', hall: 'great', ember: 2, cd: 10, radius: 260, slow: 0.5, dur: 6, dmg: 1, target: true, desc: 'Reveal and slow the Hollow' },
+    { id: 'light', key: '2', name: 'Light', hall: 'chapel', ember: 5, cd: 22, radius: 140, dmg: 35, target: true, desc: 'A column of light, big area damage' },
+    { id: 'rally', key: '3', name: 'Rally', hall: 'barracks', ember: 3, cd: 28, dur: 10, target: false, desc: 'Guards hit twice as hard for 10 s' },
+    { id: 'mend',  key: '4', name: 'Mend',  hall: 'forge', ember: 3, cd: 25, hp: 45, target: false, desc: 'Repair the weakest wall' }
+  ],
+  rewards: { baseEmber: 1, bloodEmber: 10, bloodCoin: 20, chapelEmber: 3, marketCoin: 6, reignBonusVillagers: 1 },
+  score: { perNight: 100, perHall: 500 }
+};
+const HALL = {}; CONTENT.halls.forEach(h => HALL[h.id] = h);
+/* =====================================================================
+   CORE SIMULATION: deterministic, fixed step, seeded RNG.
+   No Math.random and no frame time in here.
+   ===================================================================== */
+const STEP = 1 / 30;
+const SAVE_VERSION = 1;
+const RES = ['stone', 'timber', 'grain', 'ember', 'coin'];
+const CKEY = { st: 'stone', tb: 'timber', gr: 'grain', em: 'ember', co: 'coin' };
+const WALL_X = 780, WALL_FACE = 812, KEEP_X = 530, WALL_TOP = -138;
+const JOB_SITE = { quarry: 1110, wood: -1120, fields: -655 };
+const JOBS = ['quarry', 'wood', 'fields', 'build', 'wall'];
+
+function rngNext(G) { // mulberry32 with state kept in save
+  let t = (G.rng = (G.rng + 0x6D2B79F5) >>> 0);
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+
+/* event bus from sim to presentation */
+const FX = [];
+function emit(type, d) { FX.push(Object.assign({ type }, d || {})); }
+
+function newGame(reign, seed) {
+  const s = CONTENT.start;
+  const G = {
+    v: SAVE_VERSION, seed: seed >>> 0, rng: seed >>> 0, reign: reign || 1,
+    day: 1, phase: 'day', t: 0,
+    res: Object.assign({}, s.res),
+    vill: [], nextId: 1,
+    halls: {}, building: null,
+    walls: { L: { hp: s.wallHp, max: s.wallHp }, R: { hp: s.wallHp, max: s.wallHp } },
+    towers: { L: 0, R: 0 },
+    hungry: false, nightsSurvived: 0, plan: null, planNight: 0,
+    tut: 0, crowned: false, bloodSeen: 0,
+    stats: { killed: 0, totalEmber: 0 }
+  };
+  CONTENT.halls.forEach(h => G.halls[h.id] = { s: 'dark', p: 0 });
+  G.halls.great.s = 'lit';
+  const n = s.villagers + Math.min(3, (G.reign - 1) * CONTENT.rewards.reignBonusVillagers);
+  for (let i = 0; i < n; i++) addVillager(G, 'castle');
+  planNight(G);
+  return G;
+}
+
+function addVillager(G, from) {
+  const id = G.nextId++;
+  const v = { id, job: 'idle', side: 1, wounded: 0 };
+  G.vill.push(v);
+  initVillagerPos(G, v, from);
+  return v;
+}
+function initVillagerPos(G, v, from) {
+  v.x = from === 'gate' ? 1450 : ((v.id * 97) % 200 - 100); v.y = 0; v.fade = 0;
+  v.acc = 0; v.anim = v.id * 1.7; v.hp = CONTENT.guards.hp; v.cd = 0; v.face = 1; v.work = 0;
+  v.home = null; v.wx = 0;
+}
+
+/* ---------- derived values ---------- */
+const lit = (G, id) => G.halls[id] && G.halls[id].s === 'lit';
+const litCount = G => CONTENT.halls.reduce((n, h) => n + (lit(G, h.id) ? 1 : 0), 0);
+const isBlood = n => n % CONTENT.night.bloodEvery === 0;
+const jobCount = (G, j, side) => G.vill.reduce((n, v) => n + (v.job === j && !v.wounded && (side == null || v.side === side) ? 1 : 0), 0);
+const idleCount = G => jobCount(G, 'idle');
+const activeVill = G => G.vill.filter(v => !v.wounded);
+function workMult(G) { return (G.hungry ? CONTENT.economy.hungryWorkMult : 1) * (lit(G, 'library') ? 1.2 : 1); }
+function canAfford(G, cost, frac) {
+  frac = frac || 1;
+  for (const k in cost) if (G.res[CKEY[k]] < Math.ceil(cost[k] * frac)) return false;
+  return true;
+}
+function depsMet(G, h) { return h.deps.every(d => lit(G, d)); }
+function nextGoal(G) {
+  if (G.building) return HALL[G.building];
+  const dmg = CONTENT.halls.find(h => G.halls[h.id].s === 'damaged');
+  if (dmg) return dmg;
+  const order = ['kitchen', 'granary', 'forge', 'barracks', 'chapel', 'market', 'watchtower', 'library', 'infirmary', 'vault', 'throne'];
+  for (const id of order) { const h = HALL[id]; if (G.halls[id].s === 'dark' && depsMet(G, h)) return h; }
+  return null;
+}
+function hallCost(G, h) {
+  const st = G.halls[h.id].s, f = st === 'damaged' ? CONTENT.repairCostFrac : 1, o = {};
+  for (const k in h.cost) o[k] = Math.ceil(h.cost[k] * f);
+  return o;
+}
+function hallWork(G, h) { return h.work * (G.halls[h.id].s === 'damaged' || G.halls[h.id].rep ? CONTENT.repairCostFrac : 1); }
+function powerUnlocked(G, p) { return lit(G, p.hall); }
+
+/* ---------- actions (called from UI, also deterministic) ---------- */
+function assign(G, job, delta, side) {
+  if (delta > 0) {
+    const v = G.vill.find(v => v.job === 'idle' && !v.wounded);
+    if (!v) return false;
+    v.job = job; v.acc = 0; if (side) v.side = side; v.hp = CONTENT.guards.hp;
+    emit('assign', { job, x: v.x });
+    return true;
+  } else {
+    let cand = G.vill.filter(v => v.job === job && !v.wounded && (side == null || v.side === side));
+    if (!cand.length) return false;
+    const v = cand[cand.length - 1];
+    v.job = 'idle';
+    emit('assign', { job: 'idle', x: v.x });
+    return true;
+  }
+}
+function moveGuard(G, from, to) {
+  const v = G.vill.filter(v => v.job === 'wall' && !v.wounded && v.side === from).pop();
+  if (!v) return false; v.side = to; emit('assign', { job: 'wall', x: v.x }); return true;
+}
+function startRestore(G, id) {
+  const h = HALL[id], st = G.halls[id];
+  if (G.building || !(st.s === 'dark' || st.s === 'damaged') || !depsMet(G, h)) return false;
+  const cost = hallCost(G, h);
+  if (!canAfford(G, cost)) return false;
+  for (const k in cost) G.res[CKEY[k]] -= cost[k];
+  st.rep = st.s === 'damaged';
+  st.s = 'building'; st.p = 0; G.building = id;
+  emit('buildStart', { id });
+  return true;
+}
+function hireSellsword(G) {
+  const e = CONTENT.economy;
+  if (!lit(G, 'barracks') || G.res.coin < e.sellswordCost) return false;
+  const n = G.vill.filter(v => v.sell).length;
+  if (n >= e.sellswordMax) return false;
+  G.res.coin -= e.sellswordCost;
+  const side = jobCount(G, 'wall', 1) <= jobCount(G, 'wall', -1) ? 1 : -1;
+  const v = addVillager(G, 'castle'); v.job = 'wall'; v.side = side; v.sell = 1; v.x = side * 700;
+  emit('assign', { job: 'wall', x: v.x });
+  return true;
+}
+function trade(G, i) {
+  const tr = CONTENT.economy.trades[i];
+  if (!lit(G, 'market') || G.res[tr.give] < tr.n) return false;
+  G.res[tr.give] -= tr.n; G.res[tr.get] += tr.m; emit('trade', { res: tr.get, n: tr.m });
+  return true;
+}
+
+/* ---------- night planning (seeded, made at dawn so the Watchtower can preview) ---------- */
+function planNight(G) {
+  const N = CONTENT.night, n = G.day, blood = isBlood(n);
+  let budget = N.baseBudget + N.perNight * (n - 1) + N.perHall * (litCount(G) - 1);
+  if (blood) budget *= N.bloodMult;
+  const types = Object.keys(CONTENT.hollow).filter(k => k !== 'knight' && CONTENT.hollow[k].from <= n);
+  const plan = [];
+  N.waves.forEach((wt, wi) => {
+    let b = budget * N.waveShare[wi];
+    let guard = 0;
+    while (b > 0.5 && guard++ < 80) {
+      const k = types[Math.floor(rngNext(G) * types.length)];
+      const c = CONTENT.hollow[k].cost;
+      if (c > b + 0.6) { if (c <= 1) break; continue; }
+      b -= c;
+      const sd = rngNext(G) < 0.5 ? -1 : 1;
+      plan.push({ t: wt + rngNext(G) * 9, k, side: n <= N.oneSideUntil ? 1 : sd });
+    }
+    if (n === 1 && wi === 0 && !plan.length) plan.push({ t: wt, k: 'wisp', side: 1 });
+  });
+  if (blood) plan.push({ t: N.waves[2] + 2, k: 'knight', side: rngNext(G) < 0.5 ? -1 : 1 });
+  plan.sort((a, b) => a.t - b.t);
+  G.plan = plan; G.planNight = n;
+}
+function planSummary(G) {
+  const o = {}; (G.plan || []).forEach(p => o[p.k] = (o[p.k] || 0) + 1); return o;
+}
+
+/* ---------- transient night state ---------- */
+let W = null; // world-transient: enemies, arrows, effects
+function resetTransient(G) {
+  W = { en: [], arrows: [], spawnI: 0, effects: [], rally: 0, slowmo: 0, cds: {}, night: null, eid: 1, darkened: { L: 0, R: 0 } };
+  CONTENT.powers.forEach(p => W.cds[p.id] = 0);
+}
+
+function startNight(G) {
+  G.phase = 'night'; G.t = 0;
+  if (G.planNight !== G.day) planNight(G);
+  W.en = []; W.arrows = []; W.spawnI = 0; W.rally = 0;
+  W.night = { killed: 0, ember: 0, stolen: {}, lost: 0, wounded: 0, wallDmg: 0, darkened: [], blood: isBlood(G.day), startWall: G.walls.L.hp + G.walls.R.hp };
+  W.darkened = { L: 0, R: 0 };
+  G.vill.forEach(v => { v.hp = CONTENT.guards.hp; });
+  emit('nightStart', { blood: W.night.blood });
+}
+
+function spawnEnemy(G, p) {
+  const d = CONTENT.hollow[p.k];
+  const scale = 1 + 0.12 * (G.day - 1);
+  let hp = d.hp * scale;
+  if (p.k === 'knight') hp = d.hp + CONTENT.night.knightHpPerBlood * (Math.floor(G.day / CONTENT.night.bloodEvery) - 1);
+  const e = { id: W.eid++, k: p.k, side: p.side, x: p.side * CONTENT.night.spawnX, y: p.k === 'wisp' ? -28 : 0, hp, max: hp,
+    st: 'approach', t: 0, slow: 0, reveal: 0, loot: null, ph: rngNext(G) * 6.28, hit: 0 };
+  W.en.push(e);
+  emit('spawn', { k: p.k, side: p.side });
+}
+
+function sideKey(s) { return s < 0 ? 'L' : 'R'; }
+
+function damageEnemy(G, e, dmg, src) {
+  if (e.hp <= 0) return;
+  e.hp -= dmg; e.hit = 0.15;
+  if (e.hp <= 0) {
+    e.st = 'dead'; e.t = 0;
+    W.night.killed++; G.stats.killed++;
+    const d = CONTENT.hollow[e.k];
+    let em = rngNext(G) < d.ember ? 1 : 0;
+    if (e.k === 'knight') em += d.emberBonus;
+    if (em) { G.res.ember += em; W.night.ember += em; G.stats.totalEmber += em; }
+    if (e.loot) { G.res[e.loot.r] += e.loot.n; W.night.stolen[e.loot.r] = (W.night.stolen[e.loot.r] || 0) - e.loot.n; emit('recover', { x: e.x, y: e.y, r: e.loot.r, n: e.loot.n }); }
+    emit('kill', { k: e.k, x: e.x, y: e.y, em });
+  }
+}
+
+function guardsOn(G, side) { return G.vill.filter(v => v.job === 'wall' && !v.wounded && v.side === side && v.hp > 0 && v.onWall); }
+
+function steal(G, e, n) {
+  const pool = ['stone', 'timber', 'grain', 'coin'].filter(r => G.res[r] >= 1);
+  if (!pool.length) return null;
+  const r = pool[Math.floor(rngNext(G) * pool.length)];
+  let take = Math.min(Math.floor(G.res[r]), Math.ceil(n * (lit(G, 'vault') ? 0.5 : 1)));
+  if (take <= 0) return null;
+  G.res[r] -= take; W.night.stolen[r] = (W.night.stolen[r] || 0) + take;
+  return { r, n: take };
+}
+
+function darkenHall(G) {
+  const c = CONTENT.halls.filter(h => h.id !== 'great' && h.id !== 'throne' && lit(G, h.id));
+  if (!c.length) return null;
+  const h = c[Math.floor(rngNext(G) * c.length)];
+  G.halls[h.id].s = 'damaged';
+  W.night.darkened.push(h.name);
+  emit('darken', { id: h.id });
+  return h;
+}
+
+function stepNight(G, dt) {
+  const C = CONTENT, gd = C.guards;
+  // spawns
+  while (W.spawnI < G.plan.length && G.plan[W.spawnI].t <= G.t) spawnEnemy(G, G.plan[W.spawnI++]);
+  if (W.rally > 0) W.rally -= dt;
+  // enemies
+  for (const e of W.en) {
+    if (e.st === 'dead' || e.st === 'gone') { e.t += dt; continue; }
+    const d = C.hollow[e.k], sk = sideKey(e.side), wall = G.walls[sk];
+    const spd = d.speed * (e.slow > 0 ? C.powers[0].slow : 1);
+    if (e.slow > 0) e.slow -= dt;
+    if (e.reveal > 0) e.reveal -= dt;
+    if (e.hit > 0) e.hit -= dt;
+    e.ph += dt;
+    const ax = Math.abs(e.x);
+    if (e.st === 'approach') {
+      const stopAt = e.k === 'wailer' ? WALL_FACE + d.range * 0.75 : WALL_FACE + d.size * 0.4;
+      if (wall.hp <= 0 && e.k !== 'wailer') { if (ax > WALL_FACE - 20) e.x -= e.side * spd * dt; else e.st = 'inside'; }
+      else if (ax > stopAt) e.x -= e.side * spd * dt;
+      else {
+        e.st = e.k === 'thief' ? 'pick' : e.k === 'climber' ? 'climb' : e.k === 'wailer' ? 'wail' : 'attack'; e.t = 0;
+      }
+    } else if (e.st === 'attack') {
+      if (wall.hp <= 0) { e.st = 'inside'; continue; }
+      e.t += dt;
+      if (e.t >= d.rate) {
+        e.t -= d.rate;
+        if (e.k === 'knight' && G.towers[sk] > 0) { G.towers[sk] = Math.max(0, G.towers[sk] - d.dmg); emit('towerHit', { side: e.side, broke: G.towers[sk] <= 0 }); }
+        else { const before = wall.hp; wall.hp = Math.max(0, wall.hp - d.dmg); W.night.wallDmg += before - wall.hp; emit('gateHit', { side: e.side, heavy: e.k === 'knight' || e.k === 'husk' }); if (wall.hp <= 0 && before > 0) { emit('breach', { side: e.side }); } }
+      }
+    } else if (e.st === 'pick') {
+      e.t += dt;
+      if (wall.hp <= 0 || e.t >= d.pick) { e.st = 'inside'; e.t = 0; emit('sneak', { side: e.side }); }
+    } else if (e.st === 'climb') {
+      e.t += dt; e.y = -Math.min(1, e.t / d.climb) * (-WALL_TOP); e.x = e.side * (WALL_FACE + 4);
+      if (e.t >= d.climb) { e.st = 'onwall'; e.t = 0; e.x = e.side * (WALL_X + 30); e.y = WALL_TOP; }
+    } else if (e.st === 'onwall') {
+      e.t += dt;
+      if (e.t >= d.rate) {
+        e.t -= d.rate;
+        const gs = guardsOn(G, e.side);
+        if (gs.length) {
+          let tg = gs[0], bd = 1e9; for (const g of gs) { const dd = Math.abs(g.x - e.x); if (dd < bd) { bd = dd; tg = g; } }
+          tg.hp -= d.dmg; emit('guardHit', { x: tg.x, y: tg.y });
+          if (tg.hp <= 0) guardFalls(G, tg);
+        } else { wall.hp = Math.max(0, wall.hp - d.dmg); W.night.wallDmg += d.dmg; emit('gateHit', { side: e.side }); }
+      }
+      // walk along the wall toward nearest guard
+      const gs = guardsOn(G, e.side);
+      if (gs.length) { const g = gs[0]; if (Math.abs(g.x - e.x) > 14) e.x += Math.sign(g.x - e.x) * d.speed * 0.5 * dt; }
+    } else if (e.st === 'wail') {
+      // stays back, weakens guards on this side (applied in guard step)
+    } else if (e.st === 'inside') {
+      if (e.loot) { // fleeing out with loot
+        e.x += e.side * spd * 1.1 * dt; e.y = 0;
+        if (Math.abs(e.x) > C.night.spawnX) { e.st = 'gone'; emit('escape', { r: e.loot.r, n: e.loot.n }); }
+      } else {
+        e.y = e.k === 'wisp' ? -28 : 0;
+        if (ax > KEEP_X) e.x -= e.side * spd * 1.15 * dt;
+        else {
+          const lt = steal(G, e, e.k === 'thief' ? d.steal : 3);
+          emit('stolen', { x: e.x, side: e.side, loot: lt });
+          if (!W.darkened[sk] && e.k !== 'thief' && e.k !== 'wisp') { W.darkened[sk] = 1; darkenHall(G); }
+          if (e.k === 'thief' && lt) { e.loot = lt; } else { e.st = 'gone'; e.t = 0; emit('vanish', { x: e.x, y: e.y }); }
+        }
+      }
+    }
+  }
+  // guards
+  const wailL = W.en.some(e => e.st === 'wail' && e.side < 0), wailR = W.en.some(e => e.st === 'wail' && e.side > 0);
+  const archers = lit(G, 'barracks');
+  for (const g of G.vill) {
+    if (g.job !== 'wall' || g.wounded || g.hp <= 0 || !g.onWall) continue;
+    g.cd -= dt; if (g.cd > 0) continue;
+    let mult = (lit(G, 'forge') ? gd.forgeMult : 1) * (W.rally > 0 ? gd.rallyMult : 1) * ((g.side < 0 ? wailL : wailR) ? gd.wailMult : 1);
+    let best = null, bd = 1e9;
+    for (const e of W.en) {
+      if (e.side !== g.side || e.hp <= 0 || e.st === 'gone' || e.st === 'dead') continue;
+      if (e.st === 'inside' && Math.abs(e.x) < WALL_X - 120) continue;
+      const dx = Math.abs(e.x - g.x), dd = dx + Math.abs(e.y - g.y) * 0.3;
+      const range = archers ? gd.bowRange : gd.meleeRange + 40;
+      if (dx <= range && dd < bd) { bd = dd; best = e; }
+    }
+    if (!best) continue;
+    if (archers) {
+      g.cd = gd.bowRate;
+      const dist = Math.hypot(best.x - g.x, best.y - g.y);
+      W.arrows.push({ x: g.x, y: g.y - 10, tx: best.x, ty: best.y - 12, t: 0, dur: Math.max(0.12, dist / 650), tgt: best.id, dmg: gd.bow * mult, kind: 'arrow' });
+      emit('bow', { x: g.x });
+    } else {
+      g.cd = gd.meleeRate; g.thrust = 0.25;
+      damageEnemy(G, best, gd.melee * mult, 'spear');
+      emit('spear', { x: best.x, y: best.y });
+    }
+    g.face = Math.sign(best.x - g.x) || g.side;
+  }
+  // towers
+  if (lit(G, 'watchtower')) {
+    for (const sk of ['L', 'R']) {
+      if (G.towers[sk] <= 0) continue;
+      const side = sk === 'L' ? -1 : 1, tx = side * (WALL_X + 6), ty = -250;
+      W['tcd' + sk] = (W['tcd' + sk] || 0) - dt;
+      if (W['tcd' + sk] > 0) continue;
+      let best = null, bd = 1e9;
+      for (const e of W.en) { if (e.side !== side || e.hp <= 0 || e.st === 'gone' || e.st === 'dead') continue; const d = Math.abs(e.x - tx); if (d < C.tower.range && d < bd) { bd = d; best = e; } }
+      if (best) {
+        W['tcd' + sk] = C.tower.rate;
+        W.arrows.push({ x: tx, y: ty, tx: best.x, ty: best.y - 12, t: 0, dur: Math.max(0.15, Math.hypot(best.x - tx, best.y - ty) / 700), tgt: best.id, dmg: C.tower.dmg * (lit(G, 'forge') ? 1.25 : 1), kind: 'bolt' });
+        emit('bow', { x: tx });
+      }
+    }
+  }
+  // arrows
+  for (const a of W.arrows) {
+    a.t += dt;
+    if (a.t >= a.dur && !a.done) {
+      a.done = true;
+      const e = W.en.find(e => e.id === a.tgt);
+      if (e && e.hp > 0 && e.st !== 'gone') { damageEnemy(G, e, a.dmg); emit('arrowHit', { x: e.x, y: e.y }); }
+    }
+  }
+  W.arrows = W.arrows.filter(a => !a.done);
+  W.en = W.en.filter(e => !((e.st === 'dead' || e.st === 'gone') && e.t > 1.5));
+  for (const ef of W.effects) ef.t += dt;
+  W.effects = W.effects.filter(ef => ef.t < ef.dur);
+}
+
+function guardFalls(G, g) {
+  emit('guardDown', { x: g.x, y: g.y });
+  if (g.sell) { G.vill = G.vill.filter(v => v !== g); return; }
+  if (lit(G, 'infirmary')) { g.wounded = 1; W.night.wounded++; g.job = 'idle'; }
+  else { G.vill = G.vill.filter(v => v !== g); W.night.lost++; }
+}
+
+function castPower(G, id, wx) {
+  const p = CONTENT.powers.find(p => p.id === id);
+  if (!p || G.phase !== 'night' || !powerUnlocked(G, p) || W.cds[id] > 0 || G.res.ember < p.ember) return false;
+  G.res.ember -= p.ember; W.cds[id] = p.cd;
+  if (id === 'flare') {
+    W.effects.push({ k: 'flare', x: wx, t: 0, dur: p.dur, r: p.radius });
+    W.en.forEach(e => { if (Math.abs(e.x - wx) < p.radius && e.hp > 0) { e.slow = p.dur; e.reveal = p.dur; damageEnemy(G, e, p.dmg); } });
+  } else if (id === 'light') {
+    W.effects.push({ k: 'light', x: wx, t: 0, dur: 1.4, r: p.radius });
+    W.en.forEach(e => { if (Math.abs(e.x - wx) < p.radius && e.hp > 0 && e.st !== 'gone') damageEnemy(G, e, p.dmg); });
+    W.slowmo = 0.15;
+  } else if (id === 'rally') {
+    W.rally = p.dur;
+  } else if (id === 'mend') {
+    const k = G.walls.L.hp / G.walls.L.max <= G.walls.R.hp / G.walls.R.max ? 'L' : 'R';
+    G.walls[k].hp = Math.min(G.walls[k].max, G.walls[k].hp + p.hp);
+    wx = (k === 'L' ? -1 : 1) * WALL_X;
+  }
+  emit('power', { id, x: wx });
+  return true;
+}
+
+/* ---------- villagers (day + night movement) ---------- */
+function roomFloor(h) { return h.slot[1] + h.slot[3]; }
+function villagerTarget(G, v, i, dusk) {
+  const nightish = G.phase === 'night' || dusk;
+  const off = ((v.id * 37) % 11 - 5) * 9;
+  if (v.wounded) return homeTarget(G, v, i);
+  if (v.job === 'wall') {
+    const gs = G.vill.filter(o => o.job === 'wall' && !o.wounded && o.side === v.side);
+    const k = gs.indexOf(v), n = gs.length, span = Math.min(70, 16 * n);
+    return { x: v.side * (WALL_X + 6) + (n > 1 ? (k / (n - 1) - 0.5) * span : 0), y: WALL_TOP };
+  }
+  if (nightish) return homeTarget(G, v, i);
+  if (v.job === 'quarry' || v.job === 'wood' || v.job === 'fields') return { x: JOB_SITE[v.job] + off * (v.job === 'fields' ? 2 : 1.4), y: 0 };
+  if (v.job === 'build') {
+    if (!G.building) return { x: off * 2, y: 0 };
+    const h = HALL[G.building];
+    return { x: h.slot[0] + h.slot[2] / 2 + off * 1.5, y: roomFloor(h) };
+  }
+  return homeTarget(G, v, i);
+}
+function homeTarget(G, v, i) {
+  const rooms = CONTENT.halls.filter(h => lit(G, h.id));
+  const h = rooms[(v.id * 7) % rooms.length];
+  const k = ((v.id * 53) % 100) / 100;
+  return { x: h.slot[0] + 20 + k * (h.slot[2] - 40), y: roomFloor(h), room: h.id };
+}
+
+function stepVillagers(G, dt) {
+  const E = CONTENT.economy, day = G.phase === 'day';
+  const dusk = day && G.t > CONTENT.timing.dayLen - CONTENT.timing.duskWalkHome;
+  const wm = workMult(G);
+  let builders = 0;
+  G.vill.forEach((v, i) => {
+    const tg = villagerTarget(G, v, i, dusk);
+    v.anim += dt;
+    if (v.thrust > 0) v.thrust -= dt;
+    // wander inside a room when idle
+    if (tg.room && Math.abs(v.x - tg.x) < 2 && v.y === tg.y) { v.wx = (v.wx || 0) + dt; }
+    let tx = tg.x;
+    if (tg.room && v.y === tg.y) tx = tg.x + Math.sin(v.wx * 0.35 + v.id) * 30;
+    if (v.y !== tg.y) {
+      v.onWall = false; v.moving = 0;
+      if (v.fade > 0) { v.fade -= dt; if (v.fade <= 0) { v.fade = 0; if (v.y !== 0) v.y = 0; else { v.y = tg.y; if (tg.y === WALL_TOP) v.x = tg.x; } } return; }
+      if (v.y !== 0) { v.fade = 0.35; return; }
+      const needX = tg.x;
+      if (Math.abs(needX - v.x) < 3) { v.fade = 0.35; return; }
+      const s = E.walkSpeed * (v.job === 'wall' && G.phase === 'night' ? 1.8 : 1);
+      v.face = Math.sign(needX - v.x); v.x += v.face * Math.min(s * dt, Math.abs(needX - v.x)); v.moving = 1; return;
+    }
+    v.onWall = v.y === WALL_TOP;
+    const dx = tx - v.x, s = E.walkSpeed * (v.job === 'wall' && G.phase === 'night' ? 1.6 : 1) * (tg.room ? 0.25 : 1);
+    if (Math.abs(dx) > 2) { v.face = Math.sign(dx); v.x += v.face * Math.min(s * dt, Math.abs(dx)); v.moving = 1; v.at = 0; return; }
+    v.moving = 0; v.at = 1;
+    if (!day || dusk || v.wounded) return;
+    // working
+    if (v.job === 'quarry' || v.job === 'wood' || v.job === 'fields') {
+      let rate = E.gatherPerSec[v.job] * wm;
+      if (v.job === 'fields' && lit(G, 'granary')) rate *= 1.5;
+      v.acc += rate * dt; v.work = 1;
+      if (v.acc >= E.loadSize) {
+        v.acc -= E.loadSize;
+        const r = v.job === 'quarry' ? 'stone' : v.job === 'wood' ? 'timber' : 'grain';
+        G.res[r] += E.loadSize;
+        emit('gain', { r, n: E.loadSize, x: v.x, y: v.y - 40 });
+      }
+    } else if (v.job === 'build' && G.building) {
+      builders++; v.work = 1;
+    } else if (v.job === 'wall') {
+      for (const sk of ['L', 'R']) {
+        const w = G.walls[sk]; if ((sk === 'L') !== (v.side < 0)) continue;
+        if (w.hp < w.max) {
+          const need = E.repairHpPerSec * dt * E.stonePerRepairHp;
+          if (G.res.stone >= need) { G.res.stone -= need; w.hp = Math.min(w.max, w.hp + E.repairHpPerSec * dt); v.work = 1; }
+        } else v.work = 0;
+      }
+    }
+  });
+  if (G.building && builders > 0 && day && !dusk) {
+    const h = HALL[G.building], st = G.halls[G.building];
+    st.p += builders * E.buildRate * wm * dt;
+    if (Math.floor(st.p * 2) !== Math.floor((st.p - builders * E.buildRate * wm * dt) * 2)) emit('buildTick', { id: h.id });
+    if (st.p >= hallWork(G, h)) finishHall(G, h.id);
+  }
+}
+
+function finishHall(G, id) {
+  const h = HALL[id], st = G.halls[id];
+  const wasRepair = st.rep;
+  st.s = 'lit'; st.p = 0; st.rep = false; G.building = null;
+  G.vill.forEach(v => { if (v.job === 'build') v.job = 'build'; });
+  if (!wasRepair) {
+    for (let i = 0; i < h.villagers; i++) { const v = addVillager(G, 'gate'); v.x = 1450 + i * 40; }
+    if (id === 'watchtower') { G.towers.L = CONTENT.tower.hp; G.towers.R = CONTENT.tower.hp; }
+  }
+  emit('hallLit', { id, repair: wasRepair });
+  if (id === 'throne' && !G.crowned) { G.crowned = true; emit('crowned', {}); }
+}
+
+/* ---------- dawn ---------- */
+function doDawn(G) {
+  const C = CONTENT, rep = Object.assign({}, W.night || { killed: 0, ember: 0, stolen: {}, lost: 0, wounded: 0, wallDmg: 0, darkened: [] });
+  const survivedNight = G.day;
+  G.nightsSurvived++;
+  if (rep.blood) { G.res.ember += C.rewards.bloodEmber; G.res.coin += C.rewards.bloodCoin; rep.bloodReward = true; }
+  // remove sellswords, heal wounded (Infirmary), restore walls and towers
+  G.vill = G.vill.filter(v => !v.sell);
+  const healed = G.vill.filter(v => v.wounded).length;
+  G.vill.forEach(v => { v.wounded = 0; v.hp = C.guards.hp; });
+  for (const sk of ['L', 'R']) { const w = G.walls[sk]; w.hp = Math.min(w.max, Math.max(w.hp, 0) + w.max * C.economy.dawnWallRegen); }
+  if (lit(G, 'watchtower')) { G.towers.L = C.tower.hp; G.towers.R = C.tower.hp; }
+  G.day++;
+  G.phase = 'day'; G.t = 0;
+  // upkeep
+  const n = G.vill.length;
+  const need = Math.ceil(n * C.economy.upkeepPerVillager / (lit(G, 'kitchen') ? 2 : 1));
+  rep.eaten = Math.min(need, Math.floor(G.res.grain));
+  G.hungry = G.res.grain < need;
+  G.res.grain = Math.max(0, G.res.grain - need);
+  const tax = Math.floor(n * C.economy.taxPerVillager);
+  G.res.coin += tax; rep.tax = tax;
+  G.res.ember += C.rewards.baseEmber;
+  if (lit(G, 'chapel')) { G.res.ember += C.rewards.chapelEmber; rep.chapel = C.rewards.chapelEmber; }
+  if (lit(G, 'market')) { G.res.coin += C.rewards.marketCoin; rep.market = C.rewards.marketCoin; }
+  rep.healed = healed; rep.hungry = G.hungry; rep.night = survivedNight;
+  W.en.forEach(e => { if (e.st !== 'dead' && e.st !== 'gone') { e.st = 'gone'; e.t = 0; } });
+  W.arrows = [];
+  planNight(G);
+  emit('dawn', {});
+  return rep;
+}
+
+function score(G) { return G.nightsSurvived * CONTENT.score.perNight + litCount(G) * CONTENT.score.perHall; }
+
+/* ---------- master step ---------- */
+function simStep(G) {
+  const dt = STEP, T = CONTENT.timing;
+  G.t += dt;
+  if (G.phase === 'day') {
+    const prev = G.t - dt;
+    if (prev < T.dayLen - T.bellAt && G.t >= T.dayLen - T.bellAt) emit('bell', {});
+    stepVillagers(G, dt);
+    if (G.t >= T.dayLen) startNight(G);
+  } else {
+    stepVillagers(G, dt);
+    stepNight(G, dt);
+    for (const k in W.cds) if (W.cds[k] > 0) W.cds[k] = Math.max(0, W.cds[k] - dt);
+    const allSpawned = W.spawnI >= G.plan.length;
+    const alive = W.en.some(e => e.st !== 'dead' && e.st !== 'gone');
+    const lastT = G.plan.length ? G.plan[G.plan.length - 1].t : 0;
+    if (G.t >= T.nightLen || (allSpawned && !alive && G.t > lastT + 6)) { emit('nightEnd', {}); return 'dawn'; }
+  }
+  return null;
+}
+
+/* ---------- save ---------- */
+function serialize(G) {
+  const o = {};
+  for (const k in G) if (k !== 'vill' && k[0] !== '_') o[k] = G[k];
+  o.vill = G.vill.map(v => ({ id: v.id, job: v.job, side: v.side, wounded: v.wounded || 0, sell: v.sell || 0, prev: v.prev || 0 }));
+  return JSON.parse(JSON.stringify(o));
+}
+function deserialize(o) {
+  if (!o || typeof o !== 'object' || !o.halls || !o.res) return null;
+  // migrations
+  if (!o.v) o.v = 1;
+  const G = newGame(o.reign || 1, o.seed || 1);
+  Object.assign(G, o);
+  CONTENT.halls.forEach(h => { if (!G.halls[h.id]) G.halls[h.id] = { s: 'dark', p: 0 }; });
+  RES.forEach(r => { if (typeof G.res[r] !== 'number') G.res[r] = 0; });
+  G.vill.forEach(v => initVillagerPos(G, v, 'castle'));
+  if (G.phase === 'night') { G.phase = 'day'; G.t = CONTENT.timing.dayLen - 4; }
+  return G;
+}
+/* =====================================================================
+   AUDIO: everything synthesised with the Web Audio API.
+   Day theme = layered stems at 80 BPM in D Dorian. Every stem is
+   scheduled from the same clock at all times; restoring a hall only
+   ramps that stem's gain up over 4 bars.
+   ===================================================================== */
+const Audio = (() => {
+  const BPM = 80, BEAT = 60 / BPM, BAR = BEAT * 4, LOOP_BARS = 8;
+  let ctx = null, master, bus = {}, noiseBuf, verb, verbIn;
+  let dayBus, nightBus, titleBus, musicDuck;
+  const layerGain = {};
+  let started = false, nextBar = 0, barIdx = 0, timer = 0;
+  let mode = 'title';   // title | day | night
+  let nightIntensity = 0, blood = false;
+  const vols = { master: 0.9, music: 0.75, amb: 0.6, sfx: 0.8, ui: 0.6 };
+  const DAY_LAYERS = ['lead', 'drum', 'lute', 'anvil', 'brass', 'choir', 'stringsLow', 'flute', 'musicbox', 'stringsHigh', 'bells', 'throne'];
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+
+  // ---- composition ----
+  // D Dorian. Chords (root midi + intervals) for 8 bars.
+  const CH = [[50, [0, 3, 7]], [48, [0, 4, 7]], [43, [0, 4, 7]], [50, [0, 3, 7]], [41, [0, 4, 7]], [48, [0, 4, 7]], [43, [0, 4, 7, 10]], [45, [0, 3, 7]]];
+  // Lead melody: [bar, beat, midi, beats]
+  const MEL = [
+    [0, 0, 62, 1.5], [0, 1.5, 65, .5], [0, 2, 69, 1], [0, 3, 67, 1],
+    [1, 0, 64, 2], [1, 2, 67, 1], [1, 3, 64, 1],
+    [2, 0, 62, 1], [2, 1, 59, 1], [2, 2, 62, 2],
+    [3, 0, 57, 3], [3, 3, 60, 1],
+    [4, 0, 65, 1.5], [4, 1.5, 69, .5], [4, 2, 72, 1], [4, 3, 69, 1],
+    [5, 0, 67, 2], [5, 2, 64, 1], [5, 3, 60, 1],
+    [6, 0, 62, 1], [6, 1, 67, 1], [6, 2, 71, 1], [6, 3, 69, 1],
+    [7, 0, 69, 2], [7, 2, 64, 1], [7, 3, 61, 1]
+  ];
+  // Throne variation: melody an octave up with passing notes
+  const MEL2 = MEL.map(n => [n[0], n[1], n[2] + 12, n[3]]);
+  const FLUTE = [[0, 2, 74, 2], [1, 2, 72, 2], [2, 2, 71, 2], [3, 0, 69, 4], [4, 2, 77, 2], [5, 2, 76, 2], [6, 2, 74, 2], [7, 0, 73, 4]];
+
+  function init() {
+    if (ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try { ctx = new AC(); } catch (e) { ctx = null; return; }
+    master = ctx.createGain(); master.gain.value = vols.master;
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.01; comp.release.value = 0.25;
+    master.connect(comp); comp.connect(ctx.destination);
+    ['music', 'amb', 'sfx', 'ui'].forEach(k => { bus[k] = ctx.createGain(); bus[k].gain.value = vols[k]; bus[k].connect(master); });
+    // reverb (generated impulse)
+    verb = ctx.createConvolver();
+    const len = ctx.sampleRate * 2.8, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+    verb.buffer = ir; verbIn = ctx.createGain(); verbIn.gain.value = 0.32; verbIn.connect(verb);
+    const vOut = ctx.createGain(); vOut.gain.value = 0.9; verb.connect(vOut); vOut.connect(master);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const nd = noiseBuf.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    musicDuck = ctx.createGain(); musicDuck.connect(bus.music);
+    const mv = ctx.createGain(); mv.gain.value = 0.5; musicDuck.connect(mv); mv.connect(verbIn);
+    dayBus = ctx.createGain(); dayBus.gain.value = 0; dayBus.connect(musicDuck);
+    nightBus = ctx.createGain(); nightBus.gain.value = 0; nightBus.connect(musicDuck);
+    titleBus = ctx.createGain(); titleBus.gain.value = 0; titleBus.connect(musicDuck);
+    DAY_LAYERS.forEach(k => { const g = ctx.createGain(); g.gain.value = 0; g.connect(dayBus); layerGain[k] = g; });
+    ['nStrings', 'nDrums', 'nPulse', 'nChoir'].forEach(k => { const g = ctx.createGain(); g.gain.value = 0; g.connect(nightBus); layerGain[k] = g; });
+    initAmbience();
+  }
+  function start() {
+    init(); if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    if (started) return;
+    started = true; nextBar = ctx.currentTime + 0.15; barIdx = 0;
+    setMode(mode, true);
+    timer = setInterval(schedule, 120);
+  }
+
+  // ---- voices ----
+  function env(g, t, a, peak, d, sus, r, end) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(peak, t + a);
+    g.gain.setTargetAtTime(peak * sus, t + a, d);
+    g.gain.setTargetAtTime(0.0001, end, r);
+  }
+  function osc(type, f, t, end, dest, detune) {
+    const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (detune) o.detune.value = detune;
+    o.connect(dest); o.start(t); o.stop(end + 0.05); return o;
+  }
+  function noise(t, dur, dest, rate) {
+    const s = ctx.createBufferSource(); s.buffer = noiseBuf; if (rate) s.playbackRate.value = rate; s.loop = true;
+    s.connect(dest); s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.05); return s;
+  }
+  function filt(type, f, q, dest) { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; if (q != null) b.Q.value = q; b.connect(dest); return b; }
+  function gainTo(dest, v) { const g = ctx.createGain(); g.gain.value = v == null ? 1 : v; g.connect(dest); return g; }
+
+  function cello(t, m, dur, dest, vol) {
+    const f = mtof(m), end = t + dur;
+    const g = gainTo(dest, 0); env(g, t, 0.18, vol || 0.18, 0.5, 0.75, 0.35, end);
+    const lp = filt('lowpass', f * 4, 1.2, g);
+    lp.frequency.setValueAtTime(f * 2, t); lp.frequency.linearRampToValueAtTime(f * 5, t + 0.25);
+    const vib = ctx.createOscillator(), vg = ctx.createGain(); vib.frequency.value = 5.2; vg.gain.value = 0; vg.gain.linearRampToValueAtTime(f * 0.006, t + 0.6);
+    vib.connect(vg); vib.start(t); vib.stop(end + 1.2);
+    const o1 = osc('sawtooth', f, t, end + 1.2, lp), o2 = osc('sawtooth', f, t, end + 1.2, lp, 7);
+    vg.connect(o1.frequency); vg.connect(o2.frequency);
+  }
+  function pluck(t, m, dest, vol, bright) {
+    const f = mtof(m), g = gainTo(dest, 0);
+    g.gain.setValueAtTime(vol || 0.12, t); g.gain.exponentialRampToValueAtTime(0.0008, t + 1.4);
+    const lp = filt('lowpass', f * (bright || 6), 2, g); lp.frequency.exponentialRampToValueAtTime(f * 1.5, t + 0.4);
+    osc('triangle', f, t, t + 1.5, lp); osc('sawtooth', f * 1.002, t, t + 1.5, gainTo(lp, 0.4));
+  }
+  function frameDrum(t, dest, vol, low) {
+    const g = gainTo(dest, 0); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    const o = osc('sine', low ? 85 : 140, t, t + 0.5, g); o.frequency.exponentialRampToValueAtTime(low ? 48 : 70, t + 0.25);
+    const ng = gainTo(dest, 0); ng.gain.setValueAtTime(vol * 0.35, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    noise(t, 0.1, filt('bandpass', 1800, 0.8, ng));
+  }
+  function anvil(t, dest, vol) {
+    const g = gainTo(dest, 0); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+    [1, 2.76, 5.4, 8.93].forEach((r, i) => { const gg = gainTo(g, [0.5, 0.3, 0.2, 0.1][i]); osc('sine', 330 * r, t, t + 0.95, gg); });
+    const ng = gainTo(dest, 0); ng.gain.setValueAtTime(vol * 0.6, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+    noise(t, 0.05, filt('highpass', 3000, 0.7, ng));
+  }
+  function pad(t, notes, dur, dest, vol, type, cutoff, att) {
+    const g = gainTo(dest, 0); env(g, t, att || 0.8, vol, 1, 0.85, 0.6, t + dur);
+    const lp = filt('lowpass', cutoff || 1200, 0.7, g);
+    notes.forEach(m => { const f = mtof(m); osc(type || 'sawtooth', f, t, t + dur + 2, lp, -8); osc(type || 'sawtooth', f, t, t + dur + 2, lp, 8); });
+  }
+  function choir(t, notes, dur, dest, vol, att) {
+    const g = gainTo(dest, 0); env(g, t, att || 1.0, vol, 1, 0.9, 0.8, t + dur);
+    const f1 = filt('bandpass', 700, 4, g), f2 = filt('bandpass', 1150, 5, g), f3 = filt('bandpass', 2600, 6, gainTo(g, 0.4));
+    const mix = gainTo(f1, 1); mix.connect(f2); mix.connect(f3);
+    notes.forEach(m => { const f = mtof(m); [-11, 0, 9].forEach(d => { const o = osc('sawtooth', f, t, t + dur + 3, mix, d); }); });
+  }
+  function flute(t, m, dur, dest, vol) {
+    const f = mtof(m), g = gainTo(dest, 0); env(g, t, 0.12, vol, 0.4, 0.8, 0.15, t + dur);
+    const o = osc('sine', f, t, t + dur + 0.6, g); osc('triangle', f * 2, t, t + dur + 0.6, gainTo(g, 0.12));
+    const vib = ctx.createOscillator(), vg = ctx.createGain(); vib.frequency.value = 5; vg.gain.value = f * 0.008; vib.connect(vg); vg.connect(o.frequency); vib.start(t); vib.stop(t + dur + 0.6);
+    const ng = gainTo(g, 0.08); noise(t, dur, filt('bandpass', f * 2, 2, ng));
+  }
+  function bell(t, m, dest, vol, len) {
+    const f = mtof(m), g = gainTo(dest, 0); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + (len || 2.5));
+    [[1, .5], [2, .25], [2.4, .2], [3, .12], [4.2, .08]].forEach(p => osc('sine', f * p[0], t, t + (len || 2.5), gainTo(g, p[1])));
+  }
+  function musicBox(t, m, dest, vol) {
+    const f = mtof(m), g = gainTo(dest, 0); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+    osc('sine', f, t, t + 1.3, g); osc('sine', f * 4, t, t + 0.3, gainTo(g, 0.15));
+  }
+  function timpani(t, m, dest, vol) {
+    const g = gainTo(dest, 0); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.6);
+    const o = osc('sine', mtof(m) * 1.05, t, t + 1.7, g); o.frequency.exponentialRampToValueAtTime(mtof(m), t + 0.1);
+    osc('sine', mtof(m) * 1.5, t, t + 0.8, gainTo(g, 0.25));
+    const ng = gainTo(dest, 0); ng.gain.setValueAtTime(vol * 0.3, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.1); noise(t, 0.12, filt('lowpass', 600, 1, ng));
+  }
+
+  // ---- scheduler: one bar at a time ----
+  function schedule() {
+    if (!ctx || ctx.state !== 'running') return;
+    while (nextBar < ctx.currentTime + 0.6) { playBar(nextBar, barIdx % LOOP_BARS); nextBar += BAR; barIdx++; }
+  }
+  function live(k) { return layerGain[k].gain.value > 0.0005 || layerGain[k]._target > 0; }
+  function playBar(t, b) {
+    const [root, iv] = CH[b], chord = iv.map(i => root + i);
+    const dayOn = dayBus.gain.value > 0.0005 || dayBus._target > 0;
+    const titleOn = titleBus.gain.value > 0.0005 || titleBus._target > 0;
+    const nightOn = nightBus.gain.value > 0.0005 || nightBus._target > 0;
+    if (titleOn) {
+      // solo harp arpeggio
+      const arp = [chord[0] + 12, chord[1] + 12, chord[2] + 12, chord[1] + 24, chord[2] + 12, chord[1] + 12, chord[0] + 24, chord[2] + 12];
+      arp.forEach((m, i) => pluck(t + i * BEAT / 2, m, titleBus, 0.08, 8));
+      if (b % 2 === 0) pad(t, [root - 12], BAR * 2, titleBus, 0.05, 'triangle', 500, 2);
+    }
+    if (dayOn) {
+      const L = layerGain;
+      // all stems always run; their gain decides what you hear
+      MEL.filter(n => n[0] === b).forEach(n => cello(t + n[1] * BEAT, n[2] - 12, n[3] * BEAT * 0.95, L.lead, 0.16));
+      pluck(t, chord[0] + 12, L.lead, 0.05, 5); pluck(t + 2 * BEAT, chord[2] + 12, L.lead, 0.04, 5);
+      [0, 1.5, 2, 3].forEach((bt, i) => frameDrum(t + bt * BEAT, L.drum, i === 0 ? 0.5 : 0.28, i === 0 || i === 2));
+      [0, .5, 1, 1.5, 2, 2.5, 3, 3.5].forEach((bt, i) => pluck(t + bt * BEAT, chord[[0, 1, 2, 1, 0, 2, 1, 2][i]] + 12 + (i === 6 ? 12 : 0), L.lute, 0.07, 9));
+      anvil(t + BEAT, L.anvil, 0.16); anvil(t + 3 * BEAT, L.anvil, 0.12); anvil(t + 3.5 * BEAT, L.anvil, 0.06);
+      pad(t, [root - 12, root - 5], BAR * 1.02, L.brass, 0.09, 'sawtooth', 520, 0.6);
+      choir(t, chord.map(m => m + 12), BAR * 1.02, L.choir, 0.07, 0.9);
+      pad(t, [root - 12, chord[1]], BAR * 1.02, L.stringsLow, 0.06, 'sawtooth', 900, 0.7);
+      FLUTE.filter(n => n[0] === b).forEach(n => flute(t + n[1] * BEAT, n[2], n[3] * BEAT, L.flute, 0.06));
+      [0.5, 1.5, 2.5, 3.5].forEach((bt, i) => musicBox(t + bt * BEAT, chord[(i + b) % chord.length] + 36, L.musicbox, 0.05));
+      pad(t, chord.map(m => m + 24), BAR * 1.02, L.stringsHigh, 0.035, 'sawtooth', 2400, 1);
+      if (b % 2 === 0) bell(t, chord[0] + 24, L.bells, 0.06, 3.5);
+      // throne: timpani + melody variation + full chord
+      timpani(t, root < 46 ? root : root - 12, L.throne, 0.3); if (b % 2 === 1) timpani(t + 3 * BEAT, root - 12 + 7, L.throne, 0.18);
+      MEL2.filter(n => n[0] === b).forEach(n => flute(t + n[1] * BEAT, n[2], n[3] * BEAT * 0.9, L.throne, 0.05));
+      pad(t, [root - 12, ...chord], BAR * 1.02, L.throne, 0.035, 'sawtooth', 1600, 0.4);
+    }
+    if (nightOn) {
+      const L = layerGain;
+      const nRoot = [38, 38, 34, 36, 38, 38, 33, 33][b];
+      pad(t, [nRoot, nRoot + 7], BAR * 1.02, L.nStrings, 0.11, 'sawtooth', 380 + nightIntensity * 400, 0.5);
+      if (b % 2 === 1) cello(t + BEAT * 2, nRoot + 15, BEAT * 1.8, L.nStrings, 0.07);
+      [0, 0.75, 2, 2.5, 3].forEach((bt, i) => frameDrum(t + bt * BEAT, L.nDrums, i % 2 ? 0.25 : 0.5, true));
+      if (nightIntensity > 0.5) [1, 3.25, 3.5].forEach(bt => frameDrum(t + bt * BEAT, L.nDrums, 0.2, false));
+      for (let i = 0; i < 4; i++) { frameDrum(t + i * BEAT, L.nPulse, 0.22, true); frameDrum(t + i * BEAT + 0.22, L.nPulse, 0.14, true); }
+      choir(t, [nRoot + 12, nRoot + 15, nRoot + 19], BAR * 1.02, L.nChoir, 0.08, 1);
+    }
+  }
+
+  function ramp(node, v, secs) {
+    if (!ctx) return;
+    const t = ctx.currentTime; node._target = v;
+    node.gain.cancelScheduledValues(t); node.gain.setValueAtTime(Math.max(0.00001, node.gain.value), t);
+    node.gain.linearRampToValueAtTime(Math.max(0.00001, v), t + secs);
+  }
+  // public: which halls are lit -> which stems are up
+  let litLayers = new Set();
+  function setLayers(set, immediate) {
+    litLayers = new Set(set);
+    if (!ctx) return;
+    DAY_LAYERS.forEach(k => { const on = litLayers.has(k) ? 1 : 0; if ((layerGain[k]._target || 0) !== on || immediate) ramp(layerGain[k], on, immediate ? 0.5 : BAR * 4); });
+  }
+  function setMode(m, force) {
+    const prev = mode; mode = m; if (!ctx) return;
+    const x = force ? 0.8 : 3;
+    ramp(titleBus, m === 'title' ? 0.9 : 0, x);
+    ramp(dayBus, m === 'day' ? 0.9 : 0, x);
+    ramp(nightBus, m === 'night' ? 0.85 : 0, x);
+    if (m === 'night') setNight(nightIntensity, blood);
+    ambMode(m);
+  }
+  function setNight(intensity, isBlood) {
+    nightIntensity = intensity; blood = isBlood; if (!ctx) return;
+    ramp(layerGain.nStrings, 1, 1); ramp(layerGain.nDrums, 0.35 + 0.65 * intensity, 2);
+    ramp(layerGain.nPulse, intensity > 0.3 || isBlood ? 0.8 : 0.3, 2); ramp(layerGain.nChoir, isBlood ? 1 : 0, 2);
+  }
+  function duck(secs) {
+    if (!ctx) return; const t = ctx.currentTime, g = musicDuck.gain;
+    g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(0.45, t + 0.15); g.linearRampToValueAtTime(1, t + secs);
+  }
+
+  // ---- ambience ----
+  let wind, windG, windF, fireG, cricketG, ambT = 0;
+  function initAmbience() {
+    windG = gainTo(bus.amb, 0.0); windF = filt('bandpass', 500, 0.6, windG);
+    wind = ctx.createBufferSource(); wind.buffer = noiseBuf; wind.loop = true; wind.playbackRate.value = 0.5; wind.connect(windF); wind.start();
+    const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 0.07; lg.gain.value = 260; lfo.connect(lg); lg.connect(windF.frequency); lfo.start();
+    fireG = gainTo(bus.amb, 0); cricketG = gainTo(bus.amb, 0);
+    setInterval(ambTick, 90);
+  }
+  let fireLevel = 0, ambModeV = 'title';
+  function ambMode(m) { ambModeV = m; if (!ctx) return; ramp(windG, m === 'night' ? 0.22 : m === 'title' ? 0.2 : 0.1, 3); ramp(cricketG, m === 'night' ? 0.5 : 0, 3); }
+  function setFire(level) { fireLevel = level; if (ctx) ramp(fireG, Math.min(0.35, level), 1); }
+  function ambTick() {
+    if (!ctx || ctx.state !== 'running') return;
+    const t = ctx.currentTime + 0.05;
+    if (fireLevel > 0.02 && Math.random() < 0.35) { // crackle
+      const g = gainTo(fireG, 0); g.gain.setValueAtTime(0.4 + Math.random() * 0.6, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.03 + Math.random() * 0.04);
+      noise(t, 0.08, filt('bandpass', 1500 + Math.random() * 2500, 2, g));
+    }
+    if (ambModeV === 'night' && Math.random() < 0.18) { // cricket chirp train
+      const f = 4200 + Math.random() * 600, n = 3 + (Math.random() * 3 | 0);
+      for (let i = 0; i < n; i++) { const g = gainTo(cricketG, 0), tt = t + i * 0.05; g.gain.setValueAtTime(0.06, tt); g.gain.exponentialRampToValueAtTime(0.001, tt + 0.035); osc('sine', f, tt, tt + 0.04, g); }
+    }
+    if (ambModeV === 'night' && Math.random() < 0.006) owl(t);
+    if (ambModeV === 'day' && Math.random() < 0.01) bird(t, cricketG.gain.value < 0.01 ? bus.amb : bus.amb, 0.025);
+  }
+  function owl(t) { [0, 0.45, 0.62].forEach((d, i) => { const g = gainTo(bus.amb, 0); env(g, t + d, 0.05, 0.05, 0.1, 0.7, 0.08, t + d + (i ? 0.12 : 0.3)); const o = osc('sine', 390, t + d, t + d + 0.6, filt('lowpass', 800, 1, g)); o.frequency.linearRampToValueAtTime(350, t + d + 0.3); }); }
+  function bird(t, dest, vol) {
+    const n = 2 + (Math.random() * 4 | 0), base = 2400 + Math.random() * 1600;
+    for (let i = 0; i < n; i++) { const tt = t + i * 0.11, g = gainTo(dest, 0); g.gain.setValueAtTime(vol, tt); g.gain.exponentialRampToValueAtTime(0.001, tt + 0.09); const o = osc('sine', base, tt, tt + 0.1, g); o.frequency.exponentialRampToValueAtTime(base * (1.3 + Math.random() * 0.4), tt + 0.08); }
+  }
+
+  // ---- SFX ----
+  const last = {};
+  function sfx(name, o) {
+    if (!ctx || ctx.state !== 'running') return;
+    o = o || {};
+    const now = ctx.currentTime;
+    if (last[name] && now - last[name] < (o.gap || 0.04)) return; last[name] = now;
+    const t = now + 0.01, S = bus.sfx, U = bus.ui, vol = o.vol == null ? 1 : o.vol;
+    const tap = (dest, f, v) => { const g = gainTo(dest, 0); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.08); osc('triangle', f, t, t + 0.1, filt('lowpass', 2000, 1, g)); noise(t, 0.03, filt('bandpass', f * 3, 3, gainTo(g, 0.5))); };
+    switch (name) {
+      case 'click': tap(U, 520, 0.25); break;
+      case 'select': tap(U, 700, 0.25); tap(U, 950, 0.12); break;
+      case 'back': tap(U, 380, 0.25); break;
+      case 'deny': { const g = gainTo(U, 0); g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18); osc('square', 140, t, t + 0.2, filt('lowpass', 600, 1, g)); break; }
+      case 'assign': { tap(S, 260, 0.2); const g = gainTo(S, 0); env(g, t + 0.05, 0.04, 0.05, 0.1, 0.7, 0.06, t + 0.22); const o = osc('triangle', 220, t + 0.05, t + 0.4, filt('lowpass', 900, 1, g)); o.frequency.linearRampToValueAtTime(260, t + 0.2); break; }
+      case 'stone': { const g = gainTo(S, 0); g.gain.setValueAtTime(0.22 * vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.07); noise(t, 0.08, filt('bandpass', 2400, 4, g)); osc('square', 900, t, t + 0.03, gainTo(g, 0.08)); break; }
+      case 'timber': { const g = gainTo(S, 0); g.gain.setValueAtTime(0.35 * vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.15); const o = osc('sine', 180, t, t + 0.16, g); o.frequency.exponentialRampToValueAtTime(90, t + 0.12); noise(t, 0.04, filt('lowpass', 900, 1, gainTo(g, 0.4))); break; }
+      case 'grain': { const g = gainTo(S, 0); env(g, t, 0.04, 0.12 * vol, 0.05, 0.5, 0.06, t + 0.18); noise(t, 0.3, filt('highpass', 4000, 0.5, g)); break; }
+      case 'ember': case 'coin': { const f = name === 'coin' ? 1760 : 1320; bell(t, 12 * Math.log2(f / 440) + 69, S, 0.06 * vol, 0.6); bell(t + 0.07, 12 * Math.log2(f / 440) + 76, S, 0.04 * vol, 0.6); break; }
+      case 'build': { // hammer or saw
+        if (Math.random() < 0.6) { const g = gainTo(S, 0); g.gain.setValueAtTime(0.18 * vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.1); osc('sine', 420, t, t + 0.12, g); noise(t, 0.03, filt('bandpass', 3000, 2, gainTo(g, 0.6))); }
+        else { const g = gainTo(S, 0); env(g, t, 0.05, 0.06 * vol, 0.1, 0.7, 0.05, t + 0.25); noise(t, 0.3, filt('bandpass', 2200, 6, g)); }
+        break; }
+      case 'hall': { // choir swell + whoosh + fire ignite
+        duck(4);
+        choir(t, [62, 66, 69, 74], 2.6, S, 0.14, 0.6); choir(t + 0.5, [64, 69, 73, 76], 2.2, S, 0.1, 0.5);
+        const g = gainTo(S, 0); env(g, t, 0.6, 0.18, 0.3, 0.3, 0.3, t + 0.9); const bp = filt('bandpass', 400, 1, g); bp.frequency.exponentialRampToValueAtTime(3500, t + 0.8); noise(t, 1.2, bp);
+        const fg = gainTo(S, 0); fg.gain.setValueAtTime(0.25, t + 0.7); fg.gain.exponentialRampToValueAtTime(0.001, t + 1.6); noise(t + 0.7, 0.9, filt('lowpass', 900, 1, fg));
+        break; }
+      case 'bell': bell(t, 50, S, 0.3, 5); bell(t, 62, S, 0.1, 4); break;
+      case 'horn': { const g = gainTo(S, 0); env(g, t, 0.5, 0.2, 0.6, 0.8, 0.6, t + 2.2); const lp = filt('lowpass', 500, 1, g); lp.frequency.linearRampToValueAtTime(900, t + 1); osc('sawtooth', mtof(38), t, t + 3.2, lp); osc('sawtooth', mtof(45), t + 0.5, t + 3.2, gainTo(lp, 0.6)); break; }
+      case 'approach': { const g = gainTo(S, 0); env(g, t, 0.4, 0.1 * vol, 0.4, 0.6, 0.4, t + 1); const bp = filt('bandpass', 900, 3, g); bp.frequency.linearRampToValueAtTime(400, t + 1.2); noise(t, 1.5, bp); break; }
+      case 'spear': { const g = gainTo(S, 0); g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.1); const bp = filt('bandpass', 1200, 1.5, g); bp.frequency.exponentialRampToValueAtTime(400, t + 0.1); noise(t, 0.12, bp); break; }
+      case 'bow': { const g = gainTo(S, 0); g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.12); const o = osc('triangle', 180, t, t + 0.14, g); o.frequency.exponentialRampToValueAtTime(90, t + 0.1); break; }
+      case 'hit': { const g = gainTo(S, 0); g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05); noise(t, 0.05, filt('bandpass', 2500, 2, g)); break; }
+      case 'defeat': { const g = gainTo(S, 0); env(g, t, 0.05, 0.1, 0.2, 0.4, 0.2, t + 0.4); const lp = filt('lowpass', 2500, 1, g); lp.frequency.exponentialRampToValueAtTime(300, t + 0.6); noise(t, 0.7, lp); break; }
+      case 'gate': { const g = gainTo(S, 0); g.gain.setValueAtTime(0.4 * vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.35); const o = osc('sine', 90, t, t + 0.4, g); o.frequency.exponentialRampToValueAtTime(45, t + 0.3); noise(t, 0.12, filt('lowpass', 700, 1, gainTo(g, 0.6))); break; }
+      case 'breach': { sfx('gate', { vol: 1.4 }); const g = gainTo(S, 0); g.gain.setValueAtTime(0.35, t + 0.1); g.gain.exponentialRampToValueAtTime(0.001, t + 0.5); noise(t + 0.1, 0.5, filt('highpass', 1500, 0.7, g)); for (let i = 0; i < 4; i++) bell(t + 0.5 + i * 0.35, 79, S, 0.08, 0.4); break; }
+      case 'flare': { const g = gainTo(S, 0); env(g, t, 0.1, 0.22, 0.3, 0.3, 0.3, t + 0.7); const bp = filt('bandpass', 300, 1, g); bp.frequency.exponentialRampToValueAtTime(4000, t + 0.6); noise(t, 1, bp); break; }
+      case 'light': duck(2.5); choir(t, [62, 69, 74, 78, 81], 1.8, S, 0.2, 0.08); bell(t, 86, S, 0.08, 2); sfx('flare'); break;
+      case 'rally': { const g = gainTo(S, 0); env(g, t, 0.1, 0.18, 0.4, 0.8, 0.3, t + 1.1); const lp = filt('lowpass', 1400, 1, g); osc('sawtooth', mtof(50), t, t + 1.6, lp); osc('sawtooth', mtof(57), t + 0.3, t + 1.6, lp); osc('sawtooth', mtof(62), t + 0.6, t + 1.6, lp); break; }
+      case 'mend': { for (let i = 0; i < 5; i++) { const tt = t + i * 0.09, g = gainTo(S, 0); g.gain.setValueAtTime(0.14, tt); g.gain.exponentialRampToValueAtTime(0.001, tt + 0.12); noise(tt, 0.14, filt('bandpass', 600 + i * 120, 2, g)); } break; }
+      case 'blood': choir(t, [38, 41, 45, 50], 4, S, 0.16, 1.2); for (let i = 0; i < 6; i++) { frameDrum(t + i * 0.8, S, 0.4, true); frameDrum(t + i * 0.8 + 0.25, S, 0.25, true); } break;
+      case 'dawn': { // warm D major chord + birds + rooster-ish
+        duck(6);
+        pad(t, [50, 57, 62, 66, 69], 5, S, 0.08, 'triangle', 2400, 1.2); choir(t + 0.4, [62, 66, 69, 74], 4.5, S, 0.06, 1.5);
+        for (let i = 0; i < 6; i++) bird(t + 0.8 + i * 0.7 + Math.random() * 0.3, S, 0.035);
+        break; }
+      case 'steal': { const g = gainTo(S, 0); env(g, t, 0.05, 0.12, 0.1, 0.5, 0.1, t + 0.3); const o = osc('triangle', 800, t, t + 0.5, filt('lowpass', 2000, 1, g)); o.frequency.exponentialRampToValueAtTime(300, t + 0.4); break; }
+      case 'crown': duck(8); [0, 0.5, 1].forEach((d, i) => choir(t + d, [62 + i * 2, 66 + i * 2, 69 + i * 2, 74 + i * 2], 3.5, S, 0.12, 0.4)); timpani(t, 38, S, 0.4); timpani(t + 1, 45, S, 0.4); break;
+    }
+  }
+  function setVol(k, v) { vols[k] = v; if (!ctx) return; const n = k === 'master' ? master : bus[k]; if (n) n.gain.setTargetAtTime(v, ctx.currentTime, 0.05); }
+  function suspend(b) { if (!ctx) return; try { b ? ctx.suspend() : ctx.resume(); } catch (e) { } }
+  return { start, setLayers, setMode, setNight, sfx, setVol, vols, suspend, setFire, get ctx() { return ctx; }, get running() { return !!ctx && ctx.state === 'running'; } };
+})();
+/* =====================================================================
+   RENDER: vanilla canvas 2D. Presentation only, may use Math.random.
+   ===================================================================== */
+const cv = document.getElementById('c'), cx = cv.getContext('2d');
+let VW = 0, VH = 0, DPR = 1;
+const cam = { x: 0, y: -260, z: 0.6, tx: 0, ty: -260, tz: 0.6, shake: 0 };
+const VIS = { particles: [], floats: [], dust: [], smoke: [], flash: 0, sweep: -1, hover: null, sel: null, armed: null, hallFx: {}, reduce: false, nightFade: 0, time: 0, bloodPulse: 0 };
+
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  VW = window.innerWidth; VH = window.innerHeight;
+  cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
+}
+const w2s = (x, y) => [(x - cam.x) * cam.z + VW / 2, (y - cam.y) * cam.z + VH * 0.55];
+const s2w = (sx, sy) => [(sx - VW / 2) / cam.z + cam.x, (sy - VH * 0.55) / cam.z + cam.y];
+
+/* ---------- sprites ---------- */
+function glowSprite(r, g, b) {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, `rgba(${r},${g},${b},1)`); gr.addColorStop(0.25, `rgba(${r},${g},${b},.45)`);
+  gr.addColorStop(0.6, `rgba(${r},${g},${b},.1)`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+  x.fillStyle = gr; x.fillRect(0, 0, 128, 128); return c;
+}
+const GLOW = { gold: glowSprite(255, 176, 80), warm: glowSprite(255, 140, 60), violet: glowSprite(150, 110, 220), moon: glowSprite(220, 216, 202), white: glowSprite(255, 240, 210), red: glowSprite(200, 50, 60) };
+function glow(spr, x, y, r, a) {
+  if (a <= 0.003) return;
+  const [sx, sy] = w2s(x, y), R = r * cam.z;
+  if (sx + R < 0 || sx - R > VW || sy + R < 0 || sy - R > VH) return;
+  cx.globalAlpha = Math.min(1, a); cx.drawImage(spr, sx - R, sy - R, R * 2, R * 2);
+}
+
+/* stars, hill profiles, trees: fixed visual seed */
+const STARS = []; (function () { let s = 7; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647); for (let i = 0; i < 170; i++) STARS.push([r(), r() * 0.75, r() * 1.4 + 0.3, r() * 6]); })();
+const TREES = []; (function () { let s = 11; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647); for (let i = 0; i < 26; i++) TREES.push([-1500 + i * 17 + r() * 14, 55 + r() * 60, r()]); for (let i = 0; i < 14; i++) TREES.push([1350 + i * 22 + r() * 18, 40 + r() * 40, r()]); })();
+const ROCKS = [[1040, 38, 30], [1085, 60, 44], [1150, 46, 34], [1200, 30, 26], [1118, 24, 70]];
+
+/* ---------- lighting model ---------- */
+function lightState(G) {
+  const T = CONTENT.timing;
+  const C = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+  const MORN = [[78, 92, 104], [40, 48, 56]], NOON = [[86, 96, 104], [176, 132, 84]], EVE = [[60, 58, 74], [190, 110, 60]], NIGHT = [[44, 52, 59], [20, 24, 28]];
+  let top, bot, dark, warm = 0;
+  if (!G || VIS.titleMode) { top = NIGHT[0]; bot = NIGHT[1]; dark = 1; }
+  else if (G.phase === 'day') {
+    const u = G.t / T.dayLen, bellU = 1 - T.bellAt / T.dayLen;
+    if (G.t < 4) { const k = G.t / 4; top = C(NIGHT[0], MORN[0], k); bot = C(NIGHT[1], MORN[1], k); dark = lerp(1, 0.32, k); }
+    else if (u < 0.45) { const k = u / 0.45; top = C(MORN[0], NOON[0], k); bot = C(MORN[1], NOON[1], k); dark = lerp(0.32, 0.05, k); warm = k * 0.4; }
+    else if (u < bellU) { const k = (u - 0.45) / (bellU - 0.45); top = C(NOON[0], MORN[0], k * 0.6); bot = C(NOON[1], [120, 110, 100], k * 0.6); dark = lerp(0.05, 0.18, k); warm = 0.4 - k * 0.2; }
+    else { const k = (u - bellU) / (1 - bellU); top = C([72, 80, 92], EVE[0], k); bot = C([130, 116, 98], EVE[1], Math.min(1, k * 1.4)); dark = lerp(0.18, 0.55, k * k); warm = 0.2 + k * 0.6; }
+  } else {
+    const k = clamp(G.t / T.nightFade, 0, 1);
+    top = C(EVE[0], NIGHT[0], k); bot = C(EVE[1], NIGHT[1], k); dark = lerp(0.55, 1, k); warm = 0.8 * (1 - k);
+  }
+  if (G && !VIS.titleMode && G.phase === 'night' && W && W.night && W.night.blood) { const b = clamp(G.t / 3, 0, 1); top = C(top, [58, 28, 36], b * 0.6); bot = C(bot, [40, 16, 20], b * 0.5); }
+  return { top, bot, dark, warm };
+}
+const rgb = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a == null ? 1 : a})`;
+
+/* ---------- background ---------- */
+function drawSky(L, G) {
+  const g = cx.createLinearGradient(0, 0, 0, VH);
+  g.addColorStop(0, rgb(L.top)); g.addColorStop(0.75, rgb(L.bot)); g.addColorStop(1, rgb(L.bot));
+  cx.fillStyle = g; cx.fillRect(0, 0, VW, VH);
+  // stars
+  const sa = clamp((L.dark - 0.5) * 2, 0, 1);
+  if (sa > 0) {
+    cx.fillStyle = '#e8e4d6';
+    for (const s of STARS) {
+      const tw = VIS.reduce ? 0.8 : 0.6 + 0.4 * Math.sin(VIS.time * 1.3 + s[3]);
+      cx.globalAlpha = sa * tw * 0.8;
+      const x = ((s[0] * VW * 1.4 - cam.x * cam.z * 0.03) % (VW * 1.4) + VW * 1.4) % (VW * 1.4) - VW * 0.2;
+      cx.fillRect(x, s[1] * VH, s[2], s[2]);
+    }
+    cx.globalAlpha = 1;
+  }
+  // moon (night) or sun (day)
+  const blood = G && !VIS.titleMode && G.phase === 'night' && W && W.night && W.night.blood;
+  const mr = Math.min(VW, VH) * 0.075;
+  const mx = VW * 0.72 - cam.x * cam.z * 0.04, my = VH * 0.2;
+  if (sa > 0) {
+    cx.globalAlpha = sa;
+    const halo = blood ? 'rgba(160,60,70,' : 'rgba(220,216,202,';
+    [[2.45, .07], [1.9, .09], [1.45, .12]].forEach(r => { cx.fillStyle = halo + r[1] + ')'; cx.beginPath(); cx.arc(mx, my, mr * r[0], 0, 7); cx.fill(); });
+    cx.fillStyle = blood ? '#d9a0a0' : '#DCD8CA'; cx.beginPath(); cx.arc(mx, my, mr, 0, 7); cx.fill();
+    cx.fillStyle = blood ? 'rgba(120,30,40,.25)' : 'rgba(180,176,164,.35)';
+    [[-.3, -.2, .22], [.25, .2, .16], [.1, -.4, .1]].forEach(c => { cx.beginPath(); cx.arc(mx + c[0] * mr, my + c[1] * mr, c[2] * mr, 0, 7); cx.fill(); });
+    cx.globalAlpha = 1;
+  }
+  if (G && !VIS.titleMode && G.phase === 'day') {
+    const u = G.t / CONTENT.timing.dayLen, a = clamp(1 - L.dark * 1.6, 0, 1);
+    const sx = VW * (0.1 + 0.8 * u) - cam.x * cam.z * 0.04, sy = VH * (0.38 - Math.sin(u * Math.PI) * 0.26);
+    cx.globalCompositeOperation = 'lighter';
+    cx.globalAlpha = a * 0.5; cx.drawImage(GLOW.warm, sx - mr * 4, sy - mr * 4, mr * 8, mr * 8);
+    cx.globalCompositeOperation = 'source-over';
+    cx.globalAlpha = a * 0.9; cx.fillStyle = '#f3dcae'; cx.beginPath(); cx.arc(sx, sy, mr * 0.65, 0, 7); cx.fill(); cx.globalAlpha = 1;
+  }
+}
+function hillLayer(par, baseY, amp, col, seed, step) {
+  // baseY in world units, drawn with parallax relative to camera
+  cx.fillStyle = col; cx.beginPath();
+  const z = cam.z * (0.5 + par * 0.5);
+  const ox = cam.x * par;
+  cx.moveTo(0, VH);
+  for (let sx = -20; sx <= VW + 20; sx += step) {
+    const wx = (sx - VW / 2) / z + ox;
+    const h = Math.sin(wx * 0.0021 + seed) * amp + Math.sin(wx * 0.0057 + seed * 2) * amp * 0.45 + Math.sin(wx * 0.013 + seed) * amp * 0.12;
+    const sy = (baseY - h - cam.y * par) * z + VH * 0.55 + (cam.y * par - cam.y) * 0;
+    cx.lineTo(sx, sy);
+  }
+  cx.lineTo(VW + 20, VH); cx.closePath(); cx.fill();
+}
+function drawHills(L) {
+  const d = L.dark;
+  const mix = (a, b) => rgb([lerp(a[0], b[0], d), lerp(a[1], b[1], d), lerp(a[2], b[2], d)]);
+  hillLayer(0.25, -60, 120, mix([84, 92, 98], [38, 44, 50]), 1.3, 14);
+  hillLayer(0.5, 10, 80, mix([62, 70, 72], [34, 39, 43]), 4.1, 10);
+  // near trees silhouettes on parallax 0.7
+  const par = 0.7, z = cam.z * (0.5 + par * 0.5), ox = cam.x * par;
+  cx.fillStyle = mix([46, 54, 52], [26, 30, 34]);
+  for (let i = -40; i < 40; i++) {
+    const wx = i * 140 + ((i * 53) % 70);
+    if (Math.abs(wx) < 700) continue;
+    const sx = (wx - ox) * z + VW / 2; if (sx < -60 || sx > VW + 60) continue;
+    const sy = (40 - cam.y * par) * z + VH * 0.55, h = (70 + (i * 37 % 40)) * z;
+    cx.beginPath(); cx.moveTo(sx - h * 0.28, sy); cx.lineTo(sx, sy - h); cx.lineTo(sx + h * 0.28, sy); cx.fill();
+  }
+}
+
+/* ---------- world helpers ---------- */
+function R(x, y, w, h, col) { const [sx, sy] = w2s(x, y); cx.fillStyle = col; cx.fillRect(sx, sy, w * cam.z + 0.5, h * cam.z + 0.5); }
+function path(pts, col, close) {
+  cx.beginPath(); pts.forEach((p, i) => { const [sx, sy] = w2s(p[0], p[1]); i ? cx.lineTo(sx, sy) : cx.moveTo(sx, sy); });
+  if (close !== false) cx.closePath(); cx.fillStyle = col; cx.fill();
+}
+function circ(x, y, r, col) { const [sx, sy] = w2s(x, y); cx.fillStyle = col; cx.beginPath(); cx.arc(sx, sy, Math.max(0.5, r * cam.z), 0, 7); cx.fill(); }
+function line(x1, y1, x2, y2, col, w) { const a = w2s(x1, y1), b = w2s(x2, y2); cx.strokeStyle = col; cx.lineWidth = Math.max(1, w * cam.z); cx.beginPath(); cx.moveTo(a[0], a[1]); cx.lineTo(b[0], b[1]); cx.stroke(); }
+function crenel(x, y, w, col, mw) { mw = mw || 22; const n = Math.max(2, Math.round(w / (mw * 2))); const s = w / (n * 2 - 1); for (let i = 0; i < n; i++) R(x + i * 2 * s, y - 20, s, 20, col); }
+function text(str, x, y, size, col, align, font) {
+  const [sx, sy] = w2s(x, y); cx.font = `${font || ''} ${Math.max(8, size * cam.z)}px ${font === 'serif' ? 'var(--serif)' : 'system-ui'}`;
+  cx.font = (font === 'serif' ? '' : '600 ') + Math.max(8, size * cam.z) + 'px ' + (font === 'serif' ? '"Palatino Linotype",Palatino,Georgia,serif' : 'system-ui,sans-serif');
+  cx.fillStyle = col; cx.textAlign = align || 'center'; cx.textBaseline = 'middle'; cx.fillText(str, sx, sy);
+}
+
+function wrapText(str, x, y, maxW, size) {
+  cx.font = 'italic ' + (size * cam.z) + 'px "Palatino Linotype",Palatino,Georgia,serif';
+  const words = str.split(' '), lines = []; let cur = '';
+  for (const wd of words) { const t = cur ? cur + ' ' + wd : wd; if (cx.measureText(t).width > maxW * cam.z && cur) { lines.push(cur); cur = wd; } else cur = t; }
+  lines.push(cur);
+  const [sx, sy] = w2s(x, y); cx.fillStyle = 'rgba(245,226,180,.8)'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+  lines.slice(0, 4).forEach((l, i) => cx.fillText(l, sx, sy + i * size * 1.35 * cam.z));
+}
+const STONE = '#121214', STONE2 = '#19191c', STONE3 = '#202024';
+
+/* ---------- ground and outside world ---------- */
+function drawGround(G, L) {
+  const [, gy] = w2s(0, 0);
+  const g = cx.createLinearGradient(0, gy, 0, VH);
+  const d = L.dark; g.addColorStop(0, rgb([lerp(52, 26, d), lerp(56, 29, d), lerp(52, 32, d)])); g.addColorStop(1, rgb([lerp(30, 16, d), lerp(32, 18, d), lerp(30, 20, d)]));
+  cx.fillStyle = g; cx.fillRect(0, gy, VW, VH - gy);
+  // fields (inside walls, left)
+  const gl = G ? (lit(G, 'granary') ? 1 : 0) : 0;
+  for (let i = 0; i < 6; i++) {
+    const x = -735 + i * 30;
+    R(x, -4, 22, 4, d > 0.6 ? '#2a2a1e' : '#5e5534');
+    for (let k = 0; k < 4; k++) { const sway = VIS.reduce ? 0 : Math.sin(VIS.time * 1.5 + i + k) * 1.5; line(x + 3 + k * 5, -4, x + 3 + k * 5 + sway, -20 - gl * 6 - (k % 2) * 4, d > 0.6 ? '#3a3622' : '#a88f4c', 2); }
+  }
+  // forest (left, outside)
+  for (const t of TREES) {
+    const [x, h, v] = t; const col = d > 0.6 ? '#141a18' : rgb([lerp(40, 20, d), lerp(52, 26, d), lerp(44, 24, d)]);
+    R(x - 3, -h * 0.3, 6, h * 0.3, '#1a1512');
+    path([[x - h * 0.28, -h * 0.25], [x, -h], [x + h * 0.28, -h * 0.25]], col);
+    path([[x - h * 0.22, -h * 0.5], [x, -h * 1.12], [x + h * 0.22, -h * 0.5]], col);
+  }
+  // stumps near the woodcutter
+  [-1090, -1150, -1180].forEach(x => R(x - 5, -8, 10, 8, '#2a2018'));
+  // quarry (right, outside)
+  for (const r of ROCKS) path([[r[0] - r[2], 0], [r[0] - r[2] * 0.6, -r[1]], [r[0] + r[2] * 0.3, -r[1] * 1.1], [r[0] + r[2], 0]], d > 0.6 ? '#1e2024' : rgb([lerp(92, 34, d), lerp(94, 36, d), lerp(98, 40, d)]));
+  R(1060, -6, 30, 6, d > 0.6 ? '#2a2c30' : '#7a7c80');
+  // signposts
+  if (cam.z > 0.45 && G && !VIS.titleMode) {
+    const lab = (x, s) => text(s, x, 16, 11, 'rgba(220,216,202,.45)');
+    lab(JOB_SITE.quarry, 'QUARRY'); lab(JOB_SITE.wood, 'WOODCUTTER'); lab(JOB_SITE.fields, 'FIELDS');
+  }
+}
+
+/* ---------- outer walls ---------- */
+function drawForeHills(L) {
+  // rolling foreground hills around the castle base, like the card art
+  const d = L.dark, gy = w2s(0, 0)[1], z = cam.z;
+  const layer = (col, base, amp, ph, par) => {
+    cx.fillStyle = col; cx.beginPath(); cx.moveTo(-10, VH);
+    for (let sx = -10; sx <= VW + 10; sx += 8) {
+      const wx = (sx - VW / 2) / z + cam.x * par;
+      const h = base + Math.sin(wx * 0.0026 + ph) * amp + Math.sin(wx * 0.0063 + ph * 2) * amp * 0.35;
+      cx.lineTo(sx, gy - h * z);
+    }
+    cx.lineTo(VW + 10, VH); cx.closePath(); cx.fill();
+  };
+  layer(rgb([lerp(46, 31, d), lerp(52, 36, d), lerp(52, 40, d)]), -6, 26, 0.6, 1.0);
+  layer(rgb([lerp(36, 25, d), lerp(40, 28, d), lerp(40, 31, d)]), -34, 22, 2.4, 1.1);
+}
+function drawWalls(G) {
+  for (const side of [-1, 1]) {
+    const sk = side < 0 ? 'L' : 'R', w = G ? G.walls[sk] : { hp: 1, max: 1 };
+    const x0 = side * WALL_X - 32;
+    R(x0, WALL_TOP, 64, -WALL_TOP, STONE2);
+    R(x0, WALL_TOP, 64, 8, STONE3);
+    crenel(x0, WALL_TOP, 64, STONE2, 10);
+    // stone courses
+    for (let y = WALL_TOP + 22; y < 0; y += 22) line(x0, y, x0 + 64, y, 'rgba(255,255,255,.035)', 1);
+    // gate
+    const frac = clamp(w.hp / w.max, 0, 1);
+    const gx = x0 + 14, gw = 36, gh = 64;
+    R(gx, -gh, gw, gh, '#0b0b0c');
+    if (frac > 0) {
+      const col = frac > 0.5 ? '#3a2a1c' : frac > 0.25 ? '#33231a' : '#2a1a14';
+      R(gx + 2, -gh + 6 + (1 - frac) * 18, gw - 4, gh - 6 - (1 - frac) * 18, col);
+      for (let i = 0; i < 4; i++) line(gx + 6 + i * 8, -gh + 8 + (1 - frac) * 18, gx + 6 + i * 8, 0, '#1a120c', 2);
+      line(gx + 2, -gh * 0.55, gx + gw - 2, -gh * 0.55, '#120c08', 3);
+      if (frac < 0.5) { line(gx + 8, -40, gx + 20, -22, '#000', 2); line(gx + 24, -50, gx + 30, -30, '#000', 2); }
+    } else { path([[gx + 2, 0], [gx + 8, -18], [gx + 14, 0]], '#2a1a14'); path([[gx + 22, 0], [gx + 30, -12], [gx + 34, 0]], '#2a1a14'); }
+    // tower on the wall
+    if (G && lit(G, 'watchtower')) {
+      const tx = side * (WALL_X + 6) - 22, up = G.towers[sk] > 0;
+      R(tx, -260, 44, 122, up ? STONE2 : '#0e0e10'); crenel(tx - 4, -260, 52, up ? STONE2 : '#0e0e10', 8);
+      if (up) R(tx + 17, -230, 10, 16, '#D6A94A');
+    }
+    // hp bar (night or damaged)
+    if (G && !VIS.titleMode && (G.phase === 'night' || frac < 1) && cam.z > 0.3) {
+      R(side * WALL_X - 30, WALL_TOP - 40, 60, 5, 'rgba(0,0,0,.6)');
+      R(side * WALL_X - 30, WALL_TOP - 40, 60 * frac, 5, frac > 0.5 ? '#9aa3a8' : frac > 0.25 ? '#c9a24a' : '#b0443c');
+    }
+  }
+  // inner courtyard walls joining castle and outer wall
+  R(-WALL_X + 32, -36, WALL_X - 552, 36, 'rgba(18,18,20,.0)');
+}
+
+/* ---------- castle ---------- */
+const KEEP = { x: -520, w: 1040, floor: 130 };
+function hallRect(h) { return h.slot; }
+function drawCastleShell(G, cut) {
+  // back wall behind the halls (visible in cut-away)
+  R(-536, -276, 1072, 276, STONE);
+  // corner towers
+  R(-536, -406, 192, 140, STONE); crenel(-540, -406, 200, STONE, 16);
+  R(344, -406, 192, 140, STONE); crenel(340, -406, 200, STONE, 16);
+  // roof walk between towers and keep
+  crenel(-344, -276, 220, STONE, 16); crenel(124, -276, 220, STONE, 16);
+  // central keep
+  R(-126, -416, 252, 150, STONE);
+  R(-80, -560, 160, 150, STONE);
+  path([[-104, -556], [0, -700], [104, -556]], STONE);
+  crenel(-130, -416, 260, STONE, 14);
+  // flag on the spire when crowned
+  if (G && G.crowned) { line(0, -700, 0, -760, '#3a3a3a', 3); const f = VIS.reduce ? 0 : Math.sin(VIS.time * 3) * 4; path([[0, -760], [44, -750 + f], [0, -738]], '#D6A94A'); }
+  // keep windows (decorative)
+  const kw = G ? lit(G, 'throne') : false;
+  R(-12, -520, 24, 34, kw ? '#D6A94A' : '#262628');
+}
+function drawFacade(G, a) {
+  if (a <= 0.01) return;
+  cx.globalAlpha = a;
+  R(-536, -276, 1072, 276, STONE); R(-536, -406, 192, 140, STONE); R(344, -406, 192, 140, STONE); R(-126, -416, 252, 150, STONE);
+  // gate arch
+  const [ax, ay] = w2s(0, -52); cx.fillStyle = '#0a0a0b'; cx.beginPath(); cx.arc(ax, ay, 42 * cam.z, Math.PI, 0); cx.lineTo(ax + 42 * cam.z, ay + 52 * cam.z); cx.lineTo(ax - 42 * cam.z, ay + 52 * cam.z); cx.fill();
+  // one window per hall
+  for (const h of CONTENT.halls) {
+    const s = h.slot, st = G ? G.halls[h.id].s : (VIS.titleLit || []).includes(h.id) ? 'lit' : 'dark';
+    let wx = s[0] + s[2] / 2 - 9, wy = s[1] + s[3] * 0.32;
+    if (h.id === 'great') { wx = s[0] + 40; }
+    const on = st === 'lit', bld = st === 'building';
+    const f = VIS.hallFx[h.id] ? clamp(VIS.hallFx[h.id].t / 1.2, 0, 1) : 1;
+    R(wx, wy, 18, 28, on ? `rgba(214,169,74,${f})` : bld ? '#4a3a24' : '#2a2a2d');
+    if (on && f < 1) R(wx, wy, 18, 28, `rgba(42,42,45,${1 - f})`);
+  }
+  cx.globalAlpha = 1;
+}
+
+/* furniture per hall, drawn inside a lit (or building) room */
+function furniture(h, x, y, w, ht, k) {
+  const fl = y + ht, wood = '#5a3a22', dk = '#3a2414', iron = '#4a4a50', cloth = '#7a2a30';
+  const t = VIS.time;
+  switch (h.id) {
+    case 'great':
+      R(x + w * 0.25, fl - 26, w * 0.5, 8, wood); R(x + w * 0.28, fl - 18, 6, 18, dk); R(x + w * 0.69, fl - 18, 6, 18, dk);
+      for (let i = 0; i < 3; i++) R(x + w * 0.35 + i * 26, fl - 32, 8, 6, '#c8b07a');
+      R(x + 8, fl - 52, 46, 52, '#2a1a12'); R(x + 14, fl - 40, 34, 40, '#120a06');
+      R(x + w * 0.5 - 22, y + 16, 44, 30, cloth); path([[x + w * 0.5 - 22, y + 46], [x + w * 0.5, y + 58], [x + w * 0.5 + 22, y + 46]], cloth);
+      break;
+    case 'kitchen':
+      R(x + 10, fl - 60, 56, 60, '#2a1a12'); R(x + 18, fl - 44, 40, 44, '#120a06');
+      R(x + 30, fl - 40, 16, 14, iron); line(x + 38, fl - 60, x + 38, fl - 40, iron, 2);
+      R(x + w - 90, fl - 30, 70, 8, wood); R(x + w - 86, fl - 22, 5, 22, dk); R(x + w - 26, fl - 22, 5, 22, dk);
+      for (let i = 0; i < 4; i++) circ(x + w - 80 + i * 16, fl - 36, 5, ['#b08848', '#8a6a3a', '#c9a24a', '#a05a3a'][i]);
+      for (let i = 0; i < 3; i++) line(x + 90 + i * 20, y + 12, x + 90 + i * 20, y + 30, '#6a5a3a', 2);
+      break;
+    case 'granary':
+      for (let i = 0; i < 3; i++) { R(x + 14 + i * 44, fl - 34, 34, 34, '#8a6a3a'); R(x + 14 + i * 44, fl - 34, 34, 6, '#a08048'); }
+      R(x + 36, fl - 64, 34, 30, '#8a6a3a'); R(x + 36, fl - 64, 34, 6, '#a08048');
+      break;
+    case 'forge':
+      R(x + 14, fl - 56, 60, 56, '#2a1a12'); R(x + 22, fl - 36, 44, 36, '#3a1406');
+      R(x + w * 0.55, fl - 22, 40, 10, iron); R(x + w * 0.55 + 12, fl - 12, 16, 12, '#333338');
+      for (let i = 0; i < 4; i++) line(x + w - 30, y + 20 + i * 18, x + w - 18, y + 30 + i * 18, '#8a8a90', 3);
+      break;
+    case 'barracks':
+      for (let i = 0; i < 3; i++) { line(x + 20 + i * 18, fl, x + 20 + i * 18, fl - 80, '#7a6a52', 2); path([[x + 16 + i * 18, fl - 80], [x + 20 + i * 18, fl - 92], [x + 24 + i * 18, fl - 80]], '#9aa0a8'); }
+      R(x + w - 70, fl - 16, 56, 16, '#4a3a2a'); R(x + w - 70, fl - 20, 56, 4, '#6a2a2a');
+      circ(x + w * 0.5, y + 46, 18, '#5a1e2a'); circ(x + w * 0.5, y + 46, 9, '#D6A94A');
+      break;
+    case 'chapel':
+      path([[x + w / 2 - 22, y + 70], [x + w / 2 - 22, y + 30], [x + w / 2, y + 14], [x + w / 2 + 22, y + 30], [x + w / 2 + 22, y + 70]], '#4a5a7a');
+      R(x + w / 2 - 22, y + 44, 44, 3, '#2a2a3a'); R(x + w / 2 - 1.5, y + 14, 3, 56, '#2a2a3a');
+      R(x + w / 2 - 26, fl - 22, 52, 22, '#e0d4b0');
+      for (let i = 0; i < 5; i++) { R(x + w / 2 - 20 + i * 10, fl - 34, 3, 12, '#efe6cc'); }
+      break;
+    case 'watchtower':
+      R(x + 20, fl - 70, 4, 70, wood); for (let i = 0; i < 6; i++) R(x + 14, fl - 10 - i * 12, 16, 3, wood);
+      R(x + w - 70, fl - 26, 50, 6, wood); path([[x + w - 60, fl - 26], [x + w - 30, fl - 40], [x + w - 28, fl - 34]], '#8a7a5a');
+      break;
+    case 'market':
+      for (let i = 0; i < 3; i++) {
+        const sx = x + 30 + i * 110, c = ['#7a2a30', '#2a4a5a', '#6a5a2a'][i];
+        R(sx, fl - 30, 70, 30, wood); path([[sx - 6, fl - 50], [sx + 76, fl - 50], [sx + 70, fl - 62], [sx, fl - 62]], c);
+        for (let j = 0; j < 4; j++) circ(sx + 12 + j * 15, fl - 34, 5, ['#c9a24a', '#8a3a2a', '#9aa86a', '#d8c08a'][(i + j) % 4]);
+      }
+      break;
+    case 'library':
+      for (let i = 0; i < 4; i++) {
+        const sx = x + 20 + i * 86; R(sx, y + 18, 60, ht - 18, '#3a2414');
+        for (let r = 0; r < 4; r++) for (let b = 0; b < 7; b++) R(sx + 4 + b * 8, y + 24 + r * 24, 6, 18, ['#7a2a30', '#2a4a5a', '#6a5a2a', '#4a3a5a', '#8a6a3a'][(b + r + i) % 5]);
+      }
+      break;
+    case 'infirmary':
+      for (let i = 0; i < 2; i++) { R(x + 14 + i * 72, fl - 18, 60, 10, '#d8d0c0'); R(x + 14 + i * 72, fl - 8, 4, 8, wood); R(x + 70 + i * 72, fl - 8, 4, 8, wood); R(x + 14 + i * 72, fl - 22, 14, 6, '#efe6d6'); }
+      for (let i = 0; i < 5; i++) circ(x + 30 + i * 22, y + 24, 5, ['#6a8a5a', '#8a6a9a', '#c9a24a'][i % 3]);
+      break;
+    case 'vault':
+      R(x + 20, fl - 50, 50, 50, '#3a3a40'); circ(x + 45, fl - 26, 10, '#5a5a62');
+      for (let i = 0; i < 6; i++) circ(x + 92 + (i % 3) * 14, fl - 6 - Math.floor(i / 3) * 10, 7, '#D6A94A');
+      R(x + 86, fl - 34, 50, 8, '#5a3a22');
+      break;
+    case 'throne':
+      R(x + w / 2 - 50, y + 10, 100, ht - 10, '#5a1e2a');
+      R(x + w / 2 - 22, fl - 64, 44, 64, '#8a6a3a'); R(x + w / 2 - 16, fl - 58, 32, 34, '#5a1e2a');
+      path([[x + w / 2 - 22, fl - 64], [x + w / 2 - 12, fl - 80], [x + w / 2, fl - 70], [x + w / 2 + 12, fl - 80], [x + w / 2 + 22, fl - 64]], '#D6A94A');
+      R(x + 6, fl - 6, w - 12, 6, '#7a2a30');
+      break;
+  }
+}
+function hearthPos(h) {
+  const s = h.slot, fl = s[1] + s[3];
+  const map = { great: [s[0] + 31, fl - 14], kitchen: [s[0] + 38, fl - 14], forge: [s[0] + 44, fl - 12] };
+  return map[h.id] || null;
+}
+
+function drawHalls(G, cut, L) {
+  for (const h of CONTENT.halls) {
+    const [x, y, w, ht] = h.slot, st = G.halls[h.id];
+    const fx = VIS.hallFx[h.id];
+    const s = st.s;
+    // room interior
+    if (s === 'lit') {
+      const [sx, sy] = w2s(x, y);
+      const g = cx.createLinearGradient(0, sy, 0, sy + ht * cam.z);
+      g.addColorStop(0, '#2c1e14'); g.addColorStop(1, '#5a3a20');
+      cx.fillStyle = g; cx.fillRect(sx, sy, w * cam.z + 0.5, ht * cam.z + 0.5);
+      // stone courses on the back wall
+      for (let yy = y + 26; yy < y + ht; yy += 26) line(x, yy, x + w, yy, 'rgba(0,0,0,.18)', 1);
+      for (let yy = y; yy < y + ht; yy += 26) for (let xx = x + ((yy / 26) % 2 ? 20 : 0); xx < x + w; xx += 40) line(xx, yy, xx, yy + 26, 'rgba(0,0,0,.1)', 1);
+      // back window showing sky
+      if (!hearthPos(h) || h.id === 'great') { const wx = x + w - 44; R(wx, y + 22, 18, 30, rgb(L.top)); R(wx + 8, y + 22, 2, 30, '#2a1a12'); R(wx, y + 35, 18, 2, '#2a1a12'); }
+      furniture(h, x, y, w, ht);
+      if (fx && fx.t < 1.4 && !VIS.reduce) { cx.globalAlpha = 1 - fx.t / 1.4; R(x, y, w, ht, '#120f0c'); cx.globalAlpha = 1; }
+    } else if (s === 'building') {
+      R(x, y, w, ht, '#1c1612');
+      cx.globalAlpha = 0.5; furniture(h, x, y, w, ht); cx.globalAlpha = 1;
+      // scaffolding
+      for (let xx = x + 16; xx < x + w; xx += 48) { line(xx, y + 6, xx, y + ht, '#8a6a42', 3); }
+      for (let yy = y + 30; yy < y + ht; yy += 40) line(x + 8, yy, x + w - 8, yy, '#8a6a42', 3);
+      line(x + 16, y + ht, x + 64, y + 30, '#6a4a2a', 2);
+      const p = st.p / hallWork(G, h);
+      R(x + 20, y + 10, w - 40, 5, 'rgba(0,0,0,.6)'); R(x + 20, y + 10, (w - 40) * p, 5, '#D6A94A');
+    } else {
+      R(x, y, w, ht, s === 'damaged' ? '#1a1214' : '#151517');
+      // cobwebs
+      const web = 'rgba(200,200,190,.12)';
+      line(x, y + 26, x + 26, y, web, 1); line(x, y + 14, x + 14, y, web, 1); line(x, y, x + 20, y + 20, web, 1);
+      line(x + w, y + 26, x + w - 26, y, web, 1); line(x + w, y, x + w - 20, y + 20, web, 1);
+      // broken furniture shapes
+      R(x + w * 0.3, y + ht - 10, w * 0.25, 4, '#1f1f22'); R(x + w * 0.62, y + ht - 18, 14, 18, '#1d1d20');
+      if (s === 'damaged') { line(x + w * 0.4, y, x + w * 0.5, y + ht * 0.5, '#3a1a20', 2); line(x + w * 0.5, y + ht * 0.5, x + w * 0.42, y + ht, '#3a1a20', 2); }
+    }
+    // floor slab and side pillars
+    R(x - 4, y + ht - 6, w + 8, 8, STONE3);
+    R(x - 4, y, 8, ht, STONE2); R(x + w - 4, y, 8, ht, STONE2);
+    R(x - 4, y - 4, w + 8, 8, STONE2);
+    // lore line carved on the wall, fades in after restoring
+    if (s === 'lit' && cam.z > 1.05) {
+      const la = clamp(((fx ? fx.t : 9) - 1.5) / 2, 0, 1) * clamp((cam.z - 1.05) / 0.3, 0, 1);
+      if (la > 0) { cx.globalAlpha = la; wrapText(h.lore, x + w / 2, y + 34, w - 30, 8.5); cx.globalAlpha = 1; }
+    }
+    // labels
+    if (cam.z > 0.42) {
+      const col = s === 'lit' ? 'rgba(240,226,190,.85)' : s === 'damaged' ? 'rgba(220,140,150,.6)' : 'rgba(220,216,202,.32)';
+      text(h.name, x + w / 2, y + (s === 'building' ? 26 : 16), 13, col, 'center', 'serif');
+    }
+  }
+}
+
+function hallOutline(G, id, col, wdt) {
+  const h = HALL[id]; if (!h) return;
+  const [x, y, w, ht] = h.slot, [sx, sy] = w2s(x, y);
+  cx.strokeStyle = col; cx.lineWidth = wdt; cx.strokeRect(sx + 2, sy + 2, w * cam.z - 4, ht * cam.z - 4);
+}
+
+/* ---------- people ---------- */
+function drawPerson(x, y, face, opts) {
+  const z = cam.z, [sx, sy] = w2s(x, y);
+  if (sx < -40 || sx > VW + 40) return;
+  const s = z * (opts.scale || 1), bob = opts.moving ? Math.abs(Math.sin(opts.anim * 9)) * 2 * s : 0;
+  const body = opts.body || '#c9b48a', head = opts.head || '#e0c8a0';
+  cx.globalAlpha = opts.alpha == null ? 1 : opts.alpha;
+  // legs
+  const leg = opts.moving ? Math.sin(opts.anim * 9) * 4 * s : 0;
+  cx.fillStyle = opts.legs || '#3a2a20';
+  cx.fillRect(sx - 4 * s + leg, sy - 9 * s, 3 * s, 9 * s); cx.fillRect(sx + 1 * s - leg, sy - 9 * s, 3 * s, 9 * s);
+  // body
+  cx.fillStyle = body; cx.beginPath();
+  cx.moveTo(sx - 6 * s, sy - 8 * s - bob); cx.lineTo(sx - 5 * s, sy - 21 * s - bob); cx.lineTo(sx + 5 * s, sy - 21 * s - bob); cx.lineTo(sx + 6 * s, sy - 8 * s - bob); cx.fill();
+  cx.fillStyle = head; cx.beginPath(); cx.arc(sx, sy - 26 * s - bob, 4.6 * s, 0, 7); cx.fill();
+  if (opts.hood) { cx.fillStyle = opts.hood; cx.beginPath(); cx.arc(sx, sy - 27 * s - bob, 5 * s, Math.PI, 0); cx.fill(); }
+  // tool
+  const tl = opts.tool;
+  if (tl) {
+    const sw = opts.work ? Math.sin(opts.anim * 7) : 0;
+    cx.strokeStyle = tl === 'spear' ? '#a0a6ae' : tl === 'bow' ? '#8a6a42' : '#9a8a6a'; cx.lineWidth = Math.max(1, 1.6 * s);
+    cx.beginPath();
+    if (tl === 'spear') { const th = opts.thrust > 0 ? 8 * s : 0; cx.moveTo(sx + face * (3 * s + th), sy - 6 * s - bob); cx.lineTo(sx + face * (16 * s + th), sy - 36 * s - bob); }
+    else if (tl === 'bow') { cx.arc(sx + face * 6 * s, sy - 18 * s - bob, 8 * s, face > 0 ? -1.2 : Math.PI - 1.2 + 0, face > 0 ? 1.2 : Math.PI + 1.2); }
+    else { const a = -0.9 + sw * 0.9; cx.moveTo(sx + face * 4 * s, sy - 16 * s - bob); cx.lineTo(sx + face * (4 + Math.cos(a) * 13) * s, sy - (16 + Math.sin(-a) * 13) * s - bob); }
+    cx.stroke();
+  }
+  if (opts.carry) { cx.fillStyle = opts.carry; cx.fillRect(sx - 5 * s, sy - 30 * s - bob - 6 * s, 10 * s, 6 * s); }
+  cx.globalAlpha = 1;
+}
+const JOB_LOOK = {
+  idle: { body: '#8a7a64' }, quarry: { body: '#7a7e86', tool: 'pick', carry: null }, wood: { body: '#6a5236', tool: 'axe' },
+  fields: { body: '#9a8a4a', tool: 'scythe', hood: '#6a5a2a' }, build: { body: '#a0703a', tool: 'hammer' }, wall: { body: '#5a6a7a', head: '#c0b090', tool: 'spear' }
+};
+function drawVillagers(G, onlyInside) {
+  for (const v of G.vill) {
+    const inside = v.y !== WALL_TOP && Math.abs(v.x) < 530;
+    if (onlyInside !== inside) continue;
+    const look = JOB_LOOK[v.wounded ? 'idle' : v.job] || JOB_LOOK.idle;
+    const archer = v.job === 'wall' && lit(G, 'barracks');
+    const atHome = inside && (G.phase === 'night' || v.job === 'idle');
+    drawPerson(v.x, v.y, v.face || 1, {
+      body: v.sell ? '#6a3a3a' : look.body, head: look.head, hood: look.hood,
+      tool: atHome ? null : (archer ? 'bow' : look.tool), moving: v.moving, anim: v.anim, work: v.work && v.at,
+      thrust: v.thrust, alpha: v.fade > 0 ? 0.35 : (v.wounded ? 0.6 : 1), scale: 1,
+      carry: v.job === 'quarry' && v.moving && v.x > 400 ? null : null
+    });
+  }
+}
+
+/* ---------- the Hollow ---------- */
+function drawEnemy(e, G) {
+  const d = CONTENT.hollow[e.k], [sx, sy] = w2s(e.x, e.y), z = cam.z;
+  if (sx < -80 || sx > VW + 80) return;
+  let a = 1;
+  if (e.st === 'dead' || e.st === 'gone') a = Math.max(0, 1 - e.t / 0.8);
+  if (a <= 0) return;
+  const s = d.size * z, f = -e.side, t = e.ph, rev = e.reveal > 0;
+  cx.globalAlpha = a;
+  const body = e.hit > 0 ? '#3a3046' : '#08070c';
+  const wob = VIS.reduce ? 0 : Math.sin(t * 6) * 0.08;
+  cx.fillStyle = body;
+  cx.beginPath();
+  if (e.k === 'wisp') {
+    const by = sy + Math.sin(t * 4) * 6 * z;
+    cx.arc(sx, by, s * 0.5, 0, 7); cx.fill();
+    for (let i = 1; i < 4; i++) { cx.globalAlpha = a * (0.5 - i * 0.12); cx.beginPath(); cx.arc(sx - f * i * s * 0.45, by + Math.sin(t * 5 + i) * 3 * z, s * (0.45 - i * 0.08), 0, 7); cx.fill(); }
+    cx.globalAlpha = a; eyes(sx, by - s * 0.05, s * 0.18, f, s);
+  } else if (e.k === 'husk') {
+    cx.moveTo(sx - s * 0.6, sy); cx.quadraticCurveTo(sx - s * 0.75, sy - s * 1.1, sx + f * s * 0.1, sy - s * (1.25 + wob)); cx.quadraticCurveTo(sx + s * 0.8, sy - s * 0.9, sx + s * 0.6, sy); cx.fill();
+    eyes(sx + f * s * 0.25, sy - s * 0.95, s * 0.12, f, s);
+    if (e.st === 'attack') { const sw = Math.sin(e.t / d.rate * Math.PI); cx.fillRect(sx + f * s * 0.4, sy - s * 0.7, f * s * (0.3 + sw * 0.4), s * 0.18); }
+  } else if (e.k === 'thief') {
+    cx.moveTo(sx - s * 0.35, sy); cx.lineTo(sx - s * 0.2, sy - s * 1.6); cx.lineTo(sx + s * 0.25, sy - s * 1.7); cx.lineTo(sx + s * 0.35, sy); cx.fill();
+    cx.beginPath(); cx.arc(sx + f * 0.05 * s, sy - s * 1.9, s * 0.3, 0, 7); cx.fill();
+    eyes(sx + f * s * 0.12, sy - s * 1.92, s * 0.08, f, s);
+    if (e.loot) { cx.fillStyle = '#3a2a1a'; cx.beginPath(); cx.arc(sx - f * s * 0.5, sy - s * 1.2, s * 0.4, 0, 7); cx.fill(); cx.fillStyle = '#D6A94A'; cx.fillRect(sx - f * s * 0.5 - 2, sy - s * 1.5, 4, 3); }
+  } else if (e.k === 'climber') {
+    const leg = VIS.reduce ? 0 : Math.sin(t * 12) * s * 0.2;
+    cx.ellipse(sx, sy - s * 0.7, s * 0.5, s * 0.35, 0, 0, 7); cx.fill();
+    cx.strokeStyle = body; cx.lineWidth = Math.max(1, 2.4 * z);
+    for (let i = -1; i <= 1; i += 2) for (let k = 0; k < 2; k++) { cx.beginPath(); cx.moveTo(sx, sy - s * 0.7); cx.lineTo(sx + i * s * (0.6 + k * 0.2), sy - s * (1.1 - k * 0.6) + leg * i); cx.lineTo(sx + i * s * (0.9 + k * 0.1), sy - s * (0.2 - k * 0.2)); cx.stroke(); }
+    eyes(sx + f * s * 0.2, sy - s * 0.8, s * 0.1, f, s);
+  } else if (e.k === 'wailer') {
+    cx.moveTo(sx - s * 0.5, sy); cx.quadraticCurveTo(sx - s * 0.3, sy - s * 2, sx, sy - s * 2.4); cx.quadraticCurveTo(sx + s * 0.3, sy - s * 2, sx + s * 0.5, sy); cx.fill();
+    eyes(sx + f * s * 0.08, sy - s * 2.05, s * 0.09, f, s);
+    if (e.st === 'wail') { cx.globalCompositeOperation = 'lighter'; const r = (VIS.time * 60) % 60; cx.strokeStyle = `rgba(110,90,140,${0.35 * (1 - r / 60)})`; cx.lineWidth = 2; cx.beginPath(); cx.arc(sx, sy - s * 2, (20 + r * 2) * z, 0, 7); cx.stroke(); cx.globalCompositeOperation = 'source-over'; }
+  } else if (e.k === 'knight') {
+    cx.moveTo(sx - s * 0.55, sy); cx.lineTo(sx - s * 0.6, sy - s * 1.1); cx.lineTo(sx - s * 0.35, sy - s * 1.45); cx.lineTo(sx + s * 0.35, sy - s * 1.45); cx.lineTo(sx + s * 0.6, sy - s * 1.1); cx.lineTo(sx + s * 0.55, sy); cx.fill();
+    cx.beginPath(); cx.arc(sx, sy - s * 1.65, s * 0.3, 0, 7); cx.fill();
+    path([[e.x - d.size * 0.25, e.y - d.size * 1.8], [e.x - d.size * 0.5, e.y - d.size * 2.3], [e.x - d.size * 0.1, e.y - d.size * 1.85]], body);
+    path([[e.x + d.size * 0.25, e.y - d.size * 1.8], [e.x + d.size * 0.5, e.y - d.size * 2.3], [e.x + d.size * 0.1, e.y - d.size * 1.85]], body);
+    const sw = e.st === 'attack' ? Math.sin(e.t / d.rate * Math.PI * 2) : 0;
+    cx.strokeStyle = '#1a1622'; cx.lineWidth = 5 * z; cx.beginPath(); cx.moveTo(sx + f * s * 0.4, sy - s * 1.0); cx.lineTo(sx + f * s * (1.0 + sw * 0.3), sy - s * (1.9 - sw * 1.2)); cx.stroke();
+    eyes(sx + f * s * 0.1, sy - s * 1.68, s * 0.07, f, s);
+    // hp bar
+    R(e.x - 50, e.y - d.size * 2.6, 100, 6, 'rgba(0,0,0,.7)'); R(e.x - 50, e.y - d.size * 2.6, 100 * clamp(e.hp / e.max, 0, 1), 6, '#8c2c3c');
+  }
+  if (rev && e.hp > 0) { cx.globalCompositeOperation = 'lighter'; cx.globalAlpha = 0.5; cx.drawImage(GLOW.gold, sx - s * 1.2, sy - s * 2, s * 2.4, s * 2.4); cx.globalCompositeOperation = 'source-over'; }
+  cx.globalAlpha = 1;
+}
+function eyes(x, y, r, f, s) {
+  cx.globalCompositeOperation = 'lighter';
+  cx.fillStyle = '#b89af0';
+  const o = Math.max(1.2, r);
+  cx.beginPath(); cx.arc(x - o * 0.9 + f * o * 0.6, y, Math.max(1, r * 0.55), 0, 7); cx.arc(x + o * 0.9 + f * o * 0.6, y, Math.max(1, r * 0.55), 0, 7); cx.fill();
+  cx.globalAlpha *= 0.6; cx.drawImage(GLOW.violet, x - s * 0.5, y - s * 0.5, s, s);
+  cx.globalCompositeOperation = 'source-over';
+}
+
+/* ---------- particles ---------- */
+function puff(x, y, n, col, spread, up, life, size) {
+  if (VIS.particles.length > 600) return;
+  for (let i = 0; i < n; i++) VIS.particles.push({ x, y, vx: (Math.random() - 0.5) * spread, vy: -Math.random() * up, t: 0, life: life * (0.6 + Math.random() * 0.6), col, s: size * (0.6 + Math.random() * 0.8), add: col === 'ember' || col === 'gold' });
+}
+function stepParticles(dt) {
+  for (const p of VIS.particles) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.add ? -10 : 20) * dt; p.vx *= 0.98; }
+  VIS.particles = VIS.particles.filter(p => p.t < p.life);
+  for (const f of VIS.floats) f.t += dt;
+  VIS.floats = VIS.floats.filter(f => f.t < f.life);
+}
+function drawParticles() {
+  for (const p of VIS.particles) {
+    const a = 1 - p.t / p.life;
+    if (p.add) { cx.globalCompositeOperation = 'lighter'; glow(p.col === 'gold' ? GLOW.gold : GLOW.warm, p.x, p.y, p.s * 3, a * 0.8); cx.globalCompositeOperation = 'source-over'; }
+    else { cx.globalAlpha = a * 0.6; circ(p.x, p.y, p.s * (1 + p.t), p.col); }
+  }
+  cx.globalAlpha = 1;
+}
+function dustMotes(G) {
+  // ambient dust in dark rooms
+  if (VIS.reduce) return;
+  for (const h of CONTENT.halls) {
+    const s = G.halls[h.id].s; if (s === 'lit') continue;
+    const [x, y, w, ht] = h.slot;
+    for (let i = 0; i < 6; i++) {
+      const k = (VIS.time * 0.05 + i * 0.17 + h.slot[0] * 0.001) % 1;
+      const px = x + ((i * 97 + h.slot[0]) % w + Math.sin(VIS.time * 0.4 + i) * 10 + w) % w, py = y + ht - k * ht;
+      cx.globalAlpha = 0.25 * Math.sin(k * Math.PI); circ(px, py, 1.4, '#cfc8b4');
+    }
+  }
+  cx.globalAlpha = 1;
+}
+
+/* ---------- lights (additive) ---------- */
+function drawLights(G, L) {
+  cx.globalCompositeOperation = 'lighter';
+  const fl = n => VIS.reduce ? 1 : 0.85 + 0.15 * Math.sin(VIS.time * 9 + n) * Math.sin(VIS.time * 5.3 + n * 2);
+  const halls = G ? CONTENT.halls : [];
+  for (const h of halls) {
+    const st = G.halls[h.id].s; if (st !== 'lit') continue;
+    const [x, y, w, ht] = h.slot, fx = VIS.hallFx[h.id], bloom = fx ? clamp(1.6 - fx.t, 0, 1.6) : 0;
+    glow(GLOW.warm, x + w / 2, y + ht * 0.55, Math.max(w, ht) * 0.75, (0.22 + 0.25 * L.dark) * fl(x));
+    const hp = hearthPos(h); if (hp) { glow(GLOW.gold, hp[0], hp[1], 60, 0.7 * fl(x + 1)); for (let i = 0; i < 2; i++) glow(GLOW.white, hp[0] + Math.sin(VIS.time * 7 + i) * 3, hp[1] - 4, 10, 0.5 * fl(i)); }
+    if (bloom > 0) glow(GLOW.white, x + w / 2, y + ht / 2, Math.max(w, ht) * (0.6 + (1.6 - bloom)), bloom * 0.8);
+    if (h.id === 'chapel') for (let i = 0; i < 5; i++) glow(GLOW.gold, x + w / 2 - 18 + i * 10, y + ht - 36, 12, 0.6 * fl(i));
+  }
+  // facade windows (zoomed out)
+  // torches on walls at night
+  if (L.dark > 0.5) {
+    const ta = (L.dark - 0.5) * 2;
+    const torches = [[-WALL_X, WALL_TOP - 30], [WALL_X, WALL_TOP - 30], [-WALL_X - 30, -80], [WALL_X + 30, -80], [-536, -300], [536, -300]];
+    torches.forEach((p, i) => { const on = G && G.phase === 'night' ? clamp((G.t - i * 0.35) / 0.5, 0, 1) : ta; glow(GLOW.gold, p[0], p[1], 46, on * 0.7 * fl(i * 3)); glow(GLOW.white, p[0], p[1], 7, on * 0.8 * fl(i)); });
+  }
+  // power effects
+  if (W && G) {
+    for (const ef of W.effects) {
+      const k = ef.t / ef.dur;
+      if (ef.k === 'flare') { glow(GLOW.gold, ef.x, -200 - k * 40, ef.r * 1.4, (1 - k) * 0.5); glow(GLOW.white, ef.x, -200 - k * 40, 30, (1 - k)); }
+      if (ef.k === 'light') {
+        const a = k < 0.15 ? k / 0.15 : 1 - (k - 0.15) / 0.85;
+        const [sx] = w2s(ef.x, 0), wd = ef.r * cam.z * 0.8;
+        const g = cx.createLinearGradient(sx - wd, 0, sx + wd, 0);
+        g.addColorStop(0, 'rgba(255,200,110,0)'); g.addColorStop(0.5, `rgba(255,224,160,${0.85 * a})`); g.addColorStop(1, 'rgba(255,200,110,0)');
+        cx.fillStyle = g; cx.fillRect(sx - wd, 0, wd * 2, w2s(0, 0)[1]);
+        glow(GLOW.gold, ef.x, -10, ef.r * 1.6, a * 0.8);
+      }
+    }
+    if (W.rally > 0) G.vill.forEach(v => { if (v.job === 'wall' && v.onWall) glow(GLOW.gold, v.x, v.y - 20, 30, 0.5); });
+    for (const a of W.arrows) { const k = a.t / a.dur; glow(GLOW.gold, lerp(a.x, a.tx, k), lerp(a.y, a.ty, k) - Math.sin(k * Math.PI) * 30, 10, 0.6); }
+    for (const e of W.en) if (e.hp > 0 && e.st !== 'gone') glow(GLOW.violet, e.x, e.y - CONTENT.hollow[e.k].size * 0.6, CONTENT.hollow[e.k].size * 2.2, 0.28);
+  }
+  cx.globalCompositeOperation = 'source-over'; cx.globalAlpha = 1;
+}
+function drawArrows() {
+  if (!W) return;
+  for (const a of W.arrows) {
+    const k = a.t / a.dur, x = lerp(a.x, a.tx, k), y = lerp(a.y, a.ty, k) - Math.sin(k * Math.PI) * 30;
+    const k2 = Math.max(0, k - 0.06), x2 = lerp(a.x, a.tx, k2), y2 = lerp(a.y, a.ty, k2) - Math.sin(k2 * Math.PI) * 30;
+    line(x2, y2, x, y, '#e8d8b0', 2);
+  }
+}
+
+/* ---------- floating numbers (screen space, fly to HUD) ---------- */
+const HUD_POS = {};
+function drawFloats() {
+  cx.textAlign = 'center'; cx.textBaseline = 'middle';
+  for (const f of VIS.floats) {
+    const [sx0, sy0] = w2s(f.x, f.y);
+    let sx = sx0, sy = sy0 - Math.min(f.t, 0.6) * 50, a = 1;
+    if (f.t > 0.7 && HUD_POS[f.r]) { const k = clamp((f.t - 0.7) / 0.5, 0, 1), e = k * k; sx = lerp(sx0, HUD_POS[f.r][0], e); sy = lerp(sy0 - 30, HUD_POS[f.r][1], e); a = 1 - k * 0.3; }
+    if (f.t > f.life - 0.15) a *= (f.life - f.t) / 0.15;
+    cx.globalAlpha = clamp(a, 0, 1);
+    cx.font = `700 ${Math.round(15 * (VIS.ts || 1))}px system-ui,sans-serif`;
+    cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillText(f.text, sx + 1, sy + 1);
+    cx.fillStyle = f.col; cx.fillText(f.text, sx, sy);
+  }
+  cx.globalAlpha = 1;
+}
+
+/* ---------- frame ---------- */
+function render(G, dt) {
+  VIS.time += dt;
+  cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const L = lightState(G);
+  // camera smoothing and shake
+  const k = 1 - Math.pow(0.0005, dt);
+  cam.x += (cam.tx - cam.x) * k; cam.y += (cam.ty - cam.y) * k; cam.z += (cam.tz - cam.z) * k;
+  let shx = 0, shy = 0;
+  if (cam.shake > 0 && !VIS.reduce) { shx = (Math.random() - 0.5) * cam.shake * 14; shy = (Math.random() - 0.5) * cam.shake * 14; }
+  cam.shake = Math.max(0, cam.shake - dt * 2.5);
+  cam.x += shx / cam.z; cam.y += shy / cam.z;
+
+  drawSky(L, G);
+  drawHills(L);
+  drawGround(G, L);
+  drawWalls(G);
+  const cut = VIS.titleMode ? 0 : clamp((cam.z - 0.38) / 0.22, 0, 1);
+  drawCastleShell(G, cut);
+  if (G && !VIS.titleMode) {
+    drawHalls(G, cut, L);
+    dustMotes(G);
+    if (VIS.goal) { const a = 0.45 + 0.35 * Math.sin(VIS.time * 3); hallOutline(G, VIS.goal, `rgba(214,169,74,${a})`, 2); }
+    if (VIS.hover) hallOutline(G, VIS.hover, 'rgba(220,216,202,.35)', 1.5);
+    if (VIS.sel) hallOutline(G, VIS.sel, 'rgba(214,169,74,.95)', 2.5);
+  }
+  drawFacade(G && !VIS.titleMode ? G : null, 1 - cut);
+  if (VIS.titleMode || cut < 0.5) drawForeHills(L);
+  // darkness over the outside world (halls keep their own warm light)
+  if (L.dark > 0.02) {
+    cx.fillStyle = `rgba(10,14,28,${L.dark * 0.38})`; cx.fillRect(0, 0, VW, VH);
+    if (L.warm > 0.02) { cx.fillStyle = `rgba(200,110,40,${L.warm * 0.12})`; cx.fillRect(0, 0, VW, VH); }
+  }
+  if (G && !VIS.titleMode) {
+    // re-draw lit hall interiors at night so they read as warm windows in the dark
+    if (L.dark > 0.02 && cut > 0) {
+      cx.save(); cx.globalAlpha = cut * Math.min(1, L.dark * 0.6);
+      cx.globalCompositeOperation = 'lighter';
+      for (const h of CONTENT.halls) if (G.halls[h.id].s === 'lit') { const [x, y, w, ht] = h.slot; R(x, y, w, ht, 'rgba(60,34,14,.55)'); }
+      cx.restore();
+    }
+    if (cut > 0.05) { cx.globalAlpha = cut; drawVillagers(G, true); cx.globalAlpha = 1; }
+    drawVillagers(G, false);
+    if (W) for (const e of W.en) drawEnemy(e, G);
+    drawArrows();
+    drawParticles();
+  }
+  drawLights(G && !VIS.titleMode ? G : null, L);
+  if (VIS.titleMode || cut < 1) {
+    // facade window glows like the card art
+    cx.globalCompositeOperation = 'lighter';
+    for (const h of CONTENT.halls) {
+      const on = VIS.titleMode ? (VIS.titleLit || []).includes(h.id) : G && lit(G, h.id);
+      if (!on) continue;
+      const s = h.slot; let wx = s[0] + s[2] / 2, wy = s[1] + s[3] * 0.32 + 14; if (h.id === 'great') wx = s[0] + 49;
+      glow(GLOW.gold, wx, wy, 60, 0.5 * (1 - (VIS.titleMode ? 0 : cut)));
+    }
+    cx.globalCompositeOperation = 'source-over';
+  }
+  // dawn sweep
+  if (VIS.sweep >= 0) {
+    VIS.sweep += dt * 0.6;
+    if (VIS.sweep > 1.4) VIS.sweep = -1;
+    else { const x = VIS.sweep * VW * 1.4 - VW * 0.2, g = cx.createLinearGradient(x - 200, 0, x + 200, 0); g.addColorStop(0, 'rgba(255,200,120,0)'); g.addColorStop(0.5, 'rgba(255,200,120,.22)'); g.addColorStop(1, 'rgba(255,200,120,0)'); cx.globalCompositeOperation = 'lighter'; cx.fillStyle = g; cx.fillRect(x - 200, 0, 400, VH); cx.globalCompositeOperation = 'source-over'; }
+  }
+  if (VIS.flash > 0 && !VIS.reduce) { cx.fillStyle = `rgba(255,236,190,${VIS.flash * 0.5})`; cx.fillRect(0, 0, VW, VH); VIS.flash -= dt * 2; }
+  if (G && !VIS.titleMode && G.phase === 'night' && W && W.night && W.night.blood) { const v = cx.createRadialGradient(VW / 2, VH / 2, VH * 0.3, VW / 2, VH / 2, VH * 0.9); v.addColorStop(0, 'rgba(90,30,42,0)'); v.addColorStop(1, 'rgba(90,30,42,.35)'); cx.fillStyle = v; cx.fillRect(0, 0, VW, VH); }
+  cam.x -= shx / cam.z; cam.y -= shy / cam.z;
+  drawFloats();
+}
+/* =====================================================================
+   UI, INPUT, BRIDGE, MAIN LOOP
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const ICON = {
+  stone: '<svg viewBox="0 0 20 20"><path d="M3 15l2-7 5-3 6 3 1 7z" fill="#9aa0a8"/><path d="M5 8l5-3 6 3-6 2z" fill="#c4c8cc"/></svg>',
+  timber: '<svg viewBox="0 0 20 20"><rect x="2" y="7" width="16" height="6" rx="3" fill="#8a5a32"/><circle cx="16" cy="10" r="3" fill="#c49060"/><circle cx="16" cy="10" r="1.2" fill="#8a5a32"/></svg>',
+  grain: '<svg viewBox="0 0 20 20"><path d="M10 18V5" stroke="#c9a24a" stroke-width="1.6"/><g fill="#D6A94A"><ellipse cx="8" cy="7" rx="2" ry="3"/><ellipse cx="12" cy="7" rx="2" ry="3"/><ellipse cx="8" cy="12" rx="2" ry="3"/><ellipse cx="12" cy="12" rx="2" ry="3"/><ellipse cx="10" cy="4" rx="1.6" ry="2.6"/></g></svg>',
+  ember: '<svg viewBox="0 0 20 20"><path d="M10 2c3 4 6 6 6 10a6 6 0 01-12 0c0-3 2-4 3-6 0 2 1 3 2 3 0-3 0-5 1-7z" fill="#e0703a"/><path d="M10 9c2 2 3 3 3 5a3 3 0 01-6 0c0-2 2-3 3-5z" fill="#ffd27a"/></svg>',
+  coin: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" fill="#D6A94A"/><circle cx="10" cy="10" r="4.6" fill="none" stroke="#9a7428" stroke-width="1.2"/></svg>',
+  villager: '<svg viewBox="0 0 20 20"><circle cx="10" cy="6" r="3.2" fill="#e0c8a0"/><path d="M4 18c0-5 3-8 6-8s6 3 6 8z" fill="#8a7a64"/></svg>',
+  sun: '<circle cx="20" cy="20" r="6" fill="#f3dcae"/>',
+  moon: '<circle cx="20" cy="20" r="6.5" fill="#DCD8CA"/><circle cx="23" cy="18" r="5.5" fill="#2a2f35"/>'
+};
+const RES_COL = { stone: '#c4c8cc', timber: '#d8a070', grain: '#e8c060', ember: '#ff9a50', coin: '#f0cc6a' };
+const JOB_NAME = { quarry: 'Quarry', wood: 'Woodcutter', fields: 'Fields', build: 'Build', wall: 'Walls' };
+const JOB_ICON = { quarry: ICON.stone, wood: ICON.timber, fields: ICON.grain, build: '<svg viewBox="0 0 20 20"><path d="M3 15l8-8 2 2-8 8z" fill="#8a6a42"/><rect x="10" y="3" width="8" height="5" rx="1" fill="#9aa0a8" transform="rotate(45 14 5)"/></svg>', wall: '<svg viewBox="0 0 20 20"><path d="M3 18V8h3v2h2V8h4v2h2V8h3v10z" fill="#9aa0a8"/></svg>' };
+
+let G = null;
+let state = 'boot'; // boot | title | play
+let speed = 1, lastSpeed = 1, paused = false, extPaused = false, menuOpen = false;
+let acc = 0, lastT = 0;
+let settings = { music: 0.75, amb: 0.6, sfx: 0.8, ui: 0.6, reduce: false, ts: 1, tutorial: true };
+let report = null;
+
+/* ---------- bridge + storage ---------- */
+const inFrame = (() => { try { return window.parent !== window; } catch (e) { return true; } })();
+function post(msg) { if (inFrame) { try { window.parent.postMessage(msg, '*'); } catch (e) { } } }
+let memSave = null, loadResolve = null;
+window.addEventListener('message', ev => {
+  if (!inFrame || ev.source !== window.parent) return;
+  const m = ev.data; if (!m || typeof m !== 'object') return;
+  if (m.type === 'playchain:pause') { extPaused = true; Audio.suspend(true); }
+  else if (m.type === 'playchain:resume') { extPaused = false; if (!document.hidden) Audio.suspend(false); }
+  else if (m.type === 'playchain:loaded' && loadResolve) { loadResolve(m.data); loadResolve = null; }
+});
+function lsGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { window.localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+function loadAll() {
+  return new Promise(res => {
+    let done = false;
+    const fin = d => { if (done) return; done = true; res(d); };
+    if (inFrame) { loadResolve = fin; post({ type: 'playchain:load' }); setTimeout(() => fin(null), 800); }
+    else { const s = lsGet('hollow-kingdom-save'); let d = null; try { d = s ? JSON.parse(s) : null; } catch (e) { } fin(d); }
+  });
+}
+let saveTimer = 0;
+function save() {
+  if (!G) return;
+  const data = { v: SAVE_VERSION, game: serialize(G), settings };
+  memSave = data;
+  if (inFrame) post({ type: 'playchain:save', data });
+  else lsSet('hollow-kingdom-save', JSON.stringify(data));
+}
+function saveSettingsOnly() {
+  const data = memSave ? Object.assign({}, memSave, { settings }) : { v: SAVE_VERSION, game: null, settings };
+  memSave = data;
+  if (inFrame) post({ type: 'playchain:save', data }); else lsSet('hollow-kingdom-save', JSON.stringify(data));
+}
+
+/* ---------- settings ---------- */
+function applySettings() {
+  VIS.ts = settings.ts;
+  ['music', 'amb', 'sfx', 'ui'].forEach(k => Audio.setVol(k, settings[k]));
+  const mq = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  VIS.reduce = settings.reduce || mq;
+  document.documentElement.style.setProperty('--ts', settings.ts);
+}
+
+/* ---------- toasts / banners ---------- */
+function toast(msg, cls, ms) {
+  const d = document.createElement('div'); d.className = 'toast ' + (cls || ''); d.textContent = msg;
+  $('toasts').appendChild(d);
+  while ($('toasts').children.length > 3) $('toasts').firstChild.remove();
+  setTimeout(() => { d.style.opacity = 0; setTimeout(() => d.remove(), 900); }, ms || 3200);
+}
+let bannerT = 0;
+function banner(main, sub, cls) {
+  const b = $('banner'); b.className = 'show ' + (cls || ''); b.innerHTML = main + (sub ? `<small>${sub}</small>` : '');
+  clearTimeout(bannerT); bannerT = setTimeout(() => b.className = cls || '', 2600);
+}
+
+/* ---------- HUD ---------- */
+function buildHUD() {
+  $('res').innerHTML = RES.map(r => `<div class="r" id="r_${r}" title="${r[0].toUpperCase() + r.slice(1)}">${ICON[r]}<span>0</span></div>`).join('') +
+    `<div class="r" id="r_v" title="Villagers">${ICON.villager}<span>0</span></div>`;
+  $('jobs').innerHTML = `<div class="job idle" id="j_idle"><div class="jn">Idle</div><div class="jc"><b>0</b></div></div>` +
+    JOBS.map(j => `<div class="job" id="j_${j}"><div class="jn">${JOB_ICON[j]}${JOB_NAME[j]}</div><div class="jc"><button data-j="${j}" data-d="-1" aria-label="Remove from ${JOB_NAME[j]}">&minus;</button><b>0</b><button data-j="${j}" data-d="1" aria-label="Add to ${JOB_NAME[j]}">+</button></div>${j === 'wall' ? '<div class="side"><button data-mv="-1" title="Move a guard to the west wall">&larr;</button><span id="wallLR">0 | 0</span><button data-mv="1" title="Move a guard to the east wall">&rarr;</button></div>' : ''}</div>`).join('');
+  $('powers').innerHTML = CONTENT.powers.map(p => `<div class="pw" id="p_${p.id}" role="button" tabindex="0" title="${p.desc}"><span class="k">${p.key}</span><span class="pn">${p.name}</span><span class="pc">${ICON.ember}${p.ember}</span><i class="cd"></i></div>`).join('') +
+    `<div id="guardsBox"><div>Guards L <b id="gL">0</b> | R <b id="gR">0</b></div><div class="side"><button data-mv="-1" title="Move a guard west">&larr;</button><button data-mv="1" title="Move a guard east">&rarr;</button><button id="hire" title="Hire a sellsword for tonight">Hire</button></div><div id="walls"><span>L<div class="bar"><i id="wL"></i></div></span><span>R<div class="bar"><i id="wR"></i></div></span></div></div>`;
+  $('jobs').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || !G) return;
+    if (b.dataset.mv) { const to = +b.dataset.mv; if (moveGuard(G, -to, to)) Audio.sfx('assign'); else Audio.sfx('deny'); updateHUD(true); return; }
+    const j = b.dataset.j, d = +b.dataset.d;
+    if (j === 'build' && d > 0 && !G.building) { toast('Pick a hall to restore first. Open Halls or tap a dark room.'); Audio.sfx('deny'); return; }
+    if (j === 'wall' && d > 0) { const l = jobCount(G, 'wall', -1), r = jobCount(G, 'wall', 1); if (assign(G, j, 1, (r <= l || G.day <= CONTENT.night.oneSideUntil) ? 1 : -1)) Audio.sfx('assign'); else nobody(); return; }
+    if (assign(G, j, d)) { Audio.sfx(d > 0 ? 'assign' : 'back'); if (d > 0) tutEvent('assign_' + j); }
+    else if (d > 0) nobody();
+    updateHUD(true);
+  });
+  $('powers').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (b && b.dataset.mv) { const to = +b.dataset.mv; if (moveGuard(G, -to, to)) Audio.sfx('assign'); else Audio.sfx('deny'); updateHUD(true); return; }
+    if (b && b.id === 'hire') { if (hireSellsword(G)) { Audio.sfx('rally'); toast('A sellsword takes the wall for tonight.'); } else { Audio.sfx('deny'); toast(lit(G, 'barracks') ? `Need ${CONTENT.economy.sellswordCost} coin (max ${CONTENT.economy.sellswordMax}).` : 'Restore the Barracks to hire sellswords.'); } return; }
+    const p = e.target.closest('.pw'); if (p) pickPower(p.id.slice(2));
+  });
+  $('speed').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { setSpeed(+b.dataset.s); Audio.sfx('click'); } });
+  $('btnHalls').onclick = () => { Audio.sfx('select'); openHallsList(); };
+  $('btnMenu').onclick = () => { Audio.sfx('select'); openPause(); };
+  $('goal').onclick = () => { const h = nextGoal(G); if (h) { Audio.sfx('select'); selectHall(h.id, true); } };
+}
+function nobody() { Audio.sfx('deny'); toast('No idle villagers. Take one off another job first.'); }
+function fmt(n) { n = Math.floor(n); return n >= 10000 ? (n / 1000).toFixed(0) + 'k' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : '' + n; }
+const prevRes = {};
+let hudT = 0;
+function updateHUD(force) {
+  if (!G) return;
+  hudT -= 1; if (!force && hudT > 0) return; hudT = 6;
+  for (const r of RES) {
+    const el = $('r_' + r), v = Math.floor(G.res[r]);
+    el.querySelector('span').textContent = fmt(v);
+    if (prevRes[r] != null && v > prevRes[r]) { el.classList.add('bump'); setTimeout(() => el.classList.remove('bump'), 160); }
+    prevRes[r] = v;
+    const rc = el.getBoundingClientRect(); HUD_POS[r] = [rc.left + rc.width / 2, rc.top + rc.height / 2];
+  }
+  const need = Math.ceil(G.vill.length / (lit(G, 'kitchen') ? 2 : 1));
+  $('r_grain').classList.toggle('short', G.res.grain < need);
+  $('r_grain').title = `Grain (${need} eaten at dawn)`;
+  $('r_v').querySelector('span').innerHTML = G.vill.length + (G.hungry ? ' <small>hungry</small>' : '');
+  // clock
+  const T = CONTENT.timing, day = G.phase === 'day';
+  const len = day ? T.dayLen : T.nightLen, left = Math.max(0, len - G.t);
+  $('dayLabel').textContent = (day ? 'Day ' : (isBlood(G.day) ? 'Blood Moon ' : 'Night ')) + G.day;
+  $('timeLeft').textContent = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')} ${day ? 'to dusk' : 'to dawn'}`;
+  $('dialArc').setAttribute('stroke-dashoffset', (106.8 * (G.t / len)).toFixed(1));
+  $('dialArc').setAttribute('stroke', day ? (left < T.bellAt ? '#e08a3a' : '#D6A94A') : (isBlood(G.day) ? '#b0443c' : '#8a9ab0'));
+  $('dialIcon').innerHTML = day ? ICON.sun : ICON.moon;
+  [...$('speed').children].forEach(b => b.classList.toggle('on', (+b.dataset.s) === (paused ? 0 : speed)));
+  // jobs
+  $('jobs').classList.toggle('hidden', !day);
+  $('powers').classList.toggle('hidden', day);
+  $('j_idle').querySelector('b').textContent = idleCount(G);
+  for (const j of JOBS) {
+    const el = $('j_' + j); el.querySelector('b').textContent = jobCount(G, j);
+    const minus = el.querySelector('[data-d="-1"]'), plus = el.querySelector('[data-d="1"]');
+    minus.disabled = jobCount(G, j) === 0; plus.disabled = idleCount(G) === 0 || (j === 'build' && !G.building);
+  }
+  $('wallLR').textContent = `${jobCount(G, 'wall', -1)} | ${jobCount(G, 'wall', 1)}`;
+  if (!day) {
+    $('gL').textContent = jobCount(G, 'wall', -1); $('gR').textContent = jobCount(G, 'wall', 1);
+    $('wL').style.width = (100 * G.walls.L.hp / G.walls.L.max) + '%'; $('wR').style.width = (100 * G.walls.R.hp / G.walls.R.max) + '%';
+    for (const p of CONTENT.powers) {
+      const el = $('p_' + p.id), un = powerUnlocked(G, p);
+      el.classList.toggle('locked', !un); el.classList.toggle('armed', VIS.armed === p.id);
+      el.title = un ? p.desc : `Restore the ${HALL[p.hall].name} to unlock ${p.name}`;
+      el.querySelector('.cd').style.width = (W.cds[p.id] > 0 ? 100 * W.cds[p.id] / p.cd : 0) + '%';
+      el.style.opacity = !un ? '' : (W.cds[p.id] > 0 || G.res.ember < p.ember) ? '.55' : '';
+    }
+  }
+  // goal
+  const h = nextGoal(G);
+  VIS.goal = h ? h.id : null;
+  if (!h) $('goal').innerHTML = `<h4>Kingdom</h4><div class="gn">${G.crowned ? 'The kingdom is crowned' : 'All halls lit'}</div><div class="costrow">Endless Nights: survive as long as you can.</div>`;
+  else {
+    const st = G.halls[h.id];
+    if (st.s === 'building') {
+      const p = st.p / hallWork(G, h);
+      $('goal').innerHTML = `<h4>Restoring</h4><div class="gn">${h.name}</div><div class="bar"><i style="width:${(p * 100).toFixed(0)}%"></i></div><div class="costrow">${jobCount(G, 'build') ? jobCount(G, 'build') + ' building' : '<span style="color:#e07a6a">Assign builders</span>'}</div>`;
+    } else {
+      const cost = hallCost(G, h);
+      $('goal').innerHTML = `<h4>${st.s === 'damaged' ? 'Repair' : 'Next hall'}</h4><div class="gn">${h.name}</div>` + Object.keys(cost).map(k => {
+        const r = CKEY[k], have = G.res[r], f = clamp(have / cost[k], 0, 1);
+        return `<div class="costrow ${f >= 1 ? 'ok' : ''}">${ICON[r]}<div class="bar"><i style="width:${f * 100}%"></i></div><span>${Math.floor(Math.min(have, cost[k]))}/${cost[k]}</span></div>`;
+      }).join('') + (canAfford(G, cost) ? `<div class="costrow ok" style="margin-top:.2rem">Ready, tap to restore</div>` : '');
+    }
+  }
+  // preview (watchtower)
+  const pv = $('preview');
+  if (lit(G, 'watchtower') && G.plan) {
+    const s = planSummary(G);
+    pv.innerHTML = `${day ? 'Tonight' : 'Now'}: ` + Object.keys(s).map(k => `<b>${s[k]}</b> ${CONTENT.hollow[k].name}${s[k] > 1 && k !== 'knight' ? 's' : ''}`).join(', ');
+    pv.classList.remove('hidden'); pv.classList.toggle('blood', isBlood(G.day));
+  } else if (isBlood(G.day) && day) { pv.innerHTML = 'A <b style="color:#e5a0a8">Blood Moon</b> rises tonight.'; pv.classList.remove('hidden'); pv.classList.add('blood'); }
+  else pv.classList.add('hidden');
+  if (!$('panel').classList.contains('hidden') && panelRefresh) panelRefresh();
+}
+
+/* ---------- hall panel ---------- */
+let panelRefresh = null, panelKey = '';
+function closePanel() { $('panel').classList.add('hidden'); VIS.sel = null; panelRefresh = null; panelKey = ''; }
+function selectHall(id, focus) {
+  VIS.sel = id;
+  const h = HALL[id];
+  if (focus) { const s = h.slot; cam.tx = s[0] + s[2] / 2 + (VW > 720 ? 140 / Math.max(cam.tz, 0.8) : 0); cam.ty = s[1] + s[3] / 2; cam.tz = Math.max(cam.tz, 0.9); }
+  const render = () => {
+    const st = G.halls[id], cost = hallCost(G, h), ok = canAfford(G, cost), deps = depsMet(G, h);
+    const key = [id, st.s, ok, deps, G.building, Math.floor(st.p), G.phase].join('|');
+    if (key === panelKey) return; panelKey = key;
+    const stl = { lit: 'Lit', dark: 'Dark', building: 'Restoring', damaged: 'Darkened by the Hollow' }[st.s];
+    let html = `<button class="x" aria-label="Close">&times;</button><h2>${h.name}</h2><div class="st ${st.s === 'lit' ? 'lit' : st.s === 'building' ? 'building' : 'dark'}">${stl}</div><p>${h.unlock}</p>`;
+    if (st.s === 'lit') html += `<p class="lore">${h.lore}</p>`;
+    else {
+      if (h.deps.length) html += `<p class="req">Requires: ${h.deps.map(d => `<span class="${lit(G, d) ? '' : 'no'}">${HALL[d].name}</span>`).join(', ')}</p>`;
+      if (st.s !== 'building') html += `<p class="req">Cost: ${Object.keys(cost).map(k => `<span class="${G.res[CKEY[k]] >= cost[k] ? '' : 'no'}">${cost[k]} ${CKEY[k]}</span>`).join(', ') || 'free'}${h.villagers && st.s === 'dark' ? ` &middot; brings ${h.villagers} villager${h.villagers > 1 ? 's' : ''}` : ''}</p>`;
+      html += '<div class="btns">';
+      if (st.s === 'building') html += `<p>${jobCount(G, 'build')} builders working. ${(100 * st.p / hallWork(G, h)).toFixed(0)}% done.</p><button id="pnAddB" class="primary">Add builder</button>`;
+      else html += `<button id="pnRestore" class="primary" ${ok && deps && !G.building && G.phase === 'day' ? '' : 'disabled'}>${st.s === 'damaged' ? 'Repair' : 'Restore'}</button>${G.building ? `<span class="req">Already restoring the ${HALL[G.building].name}.</span>` : G.phase !== 'day' ? '<span class="req">Builders work by day.</span>' : ''}`;
+      html += '</div>';
+    }
+    if (id === 'market' && st.s === 'lit') html += `<p class="req">Trade</p><div class="btns">${CONTENT.economy.trades.map((t, i) => `<button data-tr="${i}" ${G.res[t.give] >= t.n ? '' : 'disabled'}>${t.n} ${t.give} &rarr; ${t.m} ${t.get}</button>`).join('')}</div>`;
+    $('panel').innerHTML = html;
+    $('panel').querySelector('.x').onclick = () => { Audio.sfx('back'); closePanel(); };
+    const rb = $('pnRestore'); if (rb) rb.onclick = () => {
+      if (startRestore(G, id)) {
+        Audio.sfx('select');
+        let n = 0; while (n < 3) { if (idleCount(G) === 0) { const from = ['quarry', 'wood', 'fields'].sort((a, b) => jobCount(G, b) - jobCount(G, a))[0]; if (jobCount(G, from) <= (n < 2 ? 0 : 1)) break; const v = G.vill.filter(v => v.job === from && !v.wounded).pop(); v.job = 'idle'; v.prev = from; } const v = G.vill.find(v => v.job === 'idle' && !v.wounded); if (!v) break; assign(G, 'build', 1); n++; }
+        if (jobCount(G, 'build') === 0) toast('Assign villagers to Build to start the work.');
+        else toast(jobCount(G, 'build') > 1 ? `${jobCount(G, 'build')} villagers start restoring the ${h.name}.` : `A villager starts restoring the ${h.name}.`);
+        tutEvent('restore_' + id); save(); updateHUD(true);
+      }
+    };
+    const ab = $('pnAddB'); if (ab) ab.onclick = () => { if (assign(G, 'build', 1)) Audio.sfx('assign'); else nobody(); panelKey = ''; updateHUD(true); };
+    $('panel').querySelectorAll('[data-tr]').forEach(b => b.onclick = () => { if (trade(G, +b.dataset.tr)) { Audio.sfx('coin'); panelKey = ''; updateHUD(true); } });
+  };
+  panelKey = ''; panelRefresh = render; render();
+  $('panel').classList.remove('hidden');
+}
+function openHallsList() {
+  VIS.sel = null; panelKey = '';
+  const render = () => {
+    const key = 'list|' + CONTENT.halls.map(h => G.halls[h.id].s).join(',');
+    if (key === panelKey) return; panelKey = key;
+    $('panel').innerHTML = `<button class="x" aria-label="Close">&times;</button><h2>Halls</h2><div class="st lit">${litCount(G)} of ${CONTENT.halls.length} lit</div><div class="hl-list">` +
+      CONTENT.halls.map(h => { const s = G.halls[h.id].s; return `<div class="hrow" data-h="${h.id}"><span class="dot ${s === 'lit' ? 'lit' : s === 'building' ? 'building' : ''}"></span><span class="nm">${h.name}</span><span class="dep">${s === 'lit' ? '' : h.deps.length ? (depsMet(G, h) ? 'ready' : 'needs ' + h.deps.filter(d => !lit(G, d)).map(d => HALL[d].name).slice(0, 2).join(', ') + (h.deps.filter(d => !lit(G, d)).length > 2 ? '...' : '')) : 'ready'}</span></div>`; }).join('') + '</div>';
+    $('panel').querySelector('.x').onclick = () => { Audio.sfx('back'); closePanel(); };
+    $('panel').querySelectorAll('.hrow').forEach(r => r.onclick = () => { Audio.sfx('select'); selectHall(r.dataset.h, true); });
+  };
+  panelRefresh = render; render(); $('panel').classList.remove('hidden');
+}
+
+/* ---------- powers ---------- */
+function pickPower(id) {
+  if (!G || G.phase !== 'night') return;
+  const p = CONTENT.powers.find(p => p.id === id);
+  if (!powerUnlocked(G, p)) { Audio.sfx('deny'); toast(`Restore the ${HALL[p.hall].name} to unlock ${p.name}.`); return; }
+  if (W.cds[id] > 0) { Audio.sfx('deny'); return; }
+  if (G.res.ember < p.ember) { Audio.sfx('deny'); toast('Not enough Ember.'); return; }
+  if (!p.target) { if (castPower(G, id, 0)) tutEvent('cast'); return; }
+  VIS.armed = VIS.armed === id ? null : id;
+  cv.classList.toggle('target', !!VIS.armed);
+  Audio.sfx('select');
+  if (VIS.armed) toast(`Tap where to cast ${p.name}.`, '', 1600);
+  updateHUD(true);
+}
+function castAt(wx) {
+  const id = VIS.armed; VIS.armed = null; cv.classList.remove('target');
+  if (castPower(G, id, wx)) tutEvent('cast');
+  updateHUD(true);
+}
+
+/* ---------- FX handler (sim events -> sound + visuals) ---------- */
+let buildSfxT = 0;
+function handleFX() {
+  while (FX.length) {
+    const e = FX.shift();
+    switch (e.type) {
+      case 'gain': {
+        const near = cam.z > 0.5 ? 1 : 0.6;
+        Audio.sfx(e.r, { vol: near, gap: 0.12 });
+        VIS.floats.push({ x: e.x, y: e.y, text: '+' + e.n, col: RES_COL[e.r], t: 0, life: 1.3, r: e.r });
+        if (!VIS.reduce) puff(e.x, -4, 4, e.r === 'stone' ? '#8a8c90' : e.r === 'timber' ? '#6a5236' : '#a89a5a', 60, 60, 0.6, 3);
+        break;
+      }
+      case 'buildTick': if (VIS.time - buildSfxT > 0.4) { buildSfxT = VIS.time; Audio.sfx('build', { vol: cam.z > 0.6 ? 1 : 0.5 }); } break;
+      case 'buildStart': { const h = HALL[e.id]; puff(h.slot[0] + h.slot[2] / 2, h.slot[1] + h.slot[3], 12, '#6a5a4a', 160, 40, 1, 6); break; }
+      case 'hallLit': {
+        const h = HALL[e.id];
+        VIS.hallFx[e.id] = { t: 0 };
+        Audio.sfx('hall'); syncLayers();
+        if (!VIS.reduce) { puff(h.slot[0] + h.slot[2] / 2, h.slot[1] + h.slot[3], 24, '#7a6a5a', 260, 60, 1.2, 7); puff(h.slot[0] + h.slot[2] / 2, h.slot[1] + h.slot[3] * 0.6, 26, 'gold', 120, 120, 1.6, 6); VIS.flash = 0.3; }
+        banner(h.name, e.repair ? 'repaired' : 'restored');
+        if (!e.repair) { setTimeout(() => toast(h.lore, 'lore', 7000), 900); if (h.villagers) setTimeout(() => toast(`${h.villagers} villager${h.villagers > 1 ? 's' : ''} arrive at the gates.`), 2200); }
+        tutEvent('lit_' + e.id); save(); panelKey = '';
+        // builders go back to idle
+        G.vill.forEach(v => { if (v.job === 'build') { v.job = v.prev || 'idle'; v.prev = 0; } });
+        break;
+      }
+      case 'crowned': setTimeout(() => { Audio.sfx('crown'); banner('Long live the kingdom', 'Endless Nights begin', ''); }, 2500); break;
+      case 'bell': Audio.sfx('bell'); toast('The bell rings. Night falls soon. Put guards on the walls.'); tutEvent('bell'); break;
+      case 'nightStart':
+        Audio.setMode('night'); Audio.setNight(0, e.blood); Audio.sfx('horn');
+        if (e.blood) { Audio.sfx('blood'); banner('Blood Moon', 'the Hollow Knight comes', 'blood'); }
+        else banner('Night ' + G.day, 'hold the walls');
+        VIS.nightFade = 0; closePanel(); tutEvent('night');
+        if (jobCount(G, 'wall') === 0) setTimeout(() => toast('No guards on the walls. Assign villagers to Walls by day.', 'bad', 4500), 2600);
+        break;
+      case 'spawn': Audio.sfx('approach', { vol: e.k === 'knight' ? 1.5 : 0.6, gap: 0.6 }); if (G && W) Audio.setNight(clamp(W.spawnI / Math.max(1, G.plan.length), 0, 1), W.night.blood); break;
+      case 'spear': Audio.sfx('spear', { gap: 0.08 }); if (!VIS.reduce) puff(e.x, e.y - 14, 3, '#3a3046', 60, 30, 0.4, 3); break;
+      case 'bow': Audio.sfx('bow', { gap: 0.07 }); break;
+      case 'arrowHit': Audio.sfx('hit', { gap: 0.06 }); break;
+      case 'kill': Audio.sfx('defeat', { gap: 0.1 }); puff(e.x, e.y - 14, e.k === 'knight' ? 40 : 10, '#2a2436', 90, 50, 1.2, e.k === 'knight' ? 10 : 5); if (e.em) { Audio.sfx('ember', { gap: 0.1 }); puff(e.x, e.y - 14, 4, 'ember', 50, 80, 1, 3); VIS.floats.push({ x: e.x, y: e.y - 40, text: '+' + e.em, col: RES_COL.ember, t: 0, life: 1.3, r: 'ember' }); } if (e.k === 'knight') { banner('The Hollow Knight falls', '', ''); cam.shake = 0.6; } break;
+      case 'gateHit': Audio.sfx('gate', { vol: e.heavy ? 1 : 0.6, gap: 0.15 }); if (e.heavy) cam.shake = Math.max(cam.shake, 0.18); puff(e.side * WALL_FACE, -30, 3, '#5a4a3a', 60, 40, 0.6, 3); break;
+      case 'towerHit': Audio.sfx('gate', { gap: 0.2 }); if (e.broke) toast('A tower has fallen.', 'bad'); break;
+      case 'breach': Audio.sfx('breach'); cam.shake = 0.7; toast(`The ${e.side < 0 ? 'west' : 'east'} gate is broken!`, 'bad', 4000); break;
+      case 'sneak': break;
+      case 'stolen': if (e.loot) { Audio.sfx('steal'); VIS.floats.push({ x: e.x, y: -120, text: '-' + e.loot.n + ' ' + e.loot.r, col: '#e07a6a', t: 0, life: 1.6 }); } break;
+      case 'recover': VIS.floats.push({ x: e.x, y: e.y - 40, text: '+' + e.n, col: RES_COL[e.r], t: 0, life: 1.3, r: e.r }); break;
+      case 'darken': toast(`The Hollow darkened the ${HALL[e.id].name}.`, 'bad', 4000); Audio.sfx('defeat'); syncLayers(); break;
+      case 'guardDown': Audio.sfx('defeat'); puff(e.x, e.y - 10, 8, '#5a6a7a', 60, 40, 0.8, 4); break;
+      case 'vanish': puff(e.x, e.y - 10, 8, '#2a2436', 60, 40, 0.8, 4); break;
+      case 'power': Audio.sfx(e.id); if (e.id === 'light') { cam.shake = 0.35; VIS.flash = 0.5; } if (e.id === 'mend') puff(e.x, -60, 14, '#8a8c90', 80, 60, 0.8, 5); if (e.id === 'rally') banner('Rally!', '', ''); break;
+      case 'assign': break;
+    }
+  }
+}
+function syncLayers() {
+  if (!G) return;
+  const set = CONTENT.halls.filter(h => lit(G, h.id)).map(h => h.layer);
+  Audio.setLayers(set);
+  let fire = 0; ['great', 'kitchen', 'forge'].forEach(id => { if (lit(G, id)) fire += 0.12; });
+  Audio.setFire(fire * clamp((cam.z - 0.3) * 1.2, 0.25, 1.4));
+}
+
+/* ---------- dawn + report ---------- */
+function dawn() {
+  if (W) W.en.forEach(e => { if (e.st !== 'dead') puff(e.x, e.y - 14, 10, '#3a3446', 80, 50, 1.4, 6); });
+  report = doDawn(G);
+  W.en = []; W.effects = [];
+  Audio.setMode('day'); Audio.sfx('dawn'); syncLayers();
+  VIS.sweep = 0;
+  post({ type: 'playchain:score', score: score(G) });
+  save();
+  showReport(report);
+}
+function showReport(r) {
+  const stolen = Object.keys(r.stolen || {}).filter(k => r.stolen[k] > 0).map(k => `${r.stolen[k]} ${k}`).join(', ');
+  let rows = `<tr><td>Hollow defeated</td><td class="good">${r.killed}</td></tr><tr><td>Ember earned</td><td class="good">+${r.ember}</td></tr>`;
+  rows += `<tr><td>Wall damage taken</td><td class="${r.wallDmg > 0 ? 'bad' : ''}">${Math.round(r.wallDmg)}</td></tr>`;
+  if (stolen) rows += `<tr><td>Stolen</td><td class="bad">${stolen}</td></tr>`;
+  if (r.lost) rows += `<tr><td>Guards lost</td><td class="bad">${r.lost}</td></tr>`;
+  if (r.wounded) rows += `<tr><td>Guards wounded (back today)</td><td>${r.wounded}</td></tr>`;
+  if (r.darkened && r.darkened.length) rows += `<tr><td>Halls darkened</td><td class="bad">${r.darkened.join(', ')}</td></tr>`;
+  if (r.bloodReward) rows += `<tr><td>Blood Moon reward</td><td class="good">+${CONTENT.rewards.bloodEmber} ember, +${CONTENT.rewards.bloodCoin} coin</td></tr>`;
+  rows += `<tr><td>Grain eaten</td><td class="${r.hungry ? 'bad' : ''}">${r.eaten}${r.hungry ? ' (hungry!)' : ''}</td></tr><tr><td>Taxes</td><td class="good">+${r.tax} coin</td></tr>`;
+  if (r.chapel) rows += `<tr><td>Chapel</td><td class="good">+${r.chapel} ember</td></tr>`;
+  if (r.market) rows += `<tr><td>Market</td><td class="good">+${r.market} coin</td></tr>`;
+  openModal(`<h3>Dawn of day ${G.day}</h3><h2>Night ${r.night} survived</h2><table>${rows}</table><div class="costrow" style="opacity:.7;margin-top:.4rem">Score ${score(G)} &middot; ${G.nightsSurvived} nights &middot; ${litCount(G)} halls lit</div><div class="menu"><button class="primary" id="mContinue">Continue</button></div>`, 'report');
+  $('mContinue').onclick = () => { Audio.sfx('select'); closeModal(); if (G.hungry) toast('The granary is empty. Hungry villagers work slower. Send someone to the Fields.', 'bad', 5000); };
+}
+
+/* ---------- modal / menus ---------- */
+let modalKind = null, modalReturn = null;
+function openModal(html, kind) {
+  $('mcard').innerHTML = html; $('modal').classList.remove('hidden'); modalKind = kind; menuOpen = true;
+  setTimeout(() => { const b = $('mcard').querySelector('button'); if (b && padActive) b.focus(); }, 30);
+}
+function closeModal() { $('modal').classList.add('hidden'); modalKind = null; menuOpen = false; if (modalReturn) { const f = modalReturn; modalReturn = null; f(); } }
+function openPause() {
+  if (state !== 'play') return;
+  openModal(`<h3>Paused</h3><h2>Day ${G.day}</h2><div class="costrow" style="opacity:.7">${G.nightsSurvived} nights survived &middot; ${litCount(G)} of ${CONTENT.halls.length} halls lit &middot; score ${score(G)}</div><div class="menu">
+    <button class="primary" id="mResume">Resume</button><button id="mHalls">Halls</button><button id="mSettings">Settings</button><button id="mTut">${G.tut >= 0 && G.tut < 99 ? 'Skip tutorial' : 'Replay tutorial'}</button><button id="mRestart" class="danger">New Reign (restart)</button><button id="mTitle">Title screen</button>${inFrame ? '<button id="mQuit">Quit to PlayChain</button>' : ''}</div>`, 'pause');
+  $('mResume').onclick = () => { Audio.sfx('back'); closeModal(); };
+  $('mHalls').onclick = () => { Audio.sfx('select'); closeModal(); openHallsList(); };
+  $('mSettings').onclick = () => { Audio.sfx('select'); openSettings(openPause); };
+  $('mTut').onclick = () => { Audio.sfx('select'); if (G.tut >= 0 && G.tut < 99) { G.tut = 99; hideTip(); } else { G.tut = 0; } closeModal(); save(); tutUpdate(); };
+  $('mRestart').onclick = () => { Audio.sfx('select'); confirmNew(openPause); };
+  $('mTitle').onclick = () => { Audio.sfx('back'); save(); closeModal(); toTitle(); };
+  if ($('mQuit')) $('mQuit').onclick = () => { save(); post({ type: 'playchain:exit' }); };
+}
+function confirmNew(back) {
+  openModal(`<h3>New Reign</h3><h2>Start over?</h2><p style="font-size:.9rem;opacity:.85">Your halls go dark again and the night count resets.${G && G.crowned ? ' Your crowned kingdom grants +1 starting villager.' : ''}</p><div class="menu"><button class="primary" id="mYes">Begin a New Reign</button><button id="mNo">Cancel</button></div>`, 'confirm');
+  $('mYes').onclick = () => { Audio.sfx('select'); closeModal(); startNew(); };
+  $('mNo').onclick = () => { Audio.sfx('back'); back ? back() : closeModal(); };
+}
+function openSettings(back) {
+  const sl = (k, label) => `<div class="set"><label for="s_${k}">${label}</label><input type="range" id="s_${k}" min="0" max="1" step="0.05" value="${settings[k]}"><span id="v_${k}">${Math.round(settings[k] * 100)}</span></div>`;
+  openModal(`<h3>Settings</h3><h2>Settings</h2>${sl('music', 'Music')}${sl('amb', 'Ambience')}${sl('sfx', 'Effects')}${sl('ui', 'Interface')}
+    <div class="set"><span>Reduce motion</span><div class="seg" id="s_rm"><button data-v="0">Off</button><button data-v="1">On</button></div><span></span></div>
+    <div class="set"><span>Text size</span><div class="seg" id="s_ts"><button data-v="0.9">S</button><button data-v="1">M</button><button data-v="1.15">L</button><button data-v="1.3">XL</button></div><span></span></div>
+    <p style="font-size:.78rem;opacity:.6;line-height:1.5">Drag to pan, wheel or pinch to zoom. Space pauses, 1 to 4 cast powers at night, H opens Halls, Esc for the menu. Gamepad: left stick moves the cursor, right stick pans, A selects, B backs out, triggers zoom, bumpers change speed.</p>
+    <div class="menu"><button class="primary" id="mBack">Back</button></div>`, 'settings');
+  ['music', 'amb', 'sfx', 'ui'].forEach(k => { $('s_' + k).oninput = ev => { settings[k] = +ev.target.value; $('v_' + k).textContent = Math.round(settings[k] * 100); applySettings(); }; $('s_' + k).onchange = () => { Audio.sfx('click'); saveSettingsOnly(); }; });
+  const seg = (id, get, set) => { const el = $(id); const upd = () => [...el.children].forEach(b => b.classList.toggle('on', String(get()) === b.dataset.v)); el.onclick = e => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); upd(); applySettings(); saveSettingsOnly(); Audio.sfx('click'); }; upd(); };
+  seg('s_rm', () => settings.reduce ? 1 : 0, v => settings.reduce = v === '1');
+  seg('s_ts', () => settings.ts, v => settings.ts = +v);
+  $('mBack').onclick = () => { Audio.sfx('back'); back ? back() : closeModal(); };
+}
+
+/* ---------- tutorial (first two days, one tip at a time) ---------- */
+const TUT = [
+  { id: 'quarry', title: 'Gather', text: 'Send a villager to the quarry. Stone restores halls.', el: () => $('j_quarry').querySelector('[data-d="1"]'), done: e => e === 'assign_quarry' },
+  { id: 'wood', title: 'Gather', text: 'Now a woodcutter for timber. Idle hands earn nothing.', el: () => $('j_wood').querySelector('[data-d="1"]'), done: e => e === 'assign_wood' },
+  { id: 'kitchen', title: 'Your next hall', text: 'When the bars fill, tap here (or the dark Kitchen) and press Restore.', el: () => $('goal'), done: e => e === 'restore_kitchen' || e === 'lit_kitchen', when: () => true },
+  { id: 'guard', title: 'Night is coming', text: 'Put a guard on the walls. Guards fight the Hollow on their own.', el: () => $('j_wall').querySelector('[data-d="1"]'), done: e => e === 'assign_wall', when: () => G.phase === 'day' && (G.t > CONTENT.timing.dayLen - 50 || G.day > 1 || G.building === 'kitchen' || lit(G, 'kitchen')) },
+  { id: 'flare', title: 'Cast a power', text: 'Tap Flare (or press 1), then tap near the Hollow to slow and reveal them.', el: () => $('p_flare'), done: e => e === 'cast', when: () => G.phase === 'night' && W.en.length > 0 }
+];
+let tipEl = null;
+function tutEvent(ev) {
+  if (!G || G.tut >= TUT.length || G.tut < 0) return;
+  // allow completing steps in any order: skip finished ones
+  const cur = TUT[G.tut];
+  if (cur && cur.done(ev)) { G.tut++; hideTip(); Audio.sfx('select'); save(); }
+  else { // pre-completion of later steps (e.g. player assigned a guard early)
+    for (let i = G.tut + 1; i < TUT.length; i++) if (TUT[i].done(ev)) TUT[i].pre = true;
+  }
+  tutUpdate();
+}
+function hideTip() { $('tip').classList.add('hidden'); if (tipEl) tipEl.classList.remove('hl'); tipEl = null; }
+function tutUpdate() {
+  if (!G || state !== 'play' || G.tut >= TUT.length || G.day > 3 || menuOpen) { hideTip(); if (G && G.day > 3 && G.tut < TUT.length) G.tut = 99; return; }
+  let s = TUT[G.tut];
+  while (s && s.pre) { G.tut++; s = TUT[G.tut]; }
+  if (!s) { hideTip(); return; }
+  if (s.id === 'kitchen' && lit(G, 'kitchen')) { G.tut++; return tutUpdate(); }
+  if (s.when && !s.when()) { hideTip(); return; }
+  const el = s.el(); if (!el || el.offsetParent === null) { hideTip(); return; }
+  if (tipEl !== el) { if (tipEl) tipEl.classList.remove('hl'); tipEl = el; el.classList.add('hl'); }
+  const tip = $('tip');
+  if (tip.dataset.k !== s.id) { tip.innerHTML = `<b>${s.title} &middot; ${G.tut + 1}/${TUT.length}</b>${s.text}<br><button id="tipSkip">Skip tutorial</button>`; tip.dataset.k = s.id; $('tipSkip').onclick = () => { G.tut = 99; hideTip(); save(); Audio.sfx('back'); }; }
+  tip.classList.remove('hidden');
+  const r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+  const below = r.top < VH / 2;
+  let left = clamp(r.left + r.width / 2 - tw / 2, 8, VW - tw - 8);
+  tip.style.left = left + 'px'; tip.style.top = (below ? r.bottom + 12 : r.top - th - 12) + 'px';
+  tip.className = below ? 'below' : 'above'; tip.style.setProperty('--ax', clamp(r.left + r.width / 2 - left, 14, tw - 14) + 'px');
+}
+
+/* ---------- input: mouse, touch, keyboard, gamepad ---------- */
+const ptrs = new Map(); let dragMoved = 0, pinch0 = null, downAt = null;
+function hallAt(wx, wy) { for (const h of CONTENT.halls) { const s = h.slot; if (wx >= s[0] && wx <= s[0] + s[2] && wy >= s[1] && wy <= s[1] + s[3]) return h.id; } return null; }
+function clampCam() { cam.tz = clamp(cam.tz, 0.32, 2.2); cam.tx = clamp(cam.tx, -1500, 1500); cam.ty = clamp(cam.ty, -720, 60); }
+function zoomAt(sx, sy, f) {
+  const [wx, wy] = s2w(sx, sy); const nz = clamp(cam.tz * f, 0.32, 2.2);
+  cam.tx = wx - (sx - VW / 2) / nz; cam.ty = wy - (sy - VH * 0.55) / nz; cam.tz = nz; cam.z = nz; cam.x = cam.tx; cam.y = cam.ty; clampCam();
+}
+cv.addEventListener('pointerdown', e => {
+  firstInput(); if (state !== 'play' || menuOpen) return;
+  cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (ptrs.size === 1) { dragMoved = 0; downAt = [e.clientX, e.clientY]; }
+  if (ptrs.size === 2) { const p = [...ptrs.values()]; pinch0 = { d: Math.hypot(p[0][0] - p[1][0], p[0][1] - p[1][1]), z: cam.tz }; }
+});
+cv.addEventListener('pointermove', e => {
+  if (state !== 'play') return;
+  if (!ptrs.has(e.pointerId)) { const [wx, wy] = s2w(e.clientX, e.clientY); VIS.hover = hallAt(wx, wy); return; }
+  const prev = ptrs.get(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (ptrs.size === 1) {
+    const dx = e.clientX - prev[0], dy = e.clientY - prev[1];
+    dragMoved += Math.abs(dx) + Math.abs(dy);
+    if (dragMoved > 6) { cv.classList.add('drag'); cam.tx -= dx / cam.z; cam.ty -= dy / cam.z; cam.x = cam.tx; cam.y = cam.ty; clampCam(); }
+  } else if (ptrs.size === 2 && pinch0) {
+    const p = [...ptrs.values()], d = Math.hypot(p[0][0] - p[1][0], p[0][1] - p[1][1]);
+    const mx = (p[0][0] + p[1][0]) / 2, my = (p[0][1] + p[1][1]) / 2;
+    zoomAt(mx, my, (pinch0.z * d / pinch0.d) / cam.tz); dragMoved = 99;
+  }
+});
+function endPtr(e) {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.delete(e.pointerId); cv.classList.remove('drag');
+  if (ptrs.size < 2) pinch0 = null;
+  if (ptrs.size === 0 && dragMoved <= 6 && e.type === 'pointerup') tapAt(e.clientX, e.clientY);
+}
+cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
+cv.addEventListener('wheel', e => { e.preventDefault(); if (state !== 'play') return; zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+function tapAt(sx, sy) {
+  if (!G) return;
+  const [wx, wy] = s2w(sx, sy);
+  if (VIS.armed) { castAt(wx); return; }
+  const h = hallAt(wx, wy);
+  if (h) { Audio.sfx('select'); selectHall(h, false); }
+  else if (!$('panel').classList.contains('hidden')) { Audio.sfx('back'); closePanel(); }
+}
+function setSpeed(s) { if (s === 0) { paused = !paused; } else { speed = s; lastSpeed = s; paused = false; } updateHUD(true); }
+window.addEventListener('keydown', e => {
+  firstInput();
+  if (state === 'title') { if (e.key === 'Enter') { const b = !$('tContinue').classList.contains('hidden') ? $('tContinue') : $('tNew'); b.click(); } return; }
+  if (state !== 'play') return;
+  if (e.key === 'Escape') { e.preventDefault(); if (menuOpen) { if (modalKind !== 'report') { Audio.sfx('back'); closeModal(); } } else if (VIS.armed) { VIS.armed = null; cv.classList.remove('target'); } else if (!$('panel').classList.contains('hidden')) closePanel(); else openPause(); return; }
+  if (menuOpen) { if (e.key === 'Enter' && modalKind === 'report') $('mContinue').click(); return; }
+  if (e.key === ' ') { e.preventDefault(); if (paused) setSpeed(lastSpeed); else if (speed === 3) setSpeed(0); else setSpeed(speed + 1); Audio.sfx('click'); }
+  else if (['1', '2', '3', '4'].includes(e.key)) { const p = CONTENT.powers.find(p => p.key === e.key); if (p) { if (p.target && G.phase === 'night') { const wx = nearestEnemyX(); if (VIS.armed === p.id || wx == null) pickPower(p.id); else { VIS.armed = p.id; castAt(wx); } } else pickPower(p.id); } }
+  else if (e.key === 'h' || e.key === 'H') { $('panel').classList.contains('hidden') || panelKey.indexOf('list') !== 0 ? openHallsList() : closePanel(); }
+  else if (e.key === 'p' || e.key === 'P') setSpeed(0);
+  else if (e.key === 'ArrowLeft' || e.key === 'a') cam.tx -= 80 / cam.z;
+  else if (e.key === 'ArrowRight' || e.key === 'd') cam.tx += 80 / cam.z;
+  else if (e.key === 'ArrowUp' || e.key === 'w') cam.ty -= 60 / cam.z;
+  else if (e.key === 'ArrowDown' || e.key === 's') cam.ty += 60 / cam.z;
+  else if (e.key === '+' || e.key === '=') cam.tz *= 1.15;
+  else if (e.key === '-') cam.tz /= 1.15;
+  clampCam();
+});
+function nearestEnemyX() {
+  // keyboard casting: target the densest group near a wall
+  let best = null, bn = 0;
+  for (const e of W.en) { if (e.hp <= 0 || e.st === 'gone') continue; let n = 0; for (const o of W.en) if (o.hp > 0 && Math.abs(o.x - e.x) < 140) n++; if (n > bn) { bn = n; best = e.x; } }
+  return best;
+}
+// gamepad
+let padActive = false, padPrev = {}, gcur = { x: 0, y: 0, on: false };
+function pollPad(dt) {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  let p = null; for (const q of pads) if (q && q.connected) { p = q; break; }
+  if (!p) return;
+  const b = i => !!(p.buttons[i] && p.buttons[i].pressed), edge = i => b(i) && !padPrev[i];
+  const ax = i => { const v = p.axes[i] || 0; return Math.abs(v) < 0.18 ? 0 : v; };
+  if (p.buttons.some(x => x.pressed) || p.axes.some(v => Math.abs(v) > 0.3)) { if (!padActive) { padActive = true; gcur.x = VW / 2; gcur.y = VH / 2; } firstInput(); }
+  const cur = $('cursor');
+  if (state === 'title' || menuOpen) {
+    // navigate buttons with d-pad / stick, A to press, B to back
+    const btns = [...document.querySelectorAll(state === 'title' && !menuOpen ? '#title button:not(.hidden)' : '#mcard button, #mcard input')];
+    const idx = btns.indexOf(document.activeElement);
+    const down = edge(13) || (ax(1) > 0.6 && !padPrev.ly), up = edge(12) || (ax(1) < -0.6 && !padPrev.ly);
+    if (down) (btns[(idx + 1) % btns.length] || btns[0]).focus();
+    if (up) (btns[(idx - 1 + btns.length) % btns.length] || btns[0]).focus();
+    const a = document.activeElement;
+    if (a && a.type === 'range' && (edge(14) || edge(15))) { a.value = clamp(+a.value + (edge(15) ? 0.1 : -0.1), 0, 1); a.dispatchEvent(new Event('input')); a.dispatchEvent(new Event('change')); }
+    if (edge(0)) { if (a && a.tagName === 'BUTTON' && btns.includes(a)) a.click(); else if (btns[0]) btns[0].focus(); }
+    if (edge(1) && menuOpen && modalKind !== 'report') { const bk = $('mBack') || $('mResume') || $('mNo'); if (bk) bk.click(); }
+    if (edge(9) && menuOpen && modalKind === 'pause') $('mResume').click();
+    cur.classList.add('hidden');
+  } else if (state === 'play') {
+    cur.classList.remove('hidden');
+    gcur.x = clamp(gcur.x + ax(0) * 700 * dt, 0, VW); gcur.y = clamp(gcur.y + ax(1) * 700 * dt, 0, VH);
+    cur.style.left = gcur.x + 'px'; cur.style.top = gcur.y + 'px';
+    // edge-pan + right stick pan
+    cam.tx += (ax(2) * 900 * dt) / cam.z; cam.ty += (ax(3) * 700 * dt) / cam.z;
+    if (gcur.x < 30) cam.tx -= 500 * dt / cam.z; if (gcur.x > VW - 30) cam.tx += 500 * dt / cam.z;
+    const lt = p.buttons[6] ? p.buttons[6].value : 0, rt = p.buttons[7] ? p.buttons[7].value : 0;
+    if (lt > 0.1 || rt > 0.1) cam.tz *= Math.exp((rt - lt) * 1.4 * dt);
+    clampCam();
+    const [wx, wy] = s2w(gcur.x, gcur.y); VIS.hover = hallAt(wx, wy);
+    if (edge(0)) { // A: click whatever is under the cursor
+      const el = document.elementFromPoint(gcur.x, gcur.y);
+      if (el && el !== cv && el.closest('button,.pw,.hrow,#goal')) el.closest('button,.pw,.hrow,#goal').click(); else tapAt(gcur.x, gcur.y);
+    }
+    if (edge(1)) { if (VIS.armed) { VIS.armed = null; cv.classList.remove('target'); } else closePanel(); Audio.sfx('back'); }
+    if (edge(9)) openPause();
+    if (edge(3)) openHallsList();
+    if (edge(2)) { setSpeed(0); }
+    if (edge(4)) setSpeed(Math.max(1, speed - 1)); if (edge(5)) setSpeed(Math.min(3, speed + 1));
+    if (G.phase === 'night') { [12, 15, 13, 14].forEach((bi, i) => { if (edge(bi)) { const pw = CONTENT.powers[i]; if (pw.target) { VIS.armed = pw.id; castAt(s2w(gcur.x, gcur.y)[0]); } else pickPower(pw.id); } }); }
+  }
+  padPrev = {}; p.buttons.forEach((x, i) => padPrev[i] = x.pressed); padPrev.ly = Math.abs(ax(1)) > 0.6;
+}
+window.addEventListener('mousemove', () => { if (padActive) { padActive = false; $('cursor').classList.add('hidden'); } });
+
+/* ---------- audio unlock / visibility ---------- */
+let audioStarted = false;
+function firstInput() { if (audioStarted) { if (Audio.ctx && Audio.ctx.state === 'suspended' && !document.hidden && !extPaused) Audio.suspend(false); return; } audioStarted = true; applySettings(); Audio.start(); applySettings(); if (state === 'play') { Audio.setMode(G.phase); syncLayers(); } else Audio.setMode('title'); }
+document.addEventListener('visibilitychange', () => { Audio.suspend(document.hidden || extPaused); if (document.hidden && state === 'play') save(); });
+['pointerdown', 'touchstart'].forEach(t => window.addEventListener(t, firstInput, { passive: true }));
+
+/* ---------- title + flow ---------- */
+let saved = null;
+function toTitle() {
+  state = 'title'; VIS.titleMode = true; VIS.titleLit = ['great', 'throne', 'barracks'];
+  cam.tz = cam.z = Math.min(VW / 1250, VH * 0.42 / 760); cam.tx = cam.x = 0; cam.ty = cam.y = (0.05 * VH) / cam.z - 20;
+  $('hud').classList.add('hidden'); $('title').classList.remove('hidden'); hideTip();
+  $('tContinue').classList.toggle('hidden', !(G || (saved && saved.game)));
+  const g = G || (saved && saved.game);
+  $('tReign').textContent = g ? `Reign ${g.reign || 1} · Day ${g.day} · ${CONTENT.halls.filter(h => g.halls[h.id] && g.halls[h.id].s === 'lit').length} halls lit` : '';
+  if (audioStarted) Audio.setMode('title');
+  setTimeout(() => { const b = !$('tContinue').classList.contains('hidden') ? $('tContinue') : $('tNew'); if (padActive) b.focus(); }, 30);
+}
+function enterPlay() {
+  state = 'play'; VIS.titleMode = false;
+  $('title').classList.add('hidden'); $('hud').classList.remove('hidden');
+  resetTransient(G);
+  if (G.phase === 'night') { G.phase = 'day'; G.t = CONTENT.timing.dayLen - 4; }
+  cam.tz = clamp(Math.min(VW / 1150, (VH - 150) / 520), 0.36, 1.0); cam.tx = 0; cam.ty = -170 + (VW < 720 ? 40 : 0);
+  Audio.setLayers(CONTENT.halls.filter(h => lit(G, h.id)).map(h => h.layer), true);
+  if (audioStarted) { Audio.setMode('day'); syncLayers(); }
+  updateHUD(true);
+  if (G.day === 1 && G.t < 1) setTimeout(() => banner('Day 1', 'The halls remember'), 400);
+  setTimeout(tutUpdate, 900);
+}
+function startNew() {
+  const reign = G ? (G.reign || 1) + (G.crowned ? 1 : 0) : 1;
+  const seed = (Date.now() ^ 0x9E3779B9) >>> 0;  // seed chosen once, all game logic after this is seeded
+  G = newGame(G && G.crowned ? reign : (G ? G.reign : 1), seed);
+  if (!settings.tutorial) G.tut = 99;
+  VIS.hallFx = {}; save(); enterPlay();
+}
+$('tNew').onclick = () => { firstInput(); Audio.sfx('select'); if (G || (saved && saved.game)) { if (!G) G = deserialize(saved.game); confirmNew(() => closeModal()); } else startNew(); };
+$('tContinue').onclick = () => { firstInput(); Audio.sfx('select'); if (!G && saved && saved.game) G = deserialize(saved.game); if (!G) { startNew(); return; } enterPlay(); };
+$('tSettings').onclick = () => { firstInput(); Audio.sfx('select'); openSettings(); };
+
+/* ---------- main loop ---------- */
+let tutT = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  let dt = Math.min(0.1, (now - (lastT || now)) / 1000); lastT = now;
+  pollPad(dt);
+  const running = state === 'play' && !menuOpen && !paused && !extPaused && !document.hidden;
+  if (running) {
+    let sp = speed;
+    if (W && W.slowmo > 0) { W.slowmo -= dt; sp *= VIS.reduce ? 1 : 0.25; }
+    acc += dt * sp;
+    let n = 0;
+    while (acc >= STEP && n < 12) {
+      acc -= STEP; n++;
+      const r = simStep(G);
+      if (r === 'dawn') { acc = 0; handleFX(); dawn(); break; }
+    }
+    if (n >= 12) acc = 0;
+    handleFX();
+    saveTimer += dt; if (saveTimer > 20) { saveTimer = 0; save(); }
+  }
+  stepParticles(running ? dt * (W && W.slowmo > 0 && !VIS.reduce ? 0.3 : 1) : dt * 0.0);
+  for (const k in VIS.hallFx) VIS.hallFx[k].t += dt;
+  render(state === 'boot' ? null : G, dt);
+  if (state === 'play') {
+    updateHUD(false);
+    tutT -= dt; if (tutT <= 0) { tutT = 0.25; tutUpdate(); }
+    if (Math.floor(VIS.time * 2) !== Math.floor((VIS.time - dt) * 2)) syncLayers();
+  }
+}
+
+/* ---------- boot ---------- */
+window.addEventListener('resize', () => { resize(); if (state === 'title') toTitle(); });
+resize(); buildHUD(); applySettings();
+VIS.titleMode = true; VIS.titleLit = ['great', 'throne', 'barracks'];
+toTitle(); state = 'title';
+requestAnimationFrame(frame);
+post({ type: 'playchain:ready' });
+loadAll().then(d => {
+  if (d && typeof d === 'object') {
+    saved = d;
+    if (d.settings) { Object.assign(settings, d.settings); applySettings(); }
+    memSave = d;
+  }
+  if (state === 'title') toTitle();
+});
+// debug/test hook (harmless)
+window.__hk = { get G() { return G; }, get W() { return W; }, simStep, CONTENT, startNew, castPower, assign, startRestore, cam, VIS, setSpeed, score, finishHall };
+</script>
+</body></html>

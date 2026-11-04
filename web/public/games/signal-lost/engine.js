@@ -463,8 +463,8 @@ function SL_ENGINE_FACTORY() {
       var nStatic = o.static || 0, nDis = o.distract || 0, nDec = o.decoys || 0;
       var ei = 0;
       empties.sort(function (a, b) { return (adj(b) ? 1 : 0) - (adj(a) ? 1 : 0) + (rng() - 0.5) * 1.2; });
-      for (; ei < empties.length && nStatic > 0; ei++, nStatic--) level.static.push([empties[ei] % W, empties[ei] / W | 0]);
       for (; ei < empties.length && nDec > 0; ei++, nDec--) level.decoys.push({ x: empties[ei] % W, y: empties[ei] / W | 0 });
+      for (; ei < empties.length && nStatic > 0; ei++, nStatic--) level.static.push([empties[ei] % W, empties[ei] / W | 0]);
       for (; ei < empties.length && nDis > 0; ei++, nDis--) {
         var dt = pick(o.distractTypes || ['straight', 'corner']);
         level.fixed.push({ x: empties[ei] % W, y: empties[ei] / W | 0, type: dt, rot: ri(0, 3) & (PERIOD[dt] - 1 || 3) });
