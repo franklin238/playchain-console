@@ -147,7 +147,7 @@ Console:
 
 ```bash
 cd web
-npm install
+npm install --legacy-peer-deps
 npm test
 npm run dev            # http://localhost:5173, preview mode until VITE_ARCADE_ADDRESS is set
 ```
