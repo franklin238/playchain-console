@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="72%">
+      <stop offset="0" stop-color="#8e1f35"/>
+      <stop offset="1" stop-color="#1b090e"/>
+    </radialGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f4f6fa"/>
+      <stop offset=".5" stop-color="#c3cbd7"/>
+      <stop offset="1" stop-color="#6f7a8b"/>
+    </linearGradient>
+    <linearGradient id="plume" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff5468"/>
+      <stop offset="1" stop-color="#a3162f"/>
+    </linearGradient>
+    <linearGradient id="armour" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a4250"/>
+      <stop offset="1" stop-color="#14181f"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <path d="M34 256c4-44 46-62 94-62s90 18 94 62z" fill="url(#armour)"/>
+  <path d="M128 194v62" stroke="#ff5468" stroke-width="4" opacity=".7"/>
+  <path d="M130 66c8-34 62-52 94-20-4 2-8 8-8 8 4 6 6 14 6 24-4-6-10-10-16-12 2 8 2 16-2 26-6-14-18-22-34-22-14 0-28-2-40-4z" fill="url(#plume)"/>
+  <path d="M74 126c0-46 24-72 54-72s54 26 54 72v48c0 22-26 40-54 50-28-10-54-28-54-50z" fill="url(#steel)"/>
+  <path d="M122 54h12v170h-6l-6-2z" fill="#fff" opacity=".55"/>
+  <path d="M74 118h108v30l-10 8H84l-10-8z" fill="#0f1319"/>
+  <path d="M84 132h36l4-6H80zM172 132h-36l-4-6h46z" fill="#ff3d55" opacity=".35"/>
+  <path d="M88 130h32l3-3H85zM168 130h-32l-3-3h38z" fill="#ff8c98"/>
+  <g fill="#262c36">
+    <circle cx="100" cy="174" r="3.5"/><circle cx="114" cy="174" r="3.5"/>
+    <circle cx="142" cy="174" r="3.5"/><circle cx="156" cy="174" r="3.5"/>
+    <circle cx="106" cy="188" r="3.5"/><circle cx="118" cy="194" r="3.5"/>
+    <circle cx="138" cy="194" r="3.5"/><circle cx="150" cy="188" r="3.5"/>
+  </g>
+</svg>

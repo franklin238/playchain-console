@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0" stop-color="#14707a"/>
+      <stop offset="1" stop-color="#061a20"/>
+    </radialGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <path d="M48 34l58 76-62 22z" fill="#ff8a3c"/>
+  <path d="M208 34l-58 76 62 22z" fill="#e0621d"/>
+  <path d="M60 62l30 44-34 12z" fill="#3a1408"/>
+  <path d="M196 62l-30 44 34 12z" fill="#2a0e05"/>
+  <path d="M44 124l84-30v134l-68-50z" fill="#ff8f42"/>
+  <path d="M212 124l-84-30v134l68-50z" fill="#e8691f"/>
+  <path d="M128 94l-34 12 34 58z" fill="#ffa763"/>
+  <path d="M128 94l34 12-34 58z" fill="#f47d33"/>
+  <path d="M44 124l54 42 30 62-68-50z" fill="#fff4e8"/>
+  <path d="M212 124l-54 42-30 62 68-50z" fill="#e6d6c6"/>
+  <path d="M76 132l40 14-30 12z" fill="#0b1b20"/>
+  <path d="M180 132l-40 14 30 12z" fill="#0b1b20"/>
+  <path d="M86 142l22 6-16 7z" fill="#4ef0e0"/>
+  <path d="M170 142l-22 6 16 7z" fill="#4ef0e0"/>
+  <path d="M112 198h32l-16 30z" fill="#1a0f10"/>
+  <path d="M118 201h12l-6 8z" fill="#fff" opacity=".35"/>
+</svg>

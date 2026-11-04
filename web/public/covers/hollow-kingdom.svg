@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#03141a"/>
+      <stop offset="0.6" stop-color="#0b2b2a"/>
+      <stop offset="1" stop-color="#020807"/>
+    </linearGradient>
+    <radialGradient id="moon" cx="0.78" cy="0.22" r="0.3">
+      <stop offset="0" stop-color="#e9f2d8" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#e9f2d8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#sky)"/>
+  <rect width="1280" height="720" fill="url(#moon)"/>
+  <circle cx="1000" cy="160" r="62" fill="#eef4dc"/>
+  <path fill="#06110f" d="M0 600l160-60 200 40 240-90 220 70 200-50 260 60v150H0z"/>
+  <path fill="#020605" d="M380 600V330h40v-50h30v50h50V250h-20l45-70 45 70h-20v80h50v-50h30v50h40v270h-90v-90a40 40 0 0 0-80 0v90z"/>
+  <g fill="#ffbf47">
+    <rect x="428" y="380" width="14" height="24"/><rect x="580" y="370" width="14" height="24"/>
+    <rect x="538" y="290" width="12" height="20"/>
+  </g>
+  <g fill="#ffbf47" fill-opacity="0.6">
+    <circle cx="160" cy="250" r="3"/><circle cx="260" cy="190" r="2"/><circle cx="760" cy="120" r="2"/>
+    <circle cx="880" cy="260" r="2.5"/><circle cx="1180" cy="330" r="2"/><circle cx="90" cy="120" r="2"/>
+  </g>
+</svg>

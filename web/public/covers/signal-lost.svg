@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#001a1f"/>
+      <stop offset="1" stop-color="#00050a"/>
+    </linearGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2fd3f0" stop-opacity="0"/>
+      <stop offset="1" stop-color="#2fd3f0" stop-opacity="0.45"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <g stroke="url(#fade)" stroke-width="2">
+    <line x1="640" y1="380" x2="-200" y2="720"/><line x1="640" y1="380" x2="100" y2="720"/>
+    <line x1="640" y1="380" x2="400" y2="720"/><line x1="640" y1="380" x2="640" y2="720"/>
+    <line x1="640" y1="380" x2="880" y2="720"/><line x1="640" y1="380" x2="1180" y2="720"/>
+    <line x1="640" y1="380" x2="1480" y2="720"/>
+    <line x1="0" y1="430" x2="1280" y2="430"/><line x1="0" y1="490" x2="1280" y2="490"/>
+    <line x1="0" y1="570" x2="1280" y2="570"/><line x1="0" y1="680" x2="1280" y2="680"/>
+  </g>
+  <g fill="none" stroke="#2fd3f0" stroke-width="6" stroke-linecap="round">
+    <line x1="640" y1="380" x2="640" y2="170"/>
+    <line x1="590" y1="380" x2="640" y2="230"/><line x1="690" y1="380" x2="640" y2="230"/>
+    <path d="M580 150a90 90 0 0 1 120 0" stroke-opacity="0.8"/>
+    <path d="M545 115a140 140 0 0 1 190 0" stroke-opacity="0.45"/>
+    <path d="M510 80a190 190 0 0 1 260 0" stroke-opacity="0.2" stroke-dasharray="20 18"/>
+  </g>
+  <circle cx="640" cy="165" r="10" fill="#ff5468"/>
+  <g fill="#2fd3f0" fill-opacity="0.35">
+    <rect x="120" y="200" width="260" height="6"/><rect x="900" y="260" width="200" height="4"/>
+    <rect x="820" y="120" width="120" height="8"/><rect x="200" y="320" width="90" height="4"/>
+  </g>
+</svg>

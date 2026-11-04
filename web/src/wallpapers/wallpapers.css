@@ -1,0 +1,370 @@
+/*
+ * Console wallpapers. Every size uses container query units (cqw, cqh,
+ * cqmin, cqmax), so the same wallpaper renders full screen and inside the
+ * small previews in Settings. Only transform and opacity are animated, which
+ * the browser can run off the main thread.
+ */
+
+.wp {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  container-type: size;
+  isolation: isolate;
+  pointer-events: none;
+  background: #151515;
+}
+.wp > * {
+  position: absolute;
+}
+.wp-fixed {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+
+/* Film grain + vignette, shared by most wallpapers. */
+.wp-grain {
+  inset: 0;
+  z-index: 5;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.wp-vignette {
+  inset: 0;
+  z-index: 6;
+  background: radial-gradient(ellipse at 50% 45%, transparent 40%, rgb(0 0 0 / 0.55) 100%);
+}
+/* Keeps the header bar and the bottom hint readable on any wallpaper. */
+.wp-scrim {
+  inset: 0;
+  z-index: 7;
+  background:
+    linear-gradient(to bottom, rgb(0 0 0 / 0.35), transparent 18%),
+    linear-gradient(to top, rgb(0 0 0 / 0.35), transparent 14%);
+}
+.wp-dim {
+  inset: 0;
+  z-index: 8;
+  background: #000;
+}
+
+/* ---------------------------------------------------------------- Charcoal */
+.wp-charcoal {
+  background:
+    radial-gradient(70cqw 40cqh at 50% -10cqh, rgb(255 255 255 / 0.04), transparent 70%),
+    #151515;
+}
+
+/* ---------------------------------------------------------- Crimson Aurora */
+.wp-aurora {
+  background: #100a0c;
+}
+.wp-aurora .blob {
+  border-radius: 50%;
+  will-change: transform;
+}
+.wp-aurora .b1 {
+  width: 90cqmax;
+  height: 65cqmax;
+  left: -25cqmax;
+  top: -32cqmax;
+  background: radial-gradient(closest-side, rgb(196 30 58 / 0.6), rgb(196 30 58 / 0));
+  animation: wp-aurora-1 34s ease-in-out infinite alternate;
+}
+.wp-aurora .b2 {
+  width: 70cqmax;
+  height: 52cqmax;
+  right: -28cqmax;
+  top: 4cqh;
+  background: radial-gradient(closest-side, rgb(212 170 92 / 0.2), rgb(212 170 92 / 0));
+  animation: wp-aurora-2 42s ease-in-out infinite alternate;
+}
+.wp-aurora .b3 {
+  width: 95cqmax;
+  height: 62cqmax;
+  left: 0;
+  bottom: -44cqmax;
+  background: radial-gradient(closest-side, rgb(120 16 72 / 0.55), rgb(120 16 72 / 0));
+  animation: wp-aurora-3 50s ease-in-out infinite alternate;
+}
+.wp-aurora .ribbon {
+  width: 120cqmax;
+  height: 16cqmax;
+  left: -10cqmax;
+  top: 30cqh;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 90 110 / 0.22), rgb(255 90 110 / 0));
+  transform: rotate(-12deg);
+  animation: wp-aurora-ribbon 28s ease-in-out infinite alternate;
+}
+@keyframes wp-aurora-1 {
+  to { transform: translate(16cqw, 12cqh) scale(1.15); }
+}
+@keyframes wp-aurora-2 {
+  to { transform: translate(-14cqw, 18cqh) scale(1.25); }
+}
+@keyframes wp-aurora-3 {
+  to { transform: translate(12cqw, -10cqh) scale(1.1); }
+}
+@keyframes wp-aurora-ribbon {
+  to { transform: rotate(-4deg) translate(-6cqw, 14cqh) scaleX(1.2); }
+}
+
+/* ------------------------------------------------------------ Midnight Rain */
+.wp-rain {
+  background: linear-gradient(180deg, #0c1328 0%, #080b18 55%, #040509 100%);
+}
+.wp-rain .glow {
+  width: 70cqmax;
+  height: 70cqmax;
+  right: -18cqmax;
+  top: -26cqmax;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 59 78 / 0.24), rgb(255 59 78 / 0));
+}
+.wp-rain .lamp {
+  width: 50cqmax;
+  height: 50cqmax;
+  left: -12cqmax;
+  bottom: -20cqmax;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(245 210 138 / 0.12), rgb(245 210 138 / 0));
+}
+.wp-rain .rain-box {
+  inset: -30cqh -20cqw;
+  transform: rotate(12deg);
+}
+.wp-rain .rain {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -240px;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='240'%3E%3Cg stroke='%23b4c4ff' stroke-linecap='round'%3E%3Cline x1='12' y1='10' x2='12' y2='58' stroke-opacity='.32' stroke-width='1.4'/%3E%3Cline x1='58' y1='120' x2='58' y2='156' stroke-opacity='.22' stroke-width='1.1'/%3E%3Cline x1='34' y1='190' x2='34' y2='224' stroke-opacity='.18' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 90px 240px;
+  will-change: transform;
+  animation: wp-rain-fall 0.9s linear infinite;
+}
+.wp-rain .rain.far {
+  opacity: 0.5;
+  background-size: 60px 160px;
+  top: -160px;
+  animation: wp-rain-fall-far 1.4s linear infinite;
+}
+@keyframes wp-rain-fall {
+  to { transform: translateY(240px); }
+}
+@keyframes wp-rain-fall-far {
+  to { transform: translateY(160px); }
+}
+.wp-rain .city {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 34cqh;
+}
+
+/* ------------------------------------------------------------------ Nebula */
+.wp-nebula {
+  background:
+    radial-gradient(60cqw 50cqh at 25% 20%, rgb(74 26 112 / 0.55), transparent 70%),
+    radial-gradient(55cqw 45cqh at 80% 75%, rgb(12 64 96 / 0.6), transparent 70%),
+    radial-gradient(40cqw 35cqh at 62% 32%, rgb(179 27 52 / 0.28), transparent 70%),
+    #07060d;
+}
+.wp-nebula .cloud {
+  width: 110cqmax;
+  height: 110cqmax;
+  left: calc(50% - 55cqmax);
+  top: calc(50% - 55cqmax);
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgb(120 40 160 / 0.14), rgb(30 120 160 / 0.12), rgb(200 40 80 / 0.12), rgb(120 40 160 / 0.14));
+  mask-image: radial-gradient(closest-side, #000 20%, transparent 75%);
+  animation: wp-spin 240s linear infinite;
+}
+.wp-nebula .stars {
+  inset: -10%;
+  will-change: transform, opacity;
+}
+.wp-nebula .s1 {
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+    radial-gradient(1px 1px at 140px 70px, rgb(255 255 255 / 0.8), transparent),
+    radial-gradient(1px 1px at 90px 160px, #fff, transparent),
+    radial-gradient(1px 1px at 210px 120px, rgb(255 255 255 / 0.7), transparent),
+    radial-gradient(1px 1px at 230px 220px, #fff, transparent),
+    radial-gradient(1px 1px at 40px 210px, rgb(255 255 255 / 0.6), transparent);
+  background-size: 250px 250px;
+  animation: wp-drift 180s linear infinite;
+}
+.wp-nebula .s2 {
+  background-image:
+    radial-gradient(1.5px 1.5px at 60px 80px, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 300px 40px, #ffd9e0, transparent),
+    radial-gradient(1.5px 1.5px at 180px 290px, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 330px 250px, #d9ecff, transparent);
+  background-size: 380px 380px;
+  animation:
+    wp-twinkle 5s ease-in-out infinite alternate,
+    wp-drift 260s linear infinite reverse;
+}
+.wp-nebula .s3 {
+  background-image:
+    radial-gradient(2.2px 2.2px at 120px 140px, #fff, transparent),
+    radial-gradient(2px 2px at 420px 380px, #ffe3b3, transparent);
+  background-size: 540px 540px;
+  animation: wp-twinkle 7s ease-in-out 2s infinite alternate;
+}
+@keyframes wp-drift {
+  to { transform: translate(-6%, 4%); }
+}
+@keyframes wp-twinkle {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+@keyframes wp-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ------------------------------------------------------------ Neon Horizon */
+.wp-neon {
+  background: linear-gradient(180deg, #06010d 0%, #12031c 38%, #330630 60%, #4a0a3a 64%, #06010d 64.2%);
+}
+.wp-neon .sun {
+  left: 50%;
+  top: 64cqh;
+  width: 34cqmin;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -82%);
+  background: linear-gradient(180deg, #ffd166 0%, #ff7a59 45%, #ff2e88 80%);
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0 48%,
+    transparent 48% 52%,
+    #000 52% 60%,
+    transparent 60% 65%,
+    #000 65% 72%,
+    transparent 72% 78%,
+    #000 78% 84%,
+    transparent 84%
+  );
+  opacity: 0.85;
+  box-shadow: 0 0 6cqmin rgb(255 46 136 / 0.45);
+}
+.wp-neon .haze {
+  left: 0;
+  right: 0;
+  top: 46cqh;
+  height: 22cqh;
+  background: radial-gradient(60% 100% at 50% 100%, rgb(255 46 136 / 0.35), transparent 70%);
+}
+.wp-neon .hills {
+  left: 0;
+  right: 0;
+  top: 52cqh;
+  width: 100%;
+  height: 12.4cqh;
+}
+.wp-neon .floor {
+  left: -60%;
+  right: -60%;
+  top: 64cqh;
+  bottom: -2cqh;
+  overflow: hidden;
+  transform: perspective(30cqh) rotateX(58deg);
+  transform-origin: 50% 0;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 30%);
+}
+.wp-neon .grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -5cqmax;
+  bottom: 0;
+  background-image:
+    linear-gradient(rgb(255 46 136 / 0.75) 0.18cqmax, transparent 0.18cqmax),
+    linear-gradient(90deg, rgb(47 211 240 / 0.6) 0.18cqmax, transparent 0.18cqmax);
+  background-size: 5cqmax 5cqmax;
+  will-change: transform;
+  animation: wp-grid 2.4s linear infinite;
+}
+@keyframes wp-grid {
+  to { transform: translateY(5cqmax); }
+}
+
+/* ------------------------------------------------------------------ Embers */
+.wp-embers {
+  background:
+    radial-gradient(80cqw 50cqh at 50% 110%, rgb(150 40 12 / 0.55), transparent 70%),
+    radial-gradient(50cqw 40cqh at 15% 100%, rgb(179 27 52 / 0.35), transparent 70%),
+    linear-gradient(180deg, #0a0607 0%, #120808 100%);
+}
+.wp-embers .p {
+  bottom: -3cqh;
+  left: var(--x);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: #ffc06b;
+  box-shadow:
+    0 0 calc(var(--s) * 2) rgb(255 140 50 / 0.9),
+    0 0 calc(var(--s) * 5) rgb(255 80 40 / 0.45);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: wp-ember var(--d) linear var(--delay) infinite;
+}
+@keyframes wp-ember {
+  0% { transform: translate(0, 0); opacity: 0; }
+  12% { opacity: 0.95; }
+  70% { opacity: 0.55; }
+  100% { transform: translate(var(--dx), -108cqh); opacity: 0; }
+}
+
+/* -------------------------------------------------------------------- Silk */
+.wp-silk {
+  background:
+    radial-gradient(70cqw 60cqh at 85% 15%, rgb(179 27 52 / 0.3), transparent 70%),
+    radial-gradient(60cqw 50cqh at 10% 90%, rgb(212 170 92 / 0.12), transparent 70%),
+    #0e0d10;
+}
+.wp-silk .waves {
+  inset: -8%;
+  width: 116%;
+  height: 116%;
+  will-change: transform;
+  animation: wp-silk 36s ease-in-out infinite alternate;
+}
+@keyframes wp-silk {
+  to { transform: translate(-4%, 3%) rotate(-2deg); }
+}
+
+/* ---------------------------------------------------------- Game art / image */
+.wp-image img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.wp-art {
+  background: #0d0d0d;
+}
+.wp-art img {
+  inset: -10%;
+  width: 120%;
+  height: 120%;
+  object-fit: cover;
+  filter: blur(var(--wp-blur, 48px)) saturate(1.2);
+  opacity: 0.85;
+}
+.wp-art .shade {
+  inset: 0;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.65));
+}
+
+/* Upload placeholder inside the Settings preview */
+.wp-empty {
+  background: repeating-linear-gradient(45deg, #1a1a1a 0 12px, #202020 12px 24px);
+}

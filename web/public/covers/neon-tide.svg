@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14002e"/>
+      <stop offset="0.55" stop-color="#4b0a5e"/>
+      <stop offset="1" stop-color="#070012"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd166"/>
+      <stop offset="1" stop-color="#ff2e88"/>
+    </linearGradient>
+    <clipPath id="sunClip"><circle cx="640" cy="380" r="190"/></clipPath>
+  </defs>
+  <rect width="1280" height="720" fill="url(#sky)"/>
+  <g clip-path="url(#sunClip)">
+    <rect x="440" y="180" width="400" height="400" fill="url(#sun)"/>
+    <g fill="#2a0440">
+      <rect x="440" y="400" width="400" height="10"/><rect x="440" y="430" width="400" height="14"/>
+      <rect x="440" y="464" width="400" height="18"/><rect x="440" y="502" width="400" height="24"/>
+    </g>
+  </g>
+  <g fill="none" stroke-linecap="round">
+    <path d="M0 520c160-40 320 40 480 0s320-40 480 0 240 30 320 10" stroke="#2fd3f0" stroke-width="8"/>
+    <path d="M0 580c160-50 320 50 480 0s320-50 480 0 240 36 320 12" stroke="#ff2e88" stroke-width="6" stroke-opacity="0.8"/>
+    <path d="M0 640c160-60 320 60 480 0s320-60 480 0 240 40 320 14" stroke="#8b6cff" stroke-width="5" stroke-opacity="0.7"/>
+  </g>
+  <path d="M560 560l80-26 80 26-80 10z" fill="#e9fbff"/>
+  <path d="M600 560l40 40 40-40" fill="none" stroke="#2fd3f0" stroke-width="4"/>
+</svg>

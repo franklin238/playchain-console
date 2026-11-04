@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+@theme {
+  /* Charcoal surfaces with thin borders. */
+  --color-bg: #151515;
+  --color-bg-2: #1b1b1b;
+  --color-surface: #1e1e1e;
+  --color-surface-2: #282828;
+  --color-line: #2f2f2f;
+  --color-line-strong: #4b4b4b;
+  --color-fg: #f3f3f3;
+  --color-muted: #a8a8a8;
+
+  /* Brand red for the main action (solid buttons); a lighter red for red text on dark. */
+  --color-accent: #b31b34;
+  --color-accent-hover: #cc2340;
+  --color-accent-text: #ff5a6e;
+  /* Secondary accent: warm gold. */
+  --color-accent-2: #d4aa5c;
+
+  --color-danger: #ff4d5e;
+  --color-warn: #ff9f1c;
+  --color-ok: #3ddc97;
+  --color-verified: #5ac8ff;
+
+  --font-sans: "Plus Jakarta Sans Variable", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --font-display: "Plus Jakarta Sans Variable", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+
+  /* Sofa-readable floor: nothing below 1rem, and 1rem is 18px on a 1080p TV. */
+  --text-xs: 1rem;
+  --text-xs--line-height: 1.45;
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1.0625rem;
+  --text-base--line-height: 1.65;
+
+  --ease-console: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* 1rem: 15px on a laptop, growing to 18px on a 1920x1080 screen or TV. */
+html {
+  font-size: clamp(15px, calc(0.6vw + 6.5px), 18px);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3a transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  /* Transparent so the wallpaper (z-index -1) shows; <html> keeps the base colour. */
+  background: transparent;
+  overflow-x: hidden;
+}
+
+/* ---- Focus ring: always visible on the selected item, for every input device. */
+:focus {
+  outline: none;
+}
+:where(button, a[href], input, textarea, select, [tabindex]:not([tabindex="-1"])):focus {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 7px rgb(179 27 52 / 0.35);
+  transition:
+    outline-offset 140ms var(--ease-console),
+    box-shadow 140ms var(--ease-console);
+}
+:where(input, textarea):focus {
+  outline-offset: 1px;
+}
+
+/* Game tiles lift when selected. */
+.tile {
+  transition:
+    transform 200ms var(--ease-console),
+    border-color 200ms var(--ease-console);
+}
+.tile:focus {
+  transform: translateY(-4px);
+  border-color: var(--color-line-strong);
+  z-index: 2;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Page container: lines content up with the header bar. */
+.page {
+  width: 100%;
+  max-width: 100rem;
+  margin-inline: auto;
+  padding-inline: max(1rem, calc(3vw + 1.5rem));
+}
+@media (min-width: 100rem) {
+  .page {
+    padding-inline: calc(3vw + 1.5rem);
+  }
+}
+
+/* ---- Background: flat charcoal with a faint top light. */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(70vw 40vh at 50% -10vh, rgb(255 255 255 / 0.035), transparent 70%),
+    var(--color-bg);
+}
+
+.fade-in {
+  animation: fade-in 280ms var(--ease-console) both;
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(0.6rem); }
+  to { opacity: 1; transform: none; }
+}
+
+.slide-in-left {
+  animation: slide-in-left 220ms var(--ease-console) both;
+}
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-1.5rem); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---- Boot screen */
+.boot-draw {
+  stroke-dasharray: 130;
+  stroke-dashoffset: 130;
+  animation: boot-draw 1.2s var(--ease-console) 100ms forwards;
+}
+@keyframes boot-draw {
+  to { stroke-dashoffset: 0; }
+}
+.boot-letter {
+  opacity: 0;
+  display: inline-block;
+  animation: boot-letter 600ms var(--ease-console) forwards;
+}
+@keyframes boot-letter {
+  from { opacity: 0; transform: translateY(0.3em); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.boot-bar {
+  width: 0;
+  animation-name: boot-bar;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: forwards;
+}
+@keyframes boot-bar {
+  to { width: 100%; }
+}
+
+/* ---- Reduce motion (Settings toggle or the operating system preference). */
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+html[data-motion="reduce"] .tile:focus {
+  transform: none;
+}
+html[data-motion="reduce"] .boot-draw {
+  stroke-dashoffset: 0;
+}
+html[data-motion="reduce"] .boot-letter {
+  opacity: 1;
+}
