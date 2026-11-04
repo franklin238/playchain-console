@@ -12,7 +12,7 @@ test-results/
 .claude/
 contracts/out/
 contracts/cache/
-contracts/broadcast/*/31337/
+contracts/broadcast/
 contracts/lcov.info
 crytic-export/
 web/dist-e2e/
