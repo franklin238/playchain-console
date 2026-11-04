@@ -178,7 +178,7 @@ export function WallpaperView({
   const customUrl = useWallpaper((s) => s.customUrl);
   const artUrl = useWallpaper((s) => s.artUrl);
   const featuredCover = useArcade((s) => s.games.find((g) => g.key === s.spotlight?.key)?.meta?.cover);
-  const art = artUrl ?? featuredCover ?? "/covers/rise-of-gamdom-man.webp";
+  const art = artUrl ?? featuredCover ?? "/covers/neon-tide.svg";
 
   const className = id === "custom" ? (customUrl ? "wp-image" : "wp-empty") : id === "game-art" ? "wp-art" : `wp-${id}`;
 

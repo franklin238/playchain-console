@@ -119,6 +119,11 @@ function SL_ENGINE_FACTORY() {
       push(n, side, v, f, c);
     }
 
+    function needRet(c, side, v, f) {
+      var pend = [[c, side, v, f]];
+      for (var bb = S; bb > 0; bb--) for (var q = heads[bb]; q < buckets[bb].length; q++) pend.push(buckets[bb][q]);
+      return { need: { c: c, side: side, v: v, f: f }, pending: pend, pw: pw, rx: rx, relays: relays };
+    }
     var T = L.tower;
     for (var e = 0; e < T.edges.length; e++) emit(T.c, T.edges[e], S, T.f);
     if (fail) return { fail: true };
@@ -142,12 +147,7 @@ function SL_ENGINE_FACTORY() {
         if (undec) return { fail: true };
         continue;
       }
-      if (undec && undec[c]) {
-        // collect pending for heuristics
-        var pend = [[c, side, v, f]];
-        for (var bb = S; bb > 0; bb--) for (var q = heads[bb]; q < buckets[bb].length; q++) pend.push(buckets[bb][q]);
-        return { need: { c: c, side: side, v: v, f: f }, pending: pend, pw: pw, rx: rx, relays: relays };
-      }
+      if (undec && undec[c]) return needRet(c, side, v, f);
       var t = tiles[c];
       var ch = t.t === 'bridge' ? (side & 1) : 0;
       var idx = c * 2 + ch;
@@ -159,6 +159,7 @@ function SL_ENGINE_FACTORY() {
       if (t.t === 'dish') {
         var p = t.p;
         if (p >= 0 && pw[p * 2] === 0) {
+          if (undec && undec[p]) return needRet(p, -2, v - 1, f);
           relays++;
           var pt = tiles[p];
           pw[p * 2] = Math.max(1, v - 1); pf[p * 2] = f; pin[p * 2] = -2; pord[p * 2] = order.length; order.push([p, 0, v - 1, f, -2]);
@@ -227,7 +228,7 @@ function SL_ENGINE_FACTORY() {
         if (res.relays + lowerBound(res) > R) return;
         var c = res.need.c, side = res.need.side, choices = [], t0 = tiles[c];
         if (t0) {
-          for (var r = 0; r < PERIOD[t0.t]; r++) if (isOpen(t0.t, r, side)) choices.push({ r: r, cost: rotCost(t0.t, t0.r0, r) });
+          for (var r = 0; r < PERIOD[t0.t]; r++) if (side === -2 || isOpen(t0.t, r, side)) choices.push({ r: r, cost: rotCost(t0.t, t0.r0, r) });
         } else {
           var keys = Object.keys(inv);
           for (var i = 0; i < keys.length; i++) {
