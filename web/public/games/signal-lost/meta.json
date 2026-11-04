@@ -1,0 +1,15 @@
+{
+  "name": "Signal Lost",
+  "slug": "signal-lost",
+  "tagline": "Restore a dead network, one relay at a time.",
+  "description": "Restore a dead network, one relay at a time. Rotate and place relays to carry a fading signal from the last working tower to every silent receiver, while static, frequencies and decoys get in your way. Each connection pulls the music out of the static. Light up the world map, decode the final transmission, and race everyone on the same Daily Signal.",
+  "genre": "Puzzle",
+  "developer": {
+    "name": "Steeve",
+    "x": "gamersteeve"
+  },
+  "cover": "https://playchain-flat.vercel.app/games/signal-lost/cover.png",
+  "playUrl": "https://playchain-flat.vercel.app/games/signal-lost/index.html",
+  "controls": "Tap or click to rotate, drag tiles to place. Keys: arrows, Space, Ctrl+Z/Y, R, H. Gamepad supported.",
+  "version": "1.0.0"
+}

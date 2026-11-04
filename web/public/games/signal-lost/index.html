@@ -1,0 +1,1332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Signal Lost</title>
+<style>
+:root{
+  --void:#101417;--panel:#1A2024;--dead:#2A3438;--teal:#5FC9C9;--dimteal:#3E7F84;--amber:#E3A857;--violet:#9B7FD1;--white:#F2F5F5;--maroon:#5A1E2A;
+  --text:#dfe7e8;--muted:#7f9095;
+  --sans:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--void);color:var(--text);font-family:var(--sans);overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+#scan{position:fixed;inset:0;pointer-events:none;z-index:40;display:none;
+  background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.16) 2px 3px),
+  radial-gradient(ellipse at center,rgba(0,0,0,0) 60%,rgba(0,0,0,.45) 100%)}
+body.scan #scan{display:block}
+.hide{display:none!important}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.btn{display:block;width:100%;padding:.72em 1.1em;margin:.38em 0;border:1px solid var(--dead);border-radius:10px;background:rgba(26,32,36,.82);
+  color:var(--text);font-weight:600;letter-spacing:.02em;text-align:left;transition:border-color .12s,background .12s,color .12s}
+.btn:hover,.btn:focus-visible,.btn.focus{border-color:var(--teal);color:#fff;background:rgba(62,127,132,.22);outline:none}
+.btn.primary{border-color:var(--dimteal);color:var(--teal)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn small{float:right;color:var(--muted);font-family:var(--mono);font-weight:400}
+/* title */
+#title{position:fixed;left:0;right:0;bottom:0;top:52%;z-index:10;display:flex;flex-direction:column;align-items:center;padding:0 16px;
+  background:linear-gradient(to bottom,rgba(11,14,16,0),rgba(11,14,16,.9) 16%,#0b0e10 40%)}
+#title h1{margin:3vh 0 0;font-size:clamp(40px,7.4vw,76px);font-weight:800;letter-spacing:-.01em;color:#fff;line-height:1}
+#title .tag{margin:.6em 0 0;color:#c9d2d4;font-size:clamp(14px,1.8vw,19px)}
+#title .line{margin:.9em 0 0;font-family:var(--mono);color:var(--teal);font-size:13px;letter-spacing:.08em;min-height:1.3em}
+#title .menu{margin-top:2vh;width:min(520px,92vw);display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+#title .menu .btn{margin:.3em 0}
+@media (max-width:520px){#title .menu{grid-template-columns:1fr}}
+#title .credit{position:absolute;bottom:10px;right:16px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em}
+#title .kick{position:absolute;bottom:10px;left:16px;font-family:var(--mono);font-size:11px;color:var(--dimteal);letter-spacing:.14em;font-weight:700}
+/* hud */
+#hud{position:fixed;left:0;right:0;top:0;z-index:10;display:flex;align-items:center;gap:10px;padding:10px 14px;pointer-events:none}
+#hud>*{pointer-events:auto}
+#hud .lv{font-family:var(--mono);font-size:13px;letter-spacing:.08em;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#hud .lv b{color:var(--teal);font-weight:700;margin-right:.5em}
+#hud .stats{margin:0 auto;display:flex;gap:14px;font-family:var(--mono);font-size:13px}
+.stat{display:flex;flex-direction:column;align-items:center;line-height:1.15;min-width:52px}
+.stat span{font-size:10px;letter-spacing:.14em;color:var(--muted)}
+.stat b{font-size:17px;color:var(--text)}
+.stat b.ok{color:var(--teal)} .stat b.over{color:var(--amber)} .stat b.bad{color:#d07080}
+.stat i{font-style:normal;color:var(--muted);font-size:12px}
+.ib{width:40px;height:40px;border:1px solid var(--dead);border-radius:10px;background:rgba(26,32,36,.85);display:grid;place-items:center;position:relative;flex:none}
+.ib:hover,.ib:focus-visible,.ib.focus{border-color:var(--teal);outline:none}
+.ib svg{width:20px;height:20px;stroke:var(--text);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ib:disabled{opacity:.35}
+.ib .badge{position:absolute;top:-6px;right:-6px;background:var(--teal);color:#0b1214;font:700 10px/16px var(--mono);min-width:16px;height:16px;border-radius:8px;padding:0 4px}
+.ib .badge.zero{background:var(--dead);color:var(--muted)}
+#legend{position:fixed;right:14px;bottom:12px;z-index:9;display:flex;gap:10px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em;pointer-events:none}
+#legend div{display:flex;align-items:center;gap:5px}
+#legend svg{width:26px;height:8px}
+/* map panel */
+#mapPanel{position:fixed;top:0;right:0;bottom:0;width:360px;z-index:10;padding:18px 18px 16px;background:linear-gradient(to right,rgba(16,20,23,.0),rgba(16,20,23,.92) 8%);
+  display:flex;flex-direction:column;overflow:auto}
+#mapPanel h2{margin:0;font-size:12px;letter-spacing:.2em;color:var(--muted);font-family:var(--mono);font-weight:700}
+#mapPanel .tot{margin:.35em 0 1em;font-family:var(--mono);font-size:13px;color:var(--text)}
+#mapPanel .tot b{color:var(--teal)}
+#mapPanel h3{margin:.2em 0 .1em;font-size:22px;color:#fff}
+#mapPanel .rule{margin:0 0 .8em;color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.lvb{border:1px solid var(--dead);border-radius:10px;background:rgba(26,32,36,.8);padding:8px 4px 6px;text-align:center;font-family:var(--mono);font-size:13px}
+.lvb .s{display:block;font-size:11px;letter-spacing:.1em;color:var(--dead);margin-top:2px}
+.lvb .s .on{color:var(--teal)}
+.lvb.done{border-color:var(--dimteal)}
+.lvb:hover,.lvb:focus-visible,.lvb.focus{border-color:var(--teal);outline:none;color:#fff}
+.lvb:disabled{opacity:.35;cursor:default}
+#mapPanel .row{display:flex;gap:8px} #mapPanel .row .btn{text-align:center}
+@media (max-width:760px){
+  #mapPanel{top:auto;left:0;width:auto;height:52%;background:linear-gradient(to bottom,rgba(16,20,23,0),rgba(16,20,23,.95) 6%);padding:14px 16px}
+  #hud{flex-wrap:wrap;padding:8px 10px;gap:6px}
+  #hud .lv{order:0;flex:1 1 40%}
+  #hud .stats{order:2;flex:1 1 100%;justify-content:center;gap:10px}
+  .ib{width:36px;height:36px}
+  #legend{display:none}
+}
+/* modal */
+#modal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(8,11,13,.66);padding:16px}
+#modal .card{width:min(420px,100%);max-height:100%;overflow:auto;background:rgba(20,26,29,.97);border:1px solid var(--dead);border-radius:16px;padding:22px 22px 18px;box-shadow:0 0 0 1px rgba(95,201,201,.06),0 30px 80px rgba(0,0,0,.6)}
+#modal h2{margin:0 0 .2em;font-size:13px;letter-spacing:.22em;color:var(--teal);font-family:var(--mono)}
+#modal h3{margin:.1em 0 .6em;font-size:24px;color:#fff}
+#modal p{color:#c3cdd0;line-height:1.5}
+.stars{display:flex;justify-content:center;gap:14px;margin:12px 0 14px}
+.star{width:46px;height:46px;opacity:0;transform:translateY(-26px) scale(.6)}
+.star svg{width:100%;height:100%}
+.star.drop{animation:drop .5s cubic-bezier(.3,1.6,.5,1) forwards}
+.star.off svg path{fill:none;stroke:var(--dead)}
+@keyframes drop{to{opacity:1;transform:none}}
+body.rm .star.drop{animation:none;opacity:1;transform:none}
+.res{display:grid;grid-template-columns:1fr auto auto;gap:4px 14px;font-family:var(--mono);font-size:14px;margin:6px 0 14px}
+.res span{color:var(--muted)} .res .ok{color:var(--teal)} .res .over{color:var(--amber)}
+.tx{font-family:var(--mono);font-size:13px;color:var(--teal);border-left:2px solid var(--dimteal);padding:6px 0 6px 12px;margin:10px 0 14px;min-height:3em;white-space:pre-wrap}
+.tx small{display:block;color:var(--muted);font-size:10px;letter-spacing:.16em;margin-bottom:4px}
+.set{display:grid;grid-template-columns:1fr 160px;align-items:center;gap:10px 12px;margin:8px 0 14px;font-size:14px}
+.set input[type=range]{width:100%;accent-color:var(--teal)}
+.tog{justify-self:end;width:52px;height:28px;border-radius:14px;border:1px solid var(--dead);background:var(--panel);position:relative}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:left .15s,background .15s}
+.tog.on{border-color:var(--dimteal)} .tog.on::after{left:27px;background:var(--teal)}
+.tog:focus-visible,.tog.focus{outline:2px solid var(--teal)}
+.keys{font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.7}
+.keys b{color:var(--text);font-weight:600}
+.log{margin:6px 0 10px}
+.log .tx.locked{color:var(--dead)}
+#toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:35;font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--teal);
+  background:rgba(16,20,23,.92);border:1px solid var(--dimteal);border-radius:20px;padding:7px 14px;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+#boot{position:fixed;inset:0;display:grid;place-items:center;font-family:var(--mono);color:var(--dimteal);letter-spacing:.2em;font-size:12px;z-index:50;background:var(--void)}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="scan"></div>
+
+<div id="title" class="hide">
+  <h1>Signal Lost</h1>
+  <p class="tag">Restore a dead network, one relay at a time.</p>
+  <p class="line" id="tline"></p>
+  <div class="menu" id="tmenu"></div>
+  <div class="kick">PLAYCHAIN · PUZZLE</div>
+  <div class="credit">BY STEEVE · @GAMERSTEEVE</div>
+</div>
+
+<div id="hud" class="hide">
+  <button class="ib" id="bMap" aria-label="Pause menu"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
+  <div class="lv" id="hudLv"></div>
+  <div class="stats" id="hudStats"></div>
+  <button class="ib" id="bUndo" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+  <button class="ib" id="bRedo" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
+  <button class="ib" id="bReset" aria-label="Reset"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+  <button class="ib" id="bHint" aria-label="Hint"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg><span class="badge" id="hintBadge">0</span></button>
+</div>
+<div id="legend" class="hide"></div>
+
+<div id="mapPanel" class="hide"></div>
+<div id="modal" class="hide"><div class="card" id="mcard"></div></div>
+<div id="toast"></div>
+<div id="boot">TUNING IN…</div>
+
+<script src="engine.js"></script>
+<script src="levels.js"></script>
+<script>
+(function () {
+'use strict';
+var SL = window.SL, LEVELS = window.SL_LEVELS;
+var $ = function (id) { return document.getElementById(id); };
+var COL = { void: '#101417', panel: '#1A2024', dead: '#2A3438', teal: '#5FC9C9', dimteal: '#3E7F84', amber: '#E3A857', violet: '#9B7FD1', white: '#F2F5F5', maroon: '#5A1E2A', idle: '#56666c' };
+var FCOL = [COL.teal, COL.amber, COL.violet, COL.white];
+var FRGB = [[95, 201, 201], [227, 168, 87], [155, 127, 209], [242, 245, 245]];
+var FNAME = ['TEAL', 'AMBER', 'VIOLET', 'WHITE'];
+
+var REGIONS = [
+  { n: 1, name: 'The Outskirts', rule: 'Relays, rotation and strength. Every hop costs one.', icon: 'corner' },
+  { n: 2, name: 'Junction Town', rule: 'T-splits. One signal in, two out.', icon: 'tee' },
+  { n: 3, name: 'Static Fields', rule: 'Static blocks the way. Boosters restore full strength.', icon: 'booster' },
+  { n: 4, name: 'Frequency Bay', rule: 'Tuners change the frequency. Some receivers are picky.', icon: 'tuner' },
+  { n: 5, name: 'Overpass', rule: 'Bridges let two signals cross without mixing.', icon: 'bridge' },
+  { n: 6, name: 'Ghost Lines', rule: 'Decoy receivers must stay dark.', icon: 'decoy' },
+  { n: 7, name: 'Orbit', rule: 'Satellite dishes. In one, out the other.', icon: 'dish' }
+];
+var TRANSMISSIONS = [
+  { f: '88.1', t: 'Relay post nine, still here. Power is out past the ridge.\nIf you can hear this, keep the tower lit.' },
+  { f: '91.4', t: 'Junction crew left at dawn and took the batteries.\nThey left the music on so the next one would not feel alone.' },
+  { f: '96.0', t: 'The static is not weather. It moves when you stop watching.\nBoosters are in the shed by the pylon.' },
+  { f: '99.7', t: 'Amber for the harbour, violet for the hill.\nTeal was always for home.' },
+  { f: '102.3', t: 'Two lines can cross without touching.\nTook me a year to learn that about people too.' },
+  { f: '104.9', t: 'Do not answer every voice out here.\nSome receivers are listening for the wrong reasons.' },
+  { f: '107.5', t: 'Dishes are up. If you are reading this, you found me.\nI am at the last tower. I never stopped transmitting.' }
+];
+var byRegion = {}; LEVELS.forEach(function (l) { var r = +l.id.split('-')[0]; (byRegion[r] = byRegion[r] || []).push(l); });
+var LEVEL_BY_ID = {}; LEVELS.forEach(function (l) { LEVEL_BY_ID[l.id] = l; });
+var MAX_STARS = LEVELS.length * 3;
+
+/* ------------------------------------------------------------------ save + bridge */
+var inFrame = window.parent !== window;
+function post(msg) { if (inFrame) try { window.parent.postMessage(msg, '*'); } catch (e) {} }
+var prefersRM = false; try { prefersRM = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+var save = {
+  v: 1, stars: {}, best: {}, hintsUsed: 0, hinted: {}, unlocked: [1], decoded: [], daily: {}, lastRegion: 1,
+  settings: { music: 0.8, amb: 0.55, sfx: 0.8, ui: 0.6, scan: true, reduce: prefersRM, patterns: true, text: 1 }
+};
+function mergeSave(d) {
+  if (!d || typeof d !== 'object') return;
+  ['stars', 'best', 'hinted', 'daily'].forEach(function (k) { if (d[k] && typeof d[k] === 'object') save[k] = d[k]; });
+  if (Array.isArray(d.decoded)) save.decoded = d.decoded;
+  if (typeof d.hintsUsed === 'number') save.hintsUsed = d.hintsUsed;
+  if (typeof d.lastRegion === 'number') save.lastRegion = d.lastRegion;
+  if (d.settings) for (var k in save.settings) if (k in d.settings) save.settings[k] = d.settings[k];
+}
+function persist() {
+  save.unlocked = REGIONS.filter(function (r) { return regionUnlocked(r.n); }).map(function (r) { return r.n; });
+  var data = JSON.parse(JSON.stringify(save));
+  // keep daily history small
+  var dk = Object.keys(data.daily).sort(); while (dk.length > 40) delete data.daily[dk.shift()];
+  if (inFrame) post({ type: 'playchain:save', data: data });
+  else try { localStorage.setItem('signal-lost-save', JSON.stringify(data)); } catch (e) {}
+}
+function totalStars() { var s = 0; for (var k in save.stars) if (LEVEL_BY_ID[k]) s += save.stars[k]; return s; }
+function hintsAvail() { return Math.max(0, Math.floor(totalStars() / 3) - save.hintsUsed); }
+function regionSolved(n) { return (byRegion[n] || []).filter(function (l) { return save.stars[l.id] > 0; }).length; }
+function regionUnlocked(n) { return n === 1 || regionSolved(n - 1) >= 3; }
+function levelUnlocked(l) {
+  var r = +l.id.split('-')[0], list = byRegion[r], i = list.indexOf(l);
+  return regionUnlocked(r) && (i < 2 || regionSolved(r) >= i - 1 || save.stars[l.id] > 0);
+}
+
+/* ------------------------------------------------------------------ solver worker */
+var Solver = (function () {
+  var worker = null, seq = 0, pending = {};
+  try {
+    var code = SL_ENGINE_FACTORY.toString() + '\nvar SL=SL_ENGINE_FACTORY();\nonmessage=function(e){var d=e.data,r;try{if(d.kind==="solve")r=SL.solve(d.level,{maxNodes:d.maxNodes||400000});else r=SL.dailyLevel(d.date);}catch(err){r={error:String(err)}}postMessage({id:d.id,result:r});};';
+    var url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+    worker = new Worker(url);
+    worker.onmessage = function (e) { var p = pending[e.data.id]; if (p) { delete pending[e.data.id]; clearTimeout(p.to); p.res(e.data.result); } };
+    worker.onerror = function () { worker = null; flush(); };
+  } catch (e) { worker = null; }
+  function sync(msg) { return msg.kind === 'solve' ? SL.solve(msg.level, { maxNodes: msg.maxNodes || 400000 }) : SL.dailyLevel(msg.date); }
+  function flush() { for (var id in pending) { var p = pending[id]; delete pending[id]; clearTimeout(p.to); p.res(sync(p.msg)); } }
+  function req(msg) {
+    return new Promise(function (res) {
+      if (!worker) { res(sync(msg)); return; }
+      var id = ++seq; msg.id = id;
+      var p = { res: res, msg: msg };
+      p.to = setTimeout(function () { if (pending[id]) { delete pending[id]; res(sync(msg)); } }, 2500);
+      pending[id] = p;
+      try { worker.postMessage(msg); } catch (e) { delete pending[id]; clearTimeout(p.to); res(sync(msg)); }
+    });
+  }
+  return { solve: function (level) { return req({ kind: 'solve', level: level }); }, daily: function (date) { return req({ kind: 'daily', date: date }); }, usingWorker: function () { return !!worker; } };
+})();
+
+/* ------------------------------------------------------------------ audio */
+var Audio = (function () {
+  var ctx = null, master, buses = {}, musicIn, lpf, ambGain, leakGain, rev, delay, layers = {}, noiseBuf;
+  var on = false, muted = false, theme = null, step = 0, nextT = 0, timer = 0, ratio = 0, layerCount = 0, mode = 'title';
+  var noteQ = [], lastLeak = 0;
+  var THEMES = {
+    title: { bpm: 72, root: 50, sc: [0, 2, 3, 5, 7, 8, 10], prog: [0, 5, 2, 6] },
+    1: { bpm: 76, root: 50, sc: [0, 2, 3, 5, 7, 9, 10], prog: [0, 5, 2, 6] },
+    2: { bpm: 84, root: 52, sc: [0, 2, 4, 5, 7, 9, 10], prog: [0, 6, 3, 0] },
+    3: { bpm: 72, root: 45, sc: [0, 2, 3, 5, 7, 8, 10], prog: [0, 5, 3, 4] },
+    4: { bpm: 88, root: 53, sc: [0, 2, 4, 6, 7, 9, 11], prog: [0, 1, 4, 5] },
+    5: { bpm: 92, root: 48, sc: [0, 2, 3, 5, 7, 9, 10], prog: [0, 3, 6, 4] },
+    6: { bpm: 70, root: 47, sc: [0, 1, 3, 5, 7, 8, 10], prog: [0, 1, 5, 3] },
+    7: { bpm: 80, root: 55, sc: [0, 2, 4, 5, 7, 9, 11], prog: [0, 4, 5, 3] },
+    daily: { bpm: 90, root: 51, sc: [0, 2, 3, 5, 7, 9, 10], prog: [0, 3, 5, 4] }
+  };
+  Object.keys(THEMES).forEach(function (k) {
+    var th = THEMES[k], r = SL.mulberry32(SL.hashStr('theme' + k)), mel = [];
+    for (var i = 0; i < 16; i++) mel.push(r() < 0.42 ? -1 : Math.floor(r() * 7) + (r() < 0.3 ? 7 : 0));
+    th.mel = mel;
+  });
+  var MORSE = '... .. --. -. .- .-.. / .-.. --- ... -'; var morseSteps = [];
+  MORSE.split('').forEach(function (ch) { if (ch === '.') { morseSteps.push(1, 0); } else if (ch === '-') { morseSteps.push(2, 2, 2, 0); } else if (ch === ' ') { morseSteps.push(0, 0); } else morseSteps.push(0, 0, 0, 0); });
+  for (var i = 0; i < 24; i++) morseSteps.push(0);
+
+  function mtof(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+  function deg(th, d, oct) { var n = th.sc.length; var o = Math.floor(d / n); var i = ((d % n) + n) % n; return th.root + th.sc[i] + 12 * (o + (oct || 0)); }
+
+  function init() {
+    if (ctx) { if (ctx.state === 'suspended' && !muted) ctx.resume(); return; }
+    var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    try { ctx = new AC(); } catch (e) { return; }
+    master = ctx.createGain(); master.gain.value = 0.9;
+    var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 3;
+    master.connect(comp); comp.connect(ctx.destination);
+    ['music', 'amb', 'sfx', 'ui'].forEach(function (k) { buses[k] = ctx.createGain(); buses[k].connect(master); });
+    // reverb
+    rev = ctx.createConvolver(); var len = ctx.sampleRate * 2.6, ir = ctx.createBuffer(2, len, ctx.sampleRate), rr = SL.mulberry32(7);
+    for (var ch = 0; ch < 2; ch++) { var d = ir.getChannelData(ch); for (var i = 0; i < len; i++) d[i] = (rr() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+    rev.buffer = ir; var revOut = ctx.createGain(); revOut.gain.value = 0.32; rev.connect(revOut); revOut.connect(buses.music);
+    delay = ctx.createDelay(1.5); var fb = ctx.createGain(); fb.gain.value = 0.33; var dl = ctx.createGain(); dl.gain.value = 0.28;
+    delay.connect(fb); fb.connect(delay); delay.connect(dl); dl.connect(buses.music);
+    musicIn = ctx.createGain(); lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 350; lpf.Q.value = 0.8;
+    musicIn.connect(lpf); lpf.connect(buses.music); lpf.connect(rev);
+    ['drone', 'pad', 'bass', 'arp', 'lead', 'title', 'net'].forEach(function (k) { layers[k] = ctx.createGain(); layers[k].gain.value = 0; layers[k].connect(k === 'net' ? buses.sfx : musicIn); });
+    layers.net.gain.value = 1; layers.net.connect(rev);
+    layers.drone.gain.value = 1;
+    // static
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); var nd = noiseBuf.getChannelData(0), nr = SL.mulberry32(3);
+    for (var j = 0; j < nd.length; j++) nd[j] = nr() * 2 - 1;
+    var ns = ctx.createBufferSource(); ns.buffer = noiseBuf; ns.loop = true;
+    var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2400; bp.Q.value = 0.45;
+    var hum = ctx.createBiquadFilter(); hum.type = 'peaking'; hum.frequency.value = 900; hum.gain.value = 5;
+    ambGain = ctx.createGain(); ambGain.gain.value = 0.35;
+    var am = ctx.createGain(); am.gain.value = 0.75; var lfo = ctx.createOscillator(); lfo.frequency.value = 0.31; var lfoG = ctx.createGain(); lfoG.gain.value = 0.25; lfo.connect(lfoG); lfoG.connect(am.gain); lfo.start();
+    ns.connect(bp); bp.connect(hum); hum.connect(am); am.connect(ambGain); ambGain.connect(buses.amb); ns.start();
+    leakGain = ctx.createGain(); leakGain.gain.value = 0; leakGain.connect(buses.sfx);
+    applyVolumes(); on = true;
+    nextT = ctx.currentTime + 0.1; step = 0;
+    timer = setInterval(tick, 25);
+    setTune(ratio, true);
+  }
+  function applyVolumes() {
+    if (!ctx) return; var s = save.settings, t = ctx.currentTime;
+    buses.music.gain.setTargetAtTime(s.music * 0.9, t, 0.05); buses.amb.gain.setTargetAtTime(s.amb * 0.6, t, 0.05);
+    buses.sfx.gain.setTargetAtTime(s.sfx, t, 0.05); buses.ui.gain.setTargetAtTime(s.ui * 0.8, t, 0.05);
+  }
+  function setMute(m) {
+    muted = m; if (!ctx) return;
+    if (m) { master.gain.setTargetAtTime(0, ctx.currentTime, 0.03); setTimeout(function () { if (muted && ctx.state === 'running') ctx.suspend(); }, 150); }
+    else { ctx.resume(); master.gain.setTargetAtTime(0.9, ctx.currentTime, 0.1); nextT = Math.max(nextT, ctx.currentTime + 0.05); }
+  }
+  function setMode(m, th) {
+    mode = m; theme = THEMES[th] || THEMES.title;
+    if (!ctx) return; var t = ctx.currentTime;
+    layers.title.gain.setTargetAtTime(m === 'title' ? 1 : 0, t, 0.6);
+  }
+  /* tune-in: r = receivers lit / total */
+  function setTune(r, instant, count) {
+    var prev = ratio; ratio = r;
+    if (!ctx) return;
+    var t = ctx.currentTime, closing = r < prev;
+    var tc = instant ? 0.01 : closing ? 1.4 : 0.35; // static creeps back slowly, clears fast
+    lpf.frequency.setTargetAtTime(320 * Math.pow(42, r), t, tc);
+    ambGain.gain.setTargetAtTime(0.03 + 0.6 * Math.pow(1 - r, 1.3), t, tc);
+    var n = r >= 1 ? 4 : Math.min(3, Math.round(r * 4));
+    if (typeof count === 'number') n = count;
+    layerCount = n;
+    ['pad', 'bass', 'arp', 'lead'].forEach(function (k, i) { layers[k].gain.setTargetAtTime(i < n ? 1 : 0, t, i < n ? 0.4 : 1.1); });
+  }
+  function env(g, t, a, peak, d, sus, rel, end) {
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + a);
+    g.gain.setTargetAtTime(peak * sus, t + a, d); g.gain.setTargetAtTime(0.0001, end, rel);
+  }
+  function osc(type, f, t, end, dest, det) { var o = ctx.createOscillator(); o.type = type; o.frequency.value = f; if (det) o.detune.value = det; o.connect(dest); o.start(t); o.stop(end); return o; }
+  function voice(dest, t, dur, peak, a, d, sus, rel) { var g = ctx.createGain(); env(g, t, a, peak, d, sus, rel, t + dur); g.connect(dest); return g; }
+  // instruments
+  function bell(m, t, vel, dest) {
+    var g = voice(dest || layers.net, t, 0.05, 0.22 * vel, 0.004, 0.5, 0.0, 0.3), f = mtof(m);
+    var mod = ctx.createOscillator(), mg = ctx.createGain(); mod.frequency.value = f * 3.5; mg.gain.setValueAtTime(f * 1.4, t); mg.gain.setTargetAtTime(0, t, 0.25);
+    var c = ctx.createOscillator(); c.frequency.value = f; mod.connect(mg); mg.connect(c.frequency); c.connect(g);
+    mod.start(t); c.start(t); mod.stop(t + 2); c.stop(t + 2);
+    var g2 = voice(dest || layers.net, t, 0.02, 0.06 * vel, 0.002, 0.2, 0, 0.2); osc('sine', f * 2, t, t + 1.4, g2);
+  }
+  function pluck(m, t, vel, dest) {
+    var f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(3200, t); f.frequency.setTargetAtTime(380, t, 0.09); f.Q.value = 2;
+    var g = voice(dest || layers.net, t, 0.02, 0.2 * vel, 0.003, 0.18, 0, 0.25); f.connect(g);
+    osc('sawtooth', mtof(m), t, t + 1.2, f); osc('triangle', mtof(m - 12), t, t + 1.2, f);
+  }
+  function soft(m, t, vel, dest) {
+    var g = voice(dest || layers.net, t, 0.25, 0.12 * vel, 0.06, 0.4, 0.5, 0.45);
+    var f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1800; f.connect(g);
+    osc('triangle', mtof(m), t, t + 2, f, -7); osc('triangle', mtof(m), t, t + 2, f, 7);
+  }
+  var INST = [bell, pluck, soft, bell];
+  function padChord(th, d, t, dur) {
+    var f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900; f.Q.value = 0.4;
+    var g = voice(layers.pad, t, dur, 0.05, 1.1, 2, 0.85, 1.2); f.connect(g);
+    [0, 2, 4, 6].forEach(function (k) { var m = deg(th, d + k, 0); osc('sawtooth', mtof(m), t, t + dur + 4, f, -8); osc('sawtooth', mtof(m), t, t + dur + 4, f, 8); });
+  }
+  function tick() {
+    if (!ctx || muted || !theme) return;
+    var th = theme, spb = 60 / th.bpm / 4;
+    while (nextT < ctx.currentTime + 0.12) { sched(th, step, nextT, spb); nextT += spb; step++; }
+  }
+  function sched(th, s, t, spb) {
+    var bar = Math.floor(s / 16), pos = s % 16, chord = th.prog[bar % th.prog.length];
+    // drone: soft heartbeat pulse + root hum
+    if (pos === 0 || pos === 8) {
+      var g = voice(layers.drone, t, 0.02, 0.32, 0.004, 0.12, 0, 0.12); var o = osc('sine', 92, t, t + 0.5, g); o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.25);
+    }
+    if (pos % 4 === 2) { var hg = voice(layers.drone, t, 0.01, 0.025, 0.001, 0.03, 0, 0.03); var hs = ctx.createBufferSource(); hs.buffer = noiseBuf; var hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000; hs.connect(hp); hp.connect(hg); hs.start(t, (s * 0.137) % 1.5); hs.stop(t + 0.08); }
+    if (pos === 0 && bar % 2 === 0) { var dg = voice(layers.drone, t, spb * 30, 0.05, 1.5, 3, 0.8, 1.5); osc('sine', mtof(deg(th, chord, -1)), t, t + spb * 32 + 5, dg); }
+    if (pos === 0) padChord(th, chord, t, spb * 15);
+    if (layerCount >= 2 && (pos === 0 || pos === 6 || pos === 10)) {
+      var bg = voice(layers.bass, t, spb * 3, 0.16, 0.01, 0.3, 0.4, 0.15); var bf = ctx.createBiquadFilter(); bf.type = 'lowpass'; bf.frequency.value = 600; bf.connect(bg);
+      osc('triangle', mtof(deg(th, chord, -2)), t, t + spb * 4 + 1, bf); osc('sine', mtof(deg(th, chord, -2)), t, t + spb * 4 + 1, bg);
+    }
+    if (layerCount >= 3 && pos % 2 === 0) {
+      var ar = [0, 2, 4, 7, 4, 2, 0, 4][(pos / 2) | 0];
+      var ag = voice(layers.arp, t, 0.02, 0.06, 0.004, 0.12, 0, 0.12); ag.connect(delay); osc('triangle', mtof(deg(th, chord + ar, 1)), t, t + 0.6, ag);
+    }
+    if (layerCount >= 4 && pos % 2 === 0) {
+      var mi = th.mel[((bar % 2) * 8 + pos / 2) | 0];
+      if (mi >= 0) { var lg = voice(layers.lead, t, spb * 3, 0.07, 0.03, 0.4, 0.6, 0.35); lg.connect(delay); var lo = osc('sine', mtof(deg(th, chord + mi, 1)), t, t + spb * 4 + 1.5, lg); var vib = ctx.createOscillator(), vg = ctx.createGain(); vib.frequency.value = 5; vg.gain.value = 4; vib.connect(vg); vg.connect(lo.detune); vib.start(t); vib.stop(t + spb * 4 + 1.5); }
+    }
+    if (mode === 'title') {
+      if (pos === 0 || pos === 8) { var tg = voice(layers.title, t, 0.12, 0.06, 0.02, 0.4, 0.5, 0.5); osc('sine', mtof(deg(th, 0, 2)), t, t + 2, tg); }
+      var ms = morseSteps[s % morseSteps.length];
+      if (ms) { var cg = voice(layers.title, t, ms === 2 ? spb * 0.8 : spb * 0.25, 0.035, 0.002, 0.5, 0.9, 0.01); osc('sine', 1750, t, t + spb + 0.1, cg); }
+    }
+    // network notes, quantized to 8ths
+    if (pos % 2 === 0 && noteQ.length) {
+      for (var k = 0; k < 2 && noteQ.length; k++) { var n = noteQ.shift(); INST[n.f](deg(th, n.d, 1), t + k * spb * 0.5, n.v); }
+    }
+  }
+  function netNote(d, f, v) { if (!ctx || muted) return; if (noteQ.length < 10) noteQ.push({ d: d, f: f, v: v || 1 }); }
+  // SFX
+  function noiseBurst(t, dur, peak, type, freq, q, bus) {
+    var s = ctx.createBufferSource(); s.buffer = noiseBuf; var f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q || 1;
+    var g = voice(bus || buses.sfx, t, dur, peak, 0.002, dur, 0.4, 0.03); s.connect(f); f.connect(g); s.start(t, (t * 7.31) % 1.5); s.stop(t + dur + 0.3); return f;
+  }
+  var sfx = {
+    rotate: function (p) { var t = ctx.currentTime; noiseBurst(t, 0.025, 0.25, 'bandpass', 3000 + p * 900, 3); var g = voice(buses.sfx, t, 0.01, 0.07, 0.001, 0.03, 0, 0.03); osc('square', 1500 + p * 300, t, t + 0.08, g); },
+    locked: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.05, 0.08, 0.002, 0.05, 0, 0.05); osc('square', 140, t, t + 0.2, g); },
+    place: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.01, 0.2, 0.002, 0.06, 0, 0.05); var o = osc('sine', 300, t, t + 0.25, g); o.frequency.exponentialRampToValueAtTime(140, t + 0.08); noiseBurst(t, 0.02, 0.12, 'lowpass', 1200); },
+    lift: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.03, 0.1, 0.01, 0.06, 0, 0.05); var o = osc('sine', 180, t, t + 0.25, g); o.frequency.exponentialRampToValueAtTime(420, t + 0.1); },
+    connect: function (f) { var t = ctx.currentTime + 0.02; [0, 1].forEach(function (i) { var g = voice(buses.sfx, t + i * 0.09, 0.03, 0.13, 0.003, 0.15, 0, 0.2); osc('sine', [1320, 1980][i], t + i * 0.09, t + i * 0.09 + 0.8, g); }); var g2 = voice(buses.sfx, t, 0.05, 0.05, 0.003, 0.1, 0, 0.1); var o = osc('sine', 600, t, t + 0.3, g2); o.frequency.exponentialRampToValueAtTime(2200, t + 0.12); },
+    lost: function () { var t = ctx.currentTime; [0, 1].forEach(function (i) { var g = voice(buses.sfx, t + i * 0.09, 0.03, 0.1, 0.003, 0.12, 0, 0.15); osc('sine', [1500, 900][i], t + i * 0.09, t + i * 0.09 + 0.6, g); }); noiseBurst(t + 0.05, 0.25, 0.18, 'bandpass', 2200, 0.6); },
+    booster: function () { var t = ctx.currentTime; var f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(200, t); f.frequency.exponentialRampToValueAtTime(2400, t + 0.45); var g = voice(buses.sfx, t, 0.4, 0.07, 0.15, 0.2, 0.8, 0.15); f.connect(g); var o = osc('sawtooth', 70, t, t + 1, f); o.frequency.exponentialRampToValueAtTime(140, t + 0.45); },
+    leak: function () { var t = ctx.currentTime; noiseBurst(t, 0.012, 0.09, 'highpass', 4000); },
+    decoy: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.35, 0.12, 0.003, 0.3, 0.8, 0.05); var gate = ctx.createGain(); gate.connect(g); var lfo = ctx.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 23; var lg = ctx.createGain(); lg.gain.value = 0.5; lfo.connect(lg); lg.connect(gate.gain); lfo.start(t); lfo.stop(t + 0.5); osc('sawtooth', 92, t, t + 0.5, gate); osc('square', 97, t, t + 0.5, gate); noiseBurst(t, 0.3, 0.15, 'bandpass', 1800, 0.5); },
+    solved: function (notes) {
+      var t = ctx.currentTime; var f = noiseBurst(t, 0.9, 0.18, 'bandpass', 400, 1.2); f.frequency.exponentialRampToValueAtTime(6000, t + 0.8);
+      var th = theme || THEMES.title;
+      (notes || [0, 2, 4, 7]).forEach(function (d, i) { bell(deg(th, d, 1), t + 0.15 + i * 0.11, 0.9, buses.sfx); });
+      var ct = t + 0.15 + (notes ? notes.length : 4) * 0.11;
+      var g = voice(buses.sfx, ct, 1.6, 0.06, 0.08, 1, 0.8, 0.9); var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1500; lp.connect(g);
+      [0, 2, 4, 6].forEach(function (k) { osc('sawtooth', mtof(deg(th, k, 0)), ct, ct + 4, lp, -6); osc('triangle', mtof(deg(th, k, 1)), ct, ct + 4, lp, 6); });
+    },
+    star: function (i) { var t = ctx.currentTime; var th = theme || THEMES.title; bell(deg(th, [4, 7, 9][i] || 4, 1), t, 1, buses.sfx); },
+    undo: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.08, 0.08, 0.005, 0.1, 0, 0.05); var o = osc('triangle', 900, t, t + 0.25, g); o.frequency.exponentialRampToValueAtTime(260, t + 0.12); },
+    reset: function () { var t = ctx.currentTime; noiseBurst(t, 0.22, 0.2, 'bandpass', 1500, 0.4); var g = voice(buses.sfx, t, 0.15, 0.06, 0.005, 0.2, 0, 0.05); var o = osc('triangle', 1200, t, t + 0.4, g); o.frequency.exponentialRampToValueAtTime(150, t + 0.25); },
+    hint: function () { var t = ctx.currentTime; [0.06, 0.06, 0.18, 0.06].forEach(function (d, i) { var st = t + i * 0.16; var g = voice(buses.sfx, st, d, 0.07, 0.003, 1, 1, 0.01); osc('sine', 1750, st, st + d + 0.1, g); }); },
+    unlock: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 1.2, 0.2, 0.05, 0.8, 0.6, 0.8); osc('sine', 55, t, t + 3, g); osc('sine', 82.5, t, t + 3, g); for (var i = 0; i < 6; i++) { var st = t + 0.3 + i * 0.07; var sg = voice(buses.sfx, st, 0.02, 0.03, 0.003, 0.2, 0, 0.3); osc('sine', 2400 + i * 300, st, st + 1, sg); } },
+    ui: function () { var t = ctx.currentTime; var g = voice(buses.ui, t, 0.005, 0.12, 0.001, 0.02, 0, 0.02); osc('sine', 2200, t, t + 0.05, g); },
+    back: function () { var t = ctx.currentTime; var g = voice(buses.ui, t, 0.005, 0.12, 0.001, 0.02, 0, 0.02); osc('sine', 1400, t, t + 0.05, g); }
+  };
+  function play(name, a) { if (!ctx || muted || !on) return; try { sfx[name](a); } catch (e) {} }
+  function leaks(n) { if (!ctx) return; var now = performance.now(); if (n > 0 && now - lastLeak > 70 + 140 / n) { lastLeak = now; if ((now * 13.7) % 1 < 0.6) play('leak'); } }
+  return { init: init, setMode: setMode, setTune: setTune, applyVolumes: applyVolumes, setMute: setMute, play: play, netNote: netNote, leaks: leaks, ready: function () { return !!ctx; } };
+})();
+
+/* ------------------------------------------------------------------ canvas */
+var cv = $('c'), ctx = cv.getContext('2d'), W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1); W = window.innerWidth; H = window.innerHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); layout();
+}
+window.addEventListener('resize', resize);
+var now = 0, RM = function () { return !!save.settings.reduce; };
+
+// static noise textures (render only, seeded)
+var noiseTex = [];
+(function () { var r = SL.mulberry32(99); for (var k = 0; k < 6; k++) { var c = document.createElement('canvas'); c.width = c.height = 24; var x = c.getContext('2d'), im = x.createImageData(24, 24); for (var i = 0; i < 576; i++) { var v = r(); var b = v > 0.55 ? 60 + v * 120 : 20 + v * 30; im.data[i * 4] = b * 1.05 + 20; im.data[i * 4 + 1] = b * 0.55; im.data[i * 4 + 2] = b * 0.62; im.data[i * 4 + 3] = 255; } x.putImageData(im, 0, 0); noiseTex.push(c); } })();
+
+var dust = []; (function () { var r = SL.mulberry32(5); for (var i = 0; i < 46; i++) dust.push({ x: r(), y: r(), s: 0.4 + r() * 1.4, v: 0.002 + r() * 0.006, a: 0.1 + r() * 0.35 }); })();
+
+function rgba(c, a) { return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+function drawBackground(t, hy, vx) {
+  ctx.fillStyle = COL.void; ctx.fillRect(0, 0, W, H);
+  var g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(30,38,42,0.55)'); g.addColorStop(1, 'rgba(16,20,23,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  hy = hy || H * 0.62; vx = vx == null ? W / 2 : vx;
+  ctx.lineWidth = 1;
+  // fan lines from vanishing point
+  ctx.strokeStyle = 'rgba(62,127,132,0.16)'; ctx.beginPath();
+  for (var i = -18; i <= 18; i++) { ctx.moveTo(vx, hy); ctx.lineTo(vx + i * W * 0.11, H + 4); }
+  ctx.stroke();
+  // receding horizontals
+  var sp = RM() ? 0 : (t * 0.00004) % 1;
+  ctx.strokeStyle = 'rgba(62,127,132,0.10)'; ctx.beginPath();
+  for (var k = 0; k < 12; k++) { var u = (k + sp) / 12; var y = hy + (H - hy) * u * u; ctx.moveTo(0, y); ctx.lineTo(W, y); }
+  ctx.stroke();
+  var hz = ctx.createLinearGradient(0, hy - 30, 0, hy + 60); hz.addColorStop(0, 'rgba(16,20,23,0)'); hz.addColorStop(0.5, 'rgba(16,20,23,0.0)'); hz.addColorStop(1, 'rgba(16,20,23,0)');
+  // dust
+  for (var d = 0; d < dust.length; d++) {
+    var p = dust[d]; if (!RM()) { p.y -= p.v * 0.05; p.x += Math.sin(t * 0.0003 + d) * 0.00008; if (p.y < 0) p.y = 1; }
+    ctx.fillStyle = 'rgba(95,201,201,' + p.a * 0.5 + ')'; ctx.fillRect(p.x * W, p.y * H, p.s, p.s);
+  }
+}
+
+/* glow stroke: three passes, additive */
+function glow(fn, rgb, a, lw) {
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.strokeStyle = rgba(rgb, a * 0.07); ctx.lineWidth = lw * 6; fn();
+  ctx.strokeStyle = rgba(rgb, a * 0.16); ctx.lineWidth = lw * 2.8; fn();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.strokeStyle = rgba(rgb, Math.min(1, a)); ctx.lineWidth = lw; fn();
+}
+function setPattern(fi, lw) {
+  if (!save.settings.patterns) { ctx.setLineDash([]); return; }
+  if (fi === 1) ctx.setLineDash([lw * 3.2, lw * 2.2]);
+  else if (fi === 2) ctx.setLineDash([0.1, lw * 2.4]);
+  else ctx.setLineDash([]);
+}
+
+/* ------------------------------------------------------------------ title art (live card) */
+function drawTitle(t) {
+  var cx = W / 2, top = H * 0.17, base = H * 0.5, s = Math.min(W, H) / 820;
+  drawBackground(t, base, cx);
+  ctx.lineCap = 'round';
+  var pulse = RM() ? 0.5 : (t * 0.0006) % 1;
+  // rings
+  [36, 72, 112].forEach(function (r, i) {
+    var a = 0.32 - i * 0.07; ctx.strokeStyle = 'rgba(62,127,132,' + a + ')'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(cx, top, r * s, 0, Math.PI * 2); ctx.stroke();
+  });
+  if (!RM()) for (var k = 0; k < 2; k++) { var u = (pulse + k * 0.5) % 1; ctx.strokeStyle = 'rgba(95,201,201,' + (0.5 * (1 - u)) + ')'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, top, (20 + u * 140) * s, 0, Math.PI * 2); ctx.stroke(); }
+  // dashed arc
+  ctx.setLineDash([7 * s, 7 * s]); ctx.lineDashOffset = RM() ? 0 : -t * 0.006; ctx.strokeStyle = 'rgba(95,201,201,0.55)'; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.arc(cx, top + 30 * s, 168 * s, Math.PI * 1.17, Math.PI * 1.83); ctx.stroke(); ctx.setLineDash([]);
+  // horizon dashes like the card
+  ctx.strokeStyle = 'rgba(62,127,132,0.35)'; ctx.lineWidth = 1; ctx.beginPath();
+  [[-0.35, 0.13, 0.05], [0.24, 0.24, 0.06], [-0.4, 0.28, 0.07], [0.3, 0.36, 0.09], [-0.45, 0.42, 0.04]].forEach(function (d) { var x = cx + d[0] * W * 0.6, y = H * d[1]; ctx.moveTo(x, y); ctx.lineTo(x + d[2] * W, y); });
+  ctx.stroke();
+  // mast
+  var bright = 0.75 + 0.25 * Math.sin(t * 0.004);
+  glow(function () {
+    ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(cx, top + 70 * s);
+    [-44, -14, 14, 44].forEach(function (dx) { ctx.moveTo(cx, top + 70 * s); ctx.lineTo(cx + dx * s, base); }); ctx.stroke();
+  }, FRGB[0], bright, 2.2);
+  ctx.fillStyle = COL.teal; ctx.beginPath(); ctx.arc(cx, top, 7 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(95,201,201,0.25)'; ctx.beginPath(); ctx.arc(cx, top, 16 * s, 0, Math.PI * 2); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+  // fan lines from base (stronger than general bg)
+  ctx.strokeStyle = 'rgba(62,127,132,0.32)'; ctx.lineWidth = 1; ctx.beginPath();
+  for (var i = -16; i <= 16; i++) { ctx.moveTo(cx, base); ctx.lineTo(cx + i * W * 0.085, H); } ctx.stroke();
+  // packets running down the fan
+  if (!RM()) { ctx.fillStyle = 'rgba(95,201,201,0.8)'; for (var j = -16; j <= 16; j += 3) { var u2 = ((t * 0.00018 + (j + 16) * 0.137) % 1); var px = cx + j * W * 0.085 * u2, py = base + (H - base) * u2; ctx.fillRect(px - 1, py - 1, 2.2, 2.2); } }
+}
+
+/* ------------------------------------------------------------------ game state */
+var screen = 'boot', G = null, Lay = { cs: 60, ox: 0, oy: 0, invY: 0, slots: [] };
+var rings = [], sparks = [], shake = 0, glitchT = -1e9, flareT = -1e9;
+var cursor = { x: 0, y: 0, show: false }, invSel = 0, drag = null;
+
+function startLevel(level, opts) {
+  opts = opts || {};
+  modalKind = null; modalBack = null; $('modal').classList.add('hide');
+  var L = SL.compile(level);
+  G = {
+    level: level, L: L, tiles: SL.cloneTiles(L.tiles0), inv: Object.assign({}, L.inv0), moves: 0,
+    hist: [], redo: [], res: null, won: false, solveAnim: null, anim: {}, hint: null, hintUsed: !!save.hinted[level.id],
+    daily: !!opts.daily, sol: null, recvAnim: level.receivers.map(function () { return { a: 0, ta: 0 }; }), rotArr: {}
+  };
+  cursor.x = L.tower.x + 1; cursor.y = L.tower.y; invSel = 0;
+  rings = []; sparks = [];
+  G.res = SL.walk(L, G.tiles); G.prevLit = 0;
+  setScreen('puzzle');
+  var region = +level.id.split('-')[0];
+  Audio.setMode('puzzle', G.daily ? 'daily' : region);
+  Audio.setTune(0, true);
+  updateHud(); layout();
+  Solver.solve(level).then(function (s) { if (G && G.level === level) G.sol = s; });
+}
+function snapshot() { return { tiles: SL.cloneTiles(G.tiles), inv: Object.assign({}, G.inv) }; }
+function commit(prev) { G.hist.push(prev); if (G.hist.length > 400) G.hist.shift(); G.redo = []; G.moves++; recompute(); }
+
+function recompute(silent) {
+  var L = G.L, old = G.res, res = SL.walk(L, G.tiles); G.res = res;
+  var S = L.tower.S;
+  if (!silent) {
+    // newly powered cells -> network notes rising along the route
+    var fresh = [];
+    for (var c = 0; c < L.N; c++) for (var ch = 0; ch < 2; ch++) { var i = c * 2 + ch; if (res.pw[i] > 0 && !(old && old.pw[i] > 0)) fresh.push(i); }
+    fresh.sort(function (a, b) { return res.pord[a] - res.pord[b]; });
+    fresh.slice(0, 6).forEach(function (i) { Audio.netNote(Math.min(13, res.pord[i]), res.pf[i], 0.5 + 0.5 * res.pw[i] / S); var t = G.tiles[i >> 1]; if (t && t.t === 'booster') Audio.play('booster'); });
+    res.rx.forEach(function (r, i) {
+      var was = old && old.rx[i].lit, rc = L.receivers[i];
+      if (r.lit && !was) { Audio.play('connect', r.f); addRing(rc.x, rc.y, FRGB[r.f]); }
+      if (!r.lit && was) { Audio.play('lost'); addRing(rc.x, rc.y, [90, 30, 42]); }
+    });
+    res.dec.forEach(function (d, i) { if (d.lit && !(old && old.dec[i].lit)) { Audio.play('decoy'); glitchT = now; if (!RM()) shake = 12; } });
+  }
+  var lit = res.rx.filter(function (r) { return r.lit; }).length;
+  Audio.setTune(res.dec.some(function (d) { return d.lit; }) ? 0 : lit / L.receivers.length);
+  if (res.solved && !G.won) win();
+  updateHud();
+}
+function addRing(x, y, rgb) { rings.push({ x: x, y: y, t0: now, rgb: rgb }); }
+
+function canAct() { return G && screen === 'puzzle' && !G.won && !modalOpen(); }
+function rotateAt(c, dir) {
+  if (!canAct()) return; var t = G.tiles[c]; if (!t) return;
+  if (t.fx && !t.rot) { Audio.play('locked'); G.anim[c] = { kind: 'nudge', t0: now }; return; }
+  if (SL.PERIOD[t.t] === 1) { Audio.play('locked'); return; }
+  var prev = snapshot(); t.r = (t.r + dir + 4) & 3;
+  G.anim[c] = { kind: 'rot', from: -dir * 90, t0: now };
+  Audio.play('rotate', (c * 0.37) % 1); commit(prev);
+}
+function placeAt(c, key, rot, fromCell) {
+  var pk = SL.parseKey(key), prev = snapshot();
+  if (fromCell != null) { G.tiles[fromCell] = null; } else { G.inv[key]--; if (!G.inv[key]) delete G.inv[key]; }
+  G.tiles[c] = { t: pk.t, r: rot || 0, r0: 0, f: pk.f, fx: false, rot: true, p: -1, k: key };
+  G.anim[c] = { kind: 'pop', t0: now };
+  Audio.play('place'); commit(prev);
+}
+function pickUp(c) {
+  if (!canAct()) return; var t = G.tiles[c]; if (!t || t.fx) return;
+  var prev = snapshot(); G.tiles[c] = null; var key = t.k || SL.keyOf(t.t, t.f); G.inv[key] = (G.inv[key] || 0) + 1;
+  Audio.play('lift'); commit(prev);
+}
+function cellFree(c) { return G.L.kind[c] === SL.K_EMPTY && !G.tiles[c]; }
+function invKeys() { return Object.keys(G.inv).filter(function (k) { return G.inv[k] > 0; }).sort(function (a, b) { return order(a) - order(b); }); function order(k) { return ['straight', 'corner', 'tee', 'booster', 'tuner', 'bridge'].indexOf(SL.parseKey(k).t) * 10 + (k.length % 10); } }
+function undo() { if (!canAct() || !G.hist.length) return; G.redo.push(snapshot()); var s = G.hist.pop(); G.tiles = s.tiles; G.inv = s.inv; Audio.play('undo'); recompute(); }
+function redo() { if (!canAct() || !G.redo.length) return; G.hist.push(snapshot()); var s = G.redo.pop(); G.tiles = s.tiles; G.inv = s.inv; Audio.play('undo'); recompute(); }
+function resetLevel() { if (!G || modalOpen()) return; G.tiles = SL.cloneTiles(G.L.tiles0); G.inv = Object.assign({}, G.L.inv0); G.hist = []; G.redo = []; G.moves = 0; G.won = false; G.solveAnim = null; G.hint = null; Audio.play('reset'); recompute(); }
+
+function hint() {
+  if (!canAct()) return;
+  if (G.daily) { toast('No hints on the Daily Signal'); return; }
+  if (!G.sol || !G.sol.ok) { toast('Solver still tuning…'); return; }
+  var step = nextHintStep();
+  if (!step) { toast('Route is right. Clean up stray relays'); return; }
+  if (!G.hintUsed) {
+    if (hintsAvail() <= 0) { toast('Earn a hint for every 3 stars'); Audio.play('locked'); return; }
+    save.hintsUsed++; save.hinted[G.level.id] = 1; G.hintUsed = true; persist();
+  }
+  G.hint = { step: step, t0: now }; Audio.play('hint'); updateHud();
+  cursor.x = step.x; cursor.y = step.y;
+}
+function nextHintStep() {
+  var L = G.L;
+  for (var i = 0; i < G.sol.solution.length; i++) {
+    var s = G.sol.solution[i], c = s.y * L.W + s.x, t = G.tiles[c], per = SL.PERIOD[s.type];
+    if (!t || t.t !== s.type || (t.r % per) !== (s.rot % per) || (s.place && t.fx)) return s;
+  }
+  return null;
+}
+
+function computeStars(res) {
+  var par = G.level.par, s = 1;
+  if (res.relays <= par.relays) s++;
+  if (res.relays <= par.relays && G.moves <= par.moves && res.leaks.length === 0) s++;
+  if (G.hintUsed) s = Math.min(s, 2);
+  return s;
+}
+function win() {
+  G.won = true; var res = G.res, stars = computeStars(res);
+  G.solveAnim = { t0: now, order: res.order.slice(), dur: RM() ? 500 : Math.min(1800, 500 + res.order.length * 70) };
+  var notes = []; res.order.forEach(function (o, i) { if (i % 2 === 0 && notes.length < 7) notes.push(Math.min(12, i >> 1)); });
+  Audio.play('solved', notes);
+  var id = G.level.id, prevStars = save.stars[id] || 0, newRegion = false, decoded = -1;
+  if (G.daily) {
+    var b = save.daily[G.level.daily];
+    if (!b || res.relays < b.r || (res.relays === b.r && G.moves < b.m)) save.daily[G.level.daily] = { r: res.relays, m: G.moves, s: stars };
+  } else {
+    var region = +id.split('-')[0];
+    var wasUnlocked = regionUnlocked(region + 1);
+    if (stars > prevStars) save.stars[id] = stars;
+    var bb = save.best[id]; if (!bb || res.relays < bb.r || (res.relays === bb.r && G.moves < bb.m)) save.best[id] = { r: res.relays, m: G.moves };
+    if (region < REGIONS.length && !wasUnlocked && regionUnlocked(region + 1)) newRegion = region + 1;
+    if (regionSolved(region) === byRegion[region].length && save.decoded.indexOf(region) < 0) { save.decoded.push(region); decoded = region; }
+    save.lastRegion = region; mapFx = { id: id, t0: 0, newRegion: newRegion, fresh: prevStars === 0 };
+  }
+  persist();
+  post({ type: 'playchain:score', score: totalStars() * 100 });
+  setTimeout(function () { showComplete(stars, res, decoded); }, G.solveAnim.dur + 250);
+  if (!RM()) flareT = now + G.solveAnim.dur - 150;
+}
+
+/* ------------------------------------------------------------------ layout + drawing puzzle */
+function layout() {
+  if (!G || screen !== 'puzzle') return;
+  var hudH = W < 760 ? 104 : 70, invH = Math.min(118, Math.max(84, H * 0.15));
+  var gw = G.L.W, gh = G.L.H;
+  var cs = Math.floor(Math.min((W - 28) / gw, (H - hudH - invH - 18) / gh, 104));
+  Lay.cs = cs; Lay.ox = Math.round((W - cs * gw) / 2); Lay.oy = Math.round(hudH + (H - hudH - invH - cs * gh) / 2);
+  Lay.invY = H - invH; Lay.invH = invH;
+  var keys = invKeys(), sz = Math.min(76, invH - 26), gap = 12, tot = keys.length * sz + (keys.length - 1) * gap;
+  Lay.slots = keys.map(function (k, i) { return { key: k, x: (W - tot) / 2 + i * (sz + gap), y: Lay.invY + (invH - sz) / 2 + 2, s: sz }; });
+}
+function cellXY(c) { var x = c % G.L.W, y = c / G.L.W | 0; return [Lay.ox + x * Lay.cs + Lay.cs / 2, Lay.oy + y * Lay.cs + Lay.cs / 2]; }
+function cellAt(px, py) { var x = Math.floor((px - Lay.ox) / Lay.cs), y = Math.floor((py - Lay.oy) / Lay.cs); if (x < 0 || y < 0 || x >= G.L.W || y >= G.L.H) return -1; return y * G.L.W + x; }
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function easeBack(u) { var c1 = 2.2, c3 = c1 + 1; return 1 + c3 * Math.pow(u - 1, 3) + c1 * Math.pow(u - 1, 2); }
+
+/* draw a tile's lines at (cx,cy). power = per side {v,f} or null */
+function drawTile(t, cx, cy, cs, angle, sideInfo, S, ghost) {
+  var h = cs / 2, lw = Math.max(1.6, cs * 0.04);
+  ctx.save(); ctx.translate(cx, cy); if (angle) ctx.rotate(angle * Math.PI / 180);
+  var openSides = []; for (var s = 0; s < 4; s++) if (SL.isOpen(t.t, t.r, s)) openSides.push(s);
+  ctx.lineCap = 'round';
+  function seg(s) { return function () { ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(SL.DX[s] * h, SL.DY[s] * h); ctx.stroke(); }; }
+  for (var i = 0; i < openSides.length; i++) {
+    var sd = openSides[i], info = sideInfo && sideInfo[sd];
+    if (t.t === 'bridge' && (sd & 1) === 1) {
+      // horizontal channel hops over: draw with a gap around the centre
+      var fnb = function (sd2) { return function () { var rb = cs * 0.17; ctx.beginPath(); ctx.moveTo(SL.DX[sd2] * h, 0); ctx.lineTo(SL.DX[sd2] * rb, 0); if (sd2 === 3) ctx.arc(0, 0, rb, Math.PI, Math.PI * 1.5); else ctx.arc(0, 0, rb, 0, -Math.PI * 0.5, true); ctx.stroke(); }; }(sd);
+      strokeSeg(fnb, info, lw, S, ghost); continue;
+    }
+    strokeSeg(seg(sd), info, lw, S, ghost);
+  }
+  // centre marks
+  var anyP = sideInfo && openSides.some(function (s) { return sideInfo[s]; });
+  var mainInfo = sideInfo && (sideInfo[openSides[0]] || sideInfo[openSides[1]]);
+  var col = ghost ? 'rgba(242,245,245,0.85)' : anyP ? rgba(FRGB[mainInfo ? mainInfo.f : 0], 0.95) : COL.idle;
+  if (t.t === 'booster') {
+    ctx.fillStyle = COL.void; ctx.strokeStyle = col; ctx.lineWidth = lw;
+    var d = cs * 0.15; ctx.beginPath(); ctx.moveTo(0, -d); ctx.lineTo(d, 0); ctx.lineTo(0, d); ctx.lineTo(-d, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-d * 0.45, d * 0.15); ctx.lineTo(0, -d * 0.35); ctx.lineTo(d * 0.45, d * 0.15); ctx.stroke();
+  } else if (t.t === 'tuner') {
+    var fi = SL.fIndex(t.f); ctx.fillStyle = COL.void; ctx.lineWidth = lw;
+    ctx.beginPath(); ctx.arc(0, 0, cs * 0.15, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = ghost ? col : FCOL[fi]; ctx.globalAlpha = anyP || ghost ? 1 : 0.6; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-cs * 0.08, cs * 0.04); ctx.lineTo(-cs * 0.03, -cs * 0.05); ctx.lineTo(cs * 0.02, cs * 0.05); ctx.lineTo(cs * 0.08, -cs * 0.04); ctx.stroke(); ctx.globalAlpha = 1;
+  } else if (t.t === 'dish') {
+    ctx.strokeStyle = col; ctx.lineWidth = lw; var a0 = [-Math.PI / 2, 0, Math.PI / 2, Math.PI][t.r & 3];
+    ctx.beginPath(); ctx.arc(-Math.cos(a0) * cs * 0.06, -Math.sin(a0) * cs * 0.06, cs * 0.2, a0 + Math.PI - 1.0, a0 + Math.PI + 1.0, false); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, lw * 1.4, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill();
+  } else if (t.t !== 'bridge' || true) {
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, 0, lw * (t.t === 'bridge' ? 0.01 : 1.15), 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+function strokeSeg(fn, info, lw, S, ghost) {
+  if (ghost) { ctx.setLineDash([lw * 2, lw * 2]); ctx.strokeStyle = 'rgba(242,245,245,0.9)'; ctx.lineWidth = lw; fn(); ctx.setLineDash([]); return; }
+  if (!info) { ctx.strokeStyle = COL.idle; ctx.lineWidth = lw; fn(); return; }
+  var a = 0.35 + 0.65 * info.v / S; if (info.v <= 2 && !RM()) a *= 0.72 + 0.28 * Math.sin(now * 0.03 + info.v * 3);
+  setPattern(info.f, lw); glow(fn, FRGB[info.f], a, lw); ctx.setLineDash([]);
+}
+
+function drawTower(cx, cy, cs, edges, S) {
+  var h = cs / 2, lw = Math.max(1.6, cs * 0.04), s = cs / 90;
+  edges.forEach(function (e) { glow(function () { ctx.beginPath(); ctx.moveTo(cx + SL.DX[e] * cs * 0.12, cy + SL.DY[e] * cs * 0.12); ctx.lineTo(cx + SL.DX[e] * h, cy + SL.DY[e] * h); ctx.stroke(); }, FRGB[SL.fIndex(G.level.tower.freq)], 1, lw); });
+  var top = cy - cs * 0.3, base = cy + cs * 0.34;
+  glow(function () { ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(cx, top + cs * 0.22); [-0.16, -0.05, 0.05, 0.16].forEach(function (dx) { ctx.moveTo(cx, top + cs * 0.22); ctx.lineTo(cx + dx * cs, base); }); ctx.stroke(); }, FRGB[0], 0.95, lw * 0.8);
+  ctx.fillStyle = COL.teal; ctx.beginPath(); ctx.arc(cx, top, lw * 1.6, 0, Math.PI * 2); ctx.fill();
+  if (!RM()) { var u = (now * 0.0008) % 1; ctx.strokeStyle = 'rgba(95,201,201,' + 0.6 * (1 - u) + ')'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, top, cs * (0.06 + u * 0.4), 0, Math.PI * 2); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(62,127,132,0.6)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, top, cs * 0.14, 0, Math.PI * 2); ctx.stroke();
+  ctx.font = '600 ' + Math.max(9, cs * 0.13) + 'px ' + 'ui-monospace,Menlo,Consolas,monospace'; ctx.fillStyle = 'rgba(95,201,201,0.75)'; ctx.textAlign = 'right'; ctx.fillText(S, cx + h - 5, cy + h - 6);
+}
+
+function drawReceiver(i, cx, cy, cs) {
+  var rc = G.L.receivers[i], st = G.res.rx[i], need = rc.f === 'any' ? -1 : SL.fIndex(rc.f);
+  var lw = Math.max(1.6, cs * 0.04), R = cs * 0.27, rgb = need >= 0 ? FRGB[need] : [200, 210, 212];
+  var ra = G.recvAnim[i];
+  if (st.lit) { ra.ta = [-90, 0, 90, 180][st.side] + 90; } else ra.ta = 0;
+  ra.a += (ra.ta - ra.a) * 0.18;
+  if (st.lit) {
+    var col = FRGB[st.f];
+    ctx.globalCompositeOperation = 'lighter';
+    var gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, cs * 0.55); gr.addColorStop(0, rgba(col, 0.32)); gr.addColorStop(1, rgba(col, 0)); ctx.fillStyle = gr; ctx.fillRect(cx - cs / 2, cy - cs / 2, cs, cs);
+    ctx.globalCompositeOperation = 'source-over';
+    // incoming line from source side
+    var sd = st.side; glow(function () { ctx.beginPath(); ctx.moveTo(cx + SL.DX[sd] * cs / 2, cy + SL.DY[sd] * cs / 2); ctx.lineTo(cx + SL.DX[sd] * R, cy + SL.DY[sd] * R); ctx.stroke(); }, col, 0.9, lw);
+    setPattern(need >= 0 ? need : 0, lw); glow(function () { ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke(); }, col, 1, lw); ctx.setLineDash([]);
+  } else {
+    var wrong = st.wrong && !RM() ? 0.5 + 0.5 * Math.sin(now * 0.03) : 0;
+    ctx.strokeStyle = wrong ? 'rgba(200,80,100,' + (0.5 + wrong * 0.5) + ')' : rgba(rgb, 0.55); ctx.lineWidth = lw; setPattern(need >= 0 ? need : 0, lw);
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    if (!RM()) { var bl = 0.25 + 0.25 * Math.sin(now * 0.004 + i); ctx.strokeStyle = rgba(rgb, bl * 0.5); ctx.beginPath(); ctx.arc(cx, cy, R + cs * 0.07, 0, Math.PI * 2); ctx.stroke(); }
+  }
+  // dish icon, tilts toward the source
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(ra.a * Math.PI / 180 * 0.35);
+  ctx.strokeStyle = st.lit ? '#fff' : rgba(rgb, 0.8); ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.arc(0, -R * 0.05, R * 0.5, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, R * 0.3); ctx.lineTo(0, R * 0.62); ctx.stroke();
+  ctx.fillStyle = st.lit ? '#fff' : rgba(rgb, 0.8); ctx.beginPath(); ctx.arc(0, -R * 0.05, lw * 1.2, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+function drawDecoy(i, cx, cy, cs) {
+  var lit = G.res.dec[i].lit, lw = Math.max(1.6, cs * 0.04), R = cs * 0.25;
+  var rgb = lit ? [230, 70, 90] : [150, 60, 75];
+  ctx.strokeStyle = rgba(rgb, lit ? 1 : 0.8); ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.moveTo(cx, cy - R); ctx.lineTo(cx + R, cy); ctx.lineTo(cx, cy + R); ctx.lineTo(cx - R, cy); ctx.closePath(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - R * 0.35, cy - R * 0.35); ctx.lineTo(cx + R * 0.35, cy + R * 0.35); ctx.moveTo(cx + R * 0.35, cy - R * 0.35); ctx.lineTo(cx - R * 0.35, cy + R * 0.35); ctx.stroke();
+  if (lit) { ctx.fillStyle = 'rgba(230,70,90,' + (RM() ? 0.25 : 0.15 + 0.2 * Math.random()) + ')'; ctx.fillRect(cx - cs / 2 + 2, cy - cs / 2 + 2, cs - 4, cs - 4); }
+}
+
+function sideInfoFor(c) {
+  var t = G.tiles[c], res = G.res; if (!t) return null;
+  var info = {}, any = false;
+  for (var s = 0; s < 4; s++) {
+    if (!SL.isOpen(t.t, t.r, s)) continue;
+    var ch = t.t === 'bridge' ? (s & 1) : 0, i = c * 2 + ch, v = res.pw[i];
+    if (v > 0) {
+      var f = res.pf[i];
+      if (t.t === 'tuner' && s !== res.pin[i]) f = SL.fIndex(t.f);
+      info[s] = { v: v, f: f, in: s === res.pin[i] }; any = true;
+    }
+  }
+  return any ? info : null;
+}
+
+function drawPuzzle(t) {
+  var L = G.L, cs = Lay.cs, S = L.tower.S;
+  drawBackground(t, H * 0.7, W / 2);
+  ctx.save();
+  if (shake > 0.3 && !RM()) { ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake); shake *= 0.86; } else shake = 0;
+  // board plate
+  ctx.fillStyle = 'rgba(16,20,23,0.75)'; rr(Lay.ox - 8, Lay.oy - 8, cs * L.W + 16, cs * L.H + 16, 14); ctx.fill();
+  ctx.strokeStyle = 'rgba(62,127,132,0.25)'; ctx.lineWidth = 1; ctx.stroke();
+  // cells
+  for (var c = 0; c < L.N; c++) {
+    var x = Lay.ox + (c % L.W) * cs, y = Lay.oy + (c / L.W | 0) * cs, k = L.kind[c];
+    if (k === SL.K_STATIC) {
+      ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 0.85;
+      ctx.drawImage(noiseTex[(Math.floor(now / (RM() ? 600 : 70)) + c) % noiseTex.length], x + 2, y + 2, cs - 4, cs - 4); ctx.globalAlpha = 1;
+      ctx.fillStyle = 'rgba(90,30,42,0.35)'; ctx.fillRect(x + 2, y + 2, cs - 4, cs - 4);
+      continue;
+    }
+    var tile = G.tiles[c];
+    ctx.fillStyle = tile && !tile.fx ? '#1c2629' : COL.panel; rr(x + 2, y + 2, cs - 4, cs - 4, Math.max(4, cs * 0.1)); ctx.fill();
+    ctx.strokeStyle = tile && !tile.fx ? 'rgba(62,127,132,0.35)' : COL.dead; ctx.lineWidth = 1; ctx.stroke();
+    if (!tile && k === SL.K_EMPTY) { ctx.fillStyle = COL.dead; ctx.fillRect(x + cs / 2 - 1, y + cs / 2 - 1, 2, 2); }
+  }
+  // tiles
+  for (c = 0; c < L.N; c++) {
+    var tl = G.tiles[c]; if (!tl) continue;
+    if (drag && drag.fromCell === c) continue;
+    var p = cellXY(c), an = G.anim[c], ang = 0, sc = 1;
+    if (an) {
+      var u = (now - an.t0) / (RM() ? 1 : 170);
+      if (u >= 1) delete G.anim[c];
+      else if (an.kind === 'rot') ang = an.from * (1 - easeBack(u));
+      else if (an.kind === 'nudge') ang = Math.sin(u * Math.PI * 3) * 6 * (1 - u);
+      else if (an.kind === 'pop') sc = 0.8 + 0.2 * easeBack(u);
+    }
+    ctx.save(); if (sc !== 1) { ctx.translate(p[0], p[1]); ctx.scale(sc, sc); ctx.translate(-p[0], -p[1]); }
+    drawTile(tl, p[0], p[1], cs, ang, sideInfoFor(c), S);
+    ctx.restore();
+    // lock / rotate badge
+    if (tl.fx) {
+      var bx = Lay.ox + (c % L.W) * cs + cs - cs * 0.17, by = Lay.oy + (c / L.W | 0) * cs + cs * 0.17, br = Math.max(3, cs * 0.06);
+      ctx.strokeStyle = 'rgba(127,144,149,0.55)'; ctx.lineWidth = 1.2;
+      if (!tl.rot) { ctx.strokeRect(bx - br, by - br * 0.2, br * 2, br * 1.5); ctx.beginPath(); ctx.arc(bx, by - br * 0.2, br * 0.7, Math.PI, 0); ctx.stroke(); }
+      else if (SL.PERIOD[tl.t] > 1) { ctx.beginPath(); ctx.arc(bx, by, br, -Math.PI * 0.9, Math.PI * 0.5); ctx.stroke(); ctx.beginPath(); ctx.moveTo(bx, by + br); ctx.lineTo(bx - br * 0.6, by + br * 0.5); ctx.stroke(); }
+    }
+  }
+  // satellite links
+  for (c = 0; c < L.N; c++) {
+    var dt = G.tiles[c]; if (!dt || dt.t !== 'dish' || dt.p < c) continue;
+    var a = cellXY(c), b = cellXY(dt.p), pw = G.res.pw[c * 2] > 0 && G.res.pw[dt.p * 2] > 0;
+    ctx.setLineDash([3, 6]); ctx.lineDashOffset = RM() ? 0 : -now * 0.02; ctx.strokeStyle = pw ? 'rgba(95,201,201,0.55)' : 'rgba(86,102,108,0.35)'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    if (pw && !RM()) { var uu = (now * 0.0006) % 1, from = G.res.pin[c * 2] === -2 ? b : a, to = from === a ? b : a; ctx.fillStyle = '#bff'; ctx.beginPath(); ctx.arc(from[0] + (to[0] - from[0]) * uu, from[1] + (to[1] - from[1]) * uu, 2.2, 0, 7); ctx.fill(); }
+  }
+  // tower, receivers, decoys
+  var tp = cellXY(L.tower.c); drawTower(tp[0], tp[1], cs, L.tower.edges, S);
+  L.receivers.forEach(function (r, i) { var p2 = cellXY(r.c); drawReceiver(i, p2[0], p2[1], cs); });
+  L.decoys.forEach(function (d, i) { var p2 = cellXY(d.c); drawDecoy(i, p2[0], p2[1], cs); });
+  drawPackets(S);
+  drawLeaks();
+  // teaching pulse on 1-1: soft breathing ring on the first relay until it is touched
+  if (G.level.id === '1-1' && G.moves === 0 && !RM()) {
+    var tp1 = cellXY(L.tower.c + 1), pu = (now * 0.0011) % 1;
+    ctx.strokeStyle = 'rgba(95,201,201,' + 0.55 * (1 - pu) + ')'; ctx.lineWidth = 1.5; rr(tp1[0] - cs / 2 + 4 - pu * 8, tp1[1] - cs / 2 + 4 - pu * 8, cs - 8 + pu * 16, cs - 8 + pu * 16, cs * 0.14); ctx.stroke();
+  }
+  // hint ghost
+  if (G.hint) {
+    var hs = G.hint.step, hc = hs.y * L.W + hs.x, hp = cellXY(hc), cur = G.tiles[hc];
+    if (cur && cur.t === hs.type && (cur.r % SL.PERIOD[hs.type]) === (hs.rot % SL.PERIOD[hs.type])) G.hint = null;
+    else {
+      var pul = 0.5 + 0.5 * Math.sin(now * 0.008);
+      ctx.strokeStyle = 'rgba(242,245,245,' + (0.4 + 0.5 * pul) + ')'; ctx.lineWidth = 2; rr(hp[0] - cs / 2 + 3, hp[1] - cs / 2 + 3, cs - 6, cs - 6, cs * 0.12); ctx.stroke();
+      ctx.globalAlpha = 0.5 + 0.4 * pul; drawTile({ t: hs.type, r: hs.rot, f: hs.freq }, hp[0], hp[1], cs * 0.8, 0, null, S, true); ctx.globalAlpha = 1;
+    }
+  }
+  // cursor
+  if (cursor.show && !G.won) {
+    var cx0 = Lay.ox + cursor.x * cs, cy0 = Lay.oy + cursor.y * cs, pp = 0.6 + 0.4 * Math.sin(now * 0.008);
+    ctx.strokeStyle = 'rgba(95,201,201,' + pp + ')'; ctx.lineWidth = 2; rr(cx0 + 1, cy0 + 1, cs - 2, cs - 2, cs * 0.12); ctx.stroke();
+  }
+  // rings
+  rings = rings.filter(function (r) { return now - r.t0 < 900; });
+  rings.forEach(function (r) { var u = (now - r.t0) / 900, p3 = cellXY(r.y * L.W + r.x); ctx.strokeStyle = rgba(r.rgb, (1 - u) * 0.9); ctx.lineWidth = 2 * (1 - u) + 0.5; ctx.beginPath(); ctx.arc(p3[0], p3[1], cs * (0.3 + u * (RM() ? 0.3 : 1.3)), 0, 7); ctx.stroke(); });
+  // solve pulse
+  if (G.solveAnim) {
+    var sa = G.solveAnim, el = now - sa.t0, stepT = sa.dur / Math.max(1, sa.order.length);
+    ctx.globalCompositeOperation = 'lighter';
+    sa.order.forEach(function (o, i) {
+      var tt = el - i * stepT; if (tt < 0 || tt > 600) return; var a2 = 1 - tt / 600, p4 = cellXY(o[0]);
+      var gg = ctx.createRadialGradient(p4[0], p4[1], 0, p4[0], p4[1], cs * 0.6); gg.addColorStop(0, rgba(FRGB[o[3]], a2 * 0.7)); gg.addColorStop(1, rgba(FRGB[o[3]], 0));
+      ctx.fillStyle = gg; ctx.fillRect(p4[0] - cs * 0.6, p4[1] - cs * 0.6, cs * 1.2, cs * 1.2);
+    });
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  ctx.restore();
+  if (now > flareT && now - flareT < 500 && !RM()) { ctx.fillStyle = 'rgba(95,201,201,' + 0.12 * (1 - (now - flareT) / 500) + ')'; ctx.fillRect(0, 0, W, H); }
+  drawInventory();
+  if (drag) { var key = drag.key, pk = SL.parseKey(key); ctx.globalAlpha = 0.9; drawTile({ t: pk.t, r: drag.rot || 0, f: pk.f }, drag.x, drag.y, cs, 0, null, S); ctx.globalAlpha = 1; var tc = cellAt(drag.x, drag.y); if (tc >= 0 && cellFree(tc)) { var q = cellXY(tc); ctx.strokeStyle = 'rgba(95,201,201,0.7)'; ctx.lineWidth = 1.5; rr(q[0] - cs / 2 + 3, q[1] - cs / 2 + 3, cs - 6, cs - 6, cs * 0.12); ctx.stroke(); } }
+  if (now - glitchT < 420 && !RM()) glitch();
+  Audio.leaks(G.won ? 0 : G.res.leaks.length);
+}
+function drawPackets(S) {
+  if (RM()) return;
+  var L = G.L, cs = Lay.cs, h = cs / 2, res = G.res;
+  ctx.globalCompositeOperation = 'lighter';
+  function dot(x, y, f, v) { ctx.fillStyle = rgba(FRGB[f], 0.5 + 0.5 * v / S); ctx.beginPath(); ctx.arc(x, y, Math.max(1.4, cs * 0.032), 0, 7); ctx.fill(); }
+  for (var c = 0; c < L.N; c++) {
+    var t = G.tiles[c]; if (!t) continue;
+    for (var ch = 0; ch < 2; ch++) {
+      var i = c * 2 + ch, v = res.pw[i]; if (!v) continue;
+      var sIn = res.pin[i], p = cellXY(c), speed = 0.35 + 0.95 * v / S, u = ((now * 0.001 * speed) - res.pord[i] * 0.5) % 1; if (u < 0) u += 1;
+      var outs = [];
+      if (t.t === 'bridge') outs = [(sIn + 2) & 3];
+      else if (t.t === 'dish') outs = sIn === -2 ? [t.r & 3] : [];
+      else for (var s = 0; s < 4; s++) if (s !== sIn && SL.isOpen(t.t, t.r, s)) outs.push(s);
+      var fo = t.t === 'tuner' ? SL.fIndex(t.f) : res.pf[i];
+      if (u < 0.5 && sIn >= 0) { var k = 1 - u * 2; dot(p[0] + SL.DX[sIn] * h * k, p[1] + SL.DY[sIn] * h * k, res.pf[i], v); }
+      else if (u >= 0.5) outs.forEach(function (o) { var k2 = (u - 0.5) * 2; dot(p[0] + SL.DX[o] * h * k2, p[1] + SL.DY[o] * h * k2, fo, v); });
+    }
+  }
+  // tower emission
+  var tp = cellXY(L.tower.c), uu = (now * 0.0013) % 1;
+  L.tower.edges.forEach(function (e) { dot(tp[0] + SL.DX[e] * h * (0.2 + uu * 0.8), tp[1] + SL.DY[e] * h * (0.2 + uu * 0.8), L.tower.f, S); });
+  ctx.globalCompositeOperation = 'source-over';
+}
+function drawLeaks() {
+  var cs = Lay.cs, h = cs / 2;
+  G.res.leaks.forEach(function (lk, j) {
+    var p = cellXY(lk.c), ex = p[0] + SL.DX[lk.d] * h, ey = p[1] + SL.DY[lk.d] * h, rgb = FRGB[lk.f];
+    var fl = RM() ? 0.7 : 0.4 + 0.6 * Math.abs(Math.sin(now * 0.05 + j * 1.7));
+    ctx.fillStyle = rgba(rgb, fl); ctx.beginPath(); ctx.arc(ex, ey, Math.max(2, cs * 0.045), 0, 7); ctx.fill();
+    if (!RM() && Math.random() < 0.35) sparks.push({ x: ex, y: ey, vx: SL.DX[lk.d] * (0.6 + Math.random()) + (Math.random() - 0.5) * 1.6, vy: SL.DY[lk.d] * (0.6 + Math.random()) + (Math.random() - 0.5) * 1.6, l: 1, rgb: rgb });
+  });
+  sparks = sparks.filter(function (s) { return s.l > 0; });
+  if (sparks.length > 160) sparks.splice(0, sparks.length - 160);
+  ctx.lineWidth = 1.2;
+  sparks.forEach(function (s) { ctx.strokeStyle = rgba(s.rgb, s.l); ctx.beginPath(); ctx.moveTo(s.x, s.y); s.x += s.vx; s.y += s.vy; s.vy += 0.03; ctx.lineTo(s.x, s.y); ctx.stroke(); s.l -= 0.05; });
+}
+function glitch() {
+  var n = 7, pw = cv.width, ph = cv.height;
+  for (var i = 0; i < n; i++) {
+    var y = Math.floor(Math.random() * ph), hh = Math.floor(6 + Math.random() * 40 * DPR), off = (Math.random() - 0.5) * 40 * DPR;
+    try { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(cv, 0, y, pw, hh, off, y, pw, hh); ctx.restore(); } catch (e) {}
+  }
+  ctx.fillStyle = 'rgba(90,30,42,0.18)'; ctx.fillRect(0, 0, W, H);
+}
+function drawInventory() {
+  var cs = Lay.cs, S = G.L.tower.S;
+  if (!Lay.slots.length) return;
+  var x0 = Lay.slots[0].x - 14, x1 = Lay.slots[Lay.slots.length - 1].x + Lay.slots[0].s + 14;
+  ctx.fillStyle = 'rgba(16,20,23,0.8)'; rr(x0, Lay.slots[0].y - 10, x1 - x0, Lay.slots[0].s + 20, 14); ctx.fill(); ctx.strokeStyle = 'rgba(62,127,132,0.25)'; ctx.lineWidth = 1; ctx.stroke();
+  Lay.slots.forEach(function (sl, i) {
+    var n = G.inv[sl.key] || 0, pk = SL.parseKey(sl.key), sel = cursor.show && i === invSel;
+    ctx.fillStyle = COL.panel; rr(sl.x, sl.y, sl.s, sl.s, 10); ctx.fill();
+    ctx.strokeStyle = sel ? COL.teal : COL.dead; ctx.lineWidth = sel ? 2 : 1; ctx.stroke();
+    ctx.globalAlpha = n ? 1 : 0.3; drawTile({ t: pk.t, r: 0, f: pk.f }, sl.x + sl.s / 2, sl.y + sl.s / 2, sl.s * 0.8, 0, null, S); ctx.globalAlpha = 1;
+    ctx.font = '700 12px ui-monospace,Menlo,Consolas,monospace'; ctx.fillStyle = n ? COL.teal : COL.idle; ctx.textAlign = 'right'; ctx.fillText('×' + n, sl.x + sl.s - 6, sl.y + sl.s - 6);
+  });
+}
+
+/* ------------------------------------------------------------------ world map */
+var MAPPOS = [[0.1, 0.72], [0.24, 0.44], [0.38, 0.7], [0.52, 0.38], [0.65, 0.66], [0.78, 0.36], [0.9, 0.62]];
+var mapSel = 1, mapFx = null, mapRect = { x: 0, y: 0, w: 0, h: 0 };
+function mapArea() {
+  var p = $('mapPanel').getBoundingClientRect();
+  if (W < 760) return { x: 0, y: 0, w: W, h: p.top };
+  return { x: 0, y: 0, w: p.left, h: H };
+}
+function regionXY(i) { var a = mapRect; var px = MAPPOS[i][0], py = MAPPOS[i][1]; if (a.w < 500) { px = 0.14 + (i % 4) * 0.24 + (i >= 4 ? 0.12 : 0); py = i >= 4 ? 0.72 : 0.36; } return [a.x + a.w * px, a.y + a.h * py]; }
+function drawMap(t) {
+  mapRect = mapArea();
+  drawBackground(t, mapRect.h * 0.82, mapRect.w / 2);
+  var a = mapRect, R = Math.max(16, Math.min(a.w, a.h) * 0.055);
+  if (mapFx && !mapFx.t0) mapFx.t0 = now;
+  // links
+  for (var i = 0; i < REGIONS.length - 1; i++) {
+    var p = regionXY(i), q = regionXY(i + 1), un = regionUnlocked(i + 2), prog = 1;
+    if (mapFx && mapFx.newRegion === i + 2) prog = Math.min(1, Math.max(0, (now - mapFx.t0 - 700) / 1200));
+    ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(42,52,56,0.9)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); ctx.setLineDash([]);
+    if (un) glow(function () { ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(p[0] + (q[0] - p[0]) * prog, p[1] + (q[1] - p[1]) * prog); ctx.stroke(); }, FRGB[0], 0.7, 1.6);
+  }
+  for (var r = 0; r < REGIONS.length; r++) {
+    var reg = REGIONS[r], pos = regionXY(r), list = byRegion[reg.n] || [], unl = regionUnlocked(reg.n), solved = regionSolved(reg.n);
+    var sel = mapSel === reg.n;
+    // sector dots
+    list.forEach(function (l, k) {
+      var ang = -Math.PI / 2 + k / list.length * Math.PI * 2, x = pos[0] + Math.cos(ang) * R * 1.65, y = pos[1] + Math.sin(ang) * R * 1.65, st = save.stars[l.id] || 0, rad = Math.max(2.5, R * 0.13);
+      var fresh = mapFx && mapFx.id === l.id && mapFx.fresh, fu = fresh ? Math.min(1, (now - mapFx.t0) / 700) : 1;
+      if (st) {
+        ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(95,201,201,' + 0.25 * fu + ')'; ctx.beginPath(); ctx.arc(x, y, rad * 2.6, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = st === 3 ? '#bdf3f3' : COL.teal; ctx.globalAlpha = fu; ctx.beginPath(); ctx.arc(x, y, rad, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+        if (fresh && fu < 1 && !RM()) { ctx.strokeStyle = 'rgba(95,201,201,' + (1 - fu) + ')'; ctx.beginPath(); ctx.arc(x, y, rad * (1 + fu * 6), 0, 7); ctx.stroke(); }
+      } else { ctx.setLineDash([2, 2.5]); ctx.strokeStyle = unl ? 'rgba(62,127,132,0.6)' : 'rgba(42,52,56,0.9)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, rad, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
+    });
+    // node
+    ctx.fillStyle = COL.void; ctx.beginPath(); ctx.arc(pos[0], pos[1], R, 0, 7); ctx.fill();
+    var frac = solved / list.length;
+    if (unl) {
+      glow(function () { ctx.beginPath(); ctx.arc(pos[0], pos[1], R, 0, 7); ctx.stroke(); }, FRGB[0], 0.35 + 0.65 * frac, sel ? 2 : 1.3);
+      if (sel && !RM()) { var u = (now * 0.0007) % 1; ctx.strokeStyle = 'rgba(95,201,201,' + 0.5 * (1 - u) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(pos[0], pos[1], R * (1 + u * 1.2), 0, 7); ctx.stroke(); }
+    } else { ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(62,127,132,0.35)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(pos[0], pos[1], R, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
+    // icon
+    ctx.globalAlpha = unl ? 1 : 0.35;
+    if (reg.icon === 'decoy') { ctx.strokeStyle = 'rgba(200,80,100,0.85)'; ctx.lineWidth = 1.5; var d = R * 0.35; ctx.beginPath(); ctx.moveTo(pos[0], pos[1] - d); ctx.lineTo(pos[0] + d, pos[1]); ctx.lineTo(pos[0], pos[1] + d); ctx.lineTo(pos[0] - d, pos[1]); ctx.closePath(); ctx.stroke(); }
+    else { var info = frac > 0 ? { 0: { v: 6, f: 0 }, 1: { v: 6, f: 0 }, 2: { v: 6, f: reg.icon === 'tuner' ? 1 : 0 }, 3: { v: 6, f: 0 } } : null; drawTile({ t: reg.icon, r: reg.icon === 'tuner' || reg.icon === 'booster' ? 1 : 0, f: 'amber' }, pos[0], pos[1], R * 1.25, 0, info, 6); }
+    ctx.globalAlpha = 1;
+    ctx.font = '700 ' + Math.max(9, Math.min(12, R * 0.38)) + 'px ui-monospace,Menlo,Consolas,monospace'; ctx.textAlign = 'center';
+    ctx.fillStyle = unl ? (sel ? COL.teal : '#9fb0b4') : '#46545a';
+    ctx.fillText((reg.n + ' ' + reg.name).toUpperCase(), pos[0], pos[1] + R * 2.35 + 10);
+    ctx.fillStyle = '#5f6f74'; ctx.fillText(unl ? solved + '/' + list.length : 'NO SIGNAL', pos[0], pos[1] + R * 2.35 + 25);
+  }
+  if (mapFx && mapFx.newRegion && !mapFx.played && now - mapFx.t0 > 600) { mapFx.played = 1; Audio.play('unlock'); }
+  if (mapFx && now - mapFx.t0 > 3000) mapFx = null;
+}
+function mapClick(x, y) {
+  for (var r = 0; r < REGIONS.length; r++) { var p = regionXY(r), R = Math.max(16, Math.min(mapRect.w, mapRect.h) * 0.055) * 2; if ((x - p[0]) * (x - p[0]) + (y - p[1]) * (y - p[1]) < R * R) { mapSel = REGIONS[r].n; Audio.play('ui'); renderMapPanel(); return; } }
+}
+
+/* ------------------------------------------------------------------ DOM screens */
+function setScreen(s) {
+  screen = s;
+  $('title').classList.toggle('hide', s !== 'title');
+  $('hud').classList.toggle('hide', s !== 'puzzle');
+  $('legend').classList.toggle('hide', s !== 'puzzle');
+  $('mapPanel').classList.toggle('hide', s !== 'map');
+  if (s !== 'puzzle') cursor.show = false;
+  if (s === 'title') { Audio.setMode('title', 'title'); Audio.setTune(0.35); renderTitle(); }
+  if (s === 'map') { var tot = totalStars(); Audio.setMode('map', mapSel); Audio.setTune(Math.min(1, 0.45 + 0.55 * tot / MAX_STARS), false, 2); renderMapPanel(); }
+}
+function nextUnsolved() { for (var i = 0; i < LEVELS.length; i++) if (!save.stars[LEVELS[i].id] && levelUnlocked(LEVELS[i])) return LEVELS[i]; return LEVELS[0]; }
+function renderTitle() {
+  var anyProgress = totalStars() > 0;
+  var m = $('tmenu'); m.innerHTML = '';
+  addBtn(m, anyProgress ? 'Continue' : 'Start', function () { startLevel(nextUnsolved()); }, 'primary', anyProgress ? nextUnsolved().id : '1-1');
+  addBtn(m, 'World Map', function () { mapSel = save.lastRegion || 1; setScreen('map'); }, '', totalStars() + ' ★');
+  addBtn(m, 'Daily Signal', startDaily, '', utcDate().slice(5));
+  addBtn(m, 'Settings', function () { openSettings(); });
+  if (inFrame) addBtn(m, 'Quit to PlayChain', function () { post({ type: 'playchain:exit' }); });
+  typeLine($('tline'), 'Somebody is still transmitting. Find them.');
+  focusFirst(m);
+}
+var typeTimer = 0;
+function typeLine(el, txt, done) {
+  clearInterval(typeTimer); var i = 0; el.textContent = '';
+  if (RM()) { el.textContent = txt; if (done) done(); return; }
+  typeTimer = setInterval(function () { i++; el.textContent = txt.slice(0, i) + (i < txt.length ? '▌' : ''); if (i >= txt.length) { clearInterval(typeTimer); if (done) done(); } }, 34);
+}
+function addBtn(parent, label, fn, cls, small) {
+  var b = document.createElement('button'); b.className = 'btn ' + (cls || ''); b.innerHTML = label + (small ? '<small>' + small + '</small>' : '');
+  b.addEventListener('click', function () { Audio.init(); Audio.play('ui'); fn(); }); parent.appendChild(b); return b;
+}
+function starStr(n) { var s = ''; for (var i = 0; i < 3; i++) s += i < n ? '<span class="on">★</span>' : '★'; return s; }
+function renderMapPanel() {
+  var p = $('mapPanel'), reg = REGIONS[mapSel - 1], list = byRegion[mapSel], unl = regionUnlocked(mapSel);
+  var hints = hintsAvail();
+  p.innerHTML = '<h2>WORLD MAP</h2><div class="tot"><b>' + totalStars() + '</b> / ' + MAX_STARS + ' ★ · ' + hints + ' hint' + (hints === 1 ? '' : 's') + ' · ' + save.decoded.length + '/' + REGIONS.length + ' decoded</div>' +
+    '<h2>REGION ' + reg.n + '</h2><h3>' + reg.name + '</h3><p class="rule">' + (unl ? reg.rule : 'Restore 3 sectors in ' + REGIONS[mapSel - 2].name + ' to reach this region.') + '</p><div class="grid" id="lvGrid"></div><div class="row" id="mapRow"></div><div id="mapRow2"></div>';
+  var g = $('lvGrid');
+  list.forEach(function (l) {
+    var b = document.createElement('button'), st = save.stars[l.id] || 0, ok = levelUnlocked(l);
+    b.className = 'lvb' + (st ? ' done' : ''); b.disabled = !ok;
+    b.innerHTML = l.id + '<span class="s">' + (ok ? starStr(st) : '···') + '</span>';
+    b.addEventListener('click', function () { Audio.init(); Audio.play('ui'); startLevel(l); });
+    g.appendChild(b);
+  });
+  var row = $('mapRow');
+  addBtn(row, '◀', function () { mapSel = mapSel > 1 ? mapSel - 1 : REGIONS.length; renderMapPanel(); Audio.setMode('map', mapSel); });
+  addBtn(row, '▶', function () { mapSel = mapSel < REGIONS.length ? mapSel + 1 : 1; renderMapPanel(); Audio.setMode('map', mapSel); });
+  var r2 = $('mapRow2');
+  addBtn(r2, 'Daily Signal', startDaily, '', utcDate());
+  addBtn(r2, 'Radio Log', openLog, '', save.decoded.length + '/' + REGIONS.length);
+  addBtn(r2, 'Settings', openSettings);
+  addBtn(r2, 'Title', function () { setScreen('title'); });
+  var firstOpen = g.querySelector('button:not(:disabled):not(.done)') || g.querySelector('button:not(:disabled)') || r2.querySelector('button');
+  if (firstOpen && !modalOpen()) focusEl(firstOpen);
+}
+function updateHud() {
+  if (!G) return;
+  var par = G.level.par, res = G.res, region = REGIONS[+G.level.id.split('-')[0] - 1];
+  $('hudLv').innerHTML = G.daily ? '<b>DAILY</b>' + G.level.daily : '<b>' + G.level.id + '</b>' + (region ? region.name.toUpperCase() : '');
+  function cls(v, p) { return v <= p ? 'ok' : 'over'; }
+  var lit = res.rx.filter(function (r) { return r.lit; }).length;
+  $('hudStats').innerHTML =
+    '<div class="stat"><span>RELAYS</span><b class="' + cls(res.relays, par.relays) + '">' + res.relays + '<i>/' + par.relays + '</i></b></div>' +
+    '<div class="stat"><span>MOVES</span><b class="' + cls(G.moves, par.moves) + '">' + G.moves + '<i>/' + par.moves + '</i></b></div>' +
+    '<div class="stat"><span>LEAKS</span><b class="' + (res.leaks.length ? 'bad' : 'ok') + '">' + res.leaks.length + '</b></div>' +
+    '<div class="stat"><span>LOCKED</span><b class="' + (lit === res.rx.length ? 'ok' : '') + '">' + lit + '<i>/' + res.rx.length + '</i></b></div>';
+  $('bUndo').disabled = !G.hist.length; $('bRedo').disabled = !G.redo.length;
+  var h = hintsAvail(), hb = $('hintBadge'); hb.textContent = G.hintUsed ? '✓' : h; hb.className = 'badge' + (h || G.hintUsed ? '' : ' zero');
+  // frequency legend
+  var used = {}; used[SL.fIndex(G.level.tower.freq)] = 1; G.level.receivers.forEach(function (r) { if (r.freq !== 'any') used[SL.fIndex(r.freq)] = 1; });
+  Object.keys(G.L.inv0).concat((G.level.fixed || []).map(function (f) { return f.type === 'tuner' ? 'tuner:' + f.freq : ''; })).forEach(function (k) { var p = SL.parseKey(k); if (p.t === 'tuner') used[SL.fIndex(p.f)] = 1; });
+  var dash = { 0: '', 1: 'stroke-dasharray="5 3"', 2: 'stroke-dasharray="0.1 4" stroke-linecap="round"' };
+  $('legend').innerHTML = Object.keys(used).map(function (f) { return '<div><svg viewBox="0 0 26 8"><line x1="1" y1="4" x2="25" y2="4" stroke="' + FCOL[f] + '" stroke-width="2" ' + (save.settings.patterns ? dash[f] : '') + '/></svg>' + FNAME[f] + '</div>'; }).join('');
+  layout();
+}
+
+var toastT = 0;
+function toast(msg) { var el = $('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove('show'); }, 1800); }
+
+/* ------------------------------------------------------------------ modals */
+var modalKind = null, modalBack = null;
+function modalOpen() { return !!modalKind; }
+function openModal(kind, html, back) { modalKind = kind; modalBack = back || null; $('mcard').innerHTML = html; $('modal').classList.remove('hide'); }
+function closeModal() { modalKind = null; $('modal').classList.add('hide'); var b = modalBack; modalBack = null; if (b) b(); else restoreFocus(); }
+function restoreFocus() { if (screen === 'title') focusFirst($('tmenu')); else if (screen === 'map') { var b = $('mapPanel').querySelector('button:not(:disabled)'); if (b) focusEl(b); } else if (document.activeElement) document.activeElement.blur(); }
+function openPause(fromConsole) {
+  if (screen !== 'puzzle' || modalKind === 'complete') return;
+  openModal('pause', '<h2>PAUSED</h2><h3>' + (G.daily ? 'Daily Signal' : 'Sector ' + G.level.id) + '</h3><div id="pm"></div>');
+  var m = $('pm');
+  addBtn(m, 'Resume', closeModal, 'primary');
+  addBtn(m, 'Restart', function () { closeModal(); resetLevel(); });
+  addBtn(m, 'Settings', function () { openSettings(openPause); });
+  addBtn(m, 'World Map', function () { closeModal(); mapSel = G.daily ? mapSel : +G.level.id.split('-')[0]; setScreen('map'); });
+  if (inFrame) addBtn(m, 'Quit to PlayChain', function () { post({ type: 'playchain:exit' }); });
+  focusFirst(m);
+}
+function openSettings(back) {
+  var s = save.settings;
+  var html = '<h2>SETTINGS</h2><h3>Tuning</h3><div class="set">' +
+    ['music:Music', 'amb:Ambience (static)', 'sfx:Effects', 'ui:Interface'].map(function (x) { var k = x.split(':'); return '<label for="v_' + k[0] + '">' + k[1] + '</label><input type="range" min="0" max="1" step="0.05" id="v_' + k[0] + '" value="' + s[k[0]] + '">'; }).join('') +
+    ['scan:Scanlines + CRT', 'reduce:Reduce motion', 'patterns:Colourblind line patterns', 'text:Large text'].map(function (x) { var k = x.split(':'); var on = k[0] === 'text' ? s.text > 1 : s[k[0]]; return '<span>' + k[1] + '</span><button class="tog' + (on ? ' on' : '') + '" data-k="' + k[0] + '" aria-label="' + k[1] + '"></button>'; }).join('') +
+    '</div><div class="keys"><b>Mouse</b> click rotate · right click rotate back · drag to place<br><b>Touch</b> tap rotate · long press back · drag to place<br><b>Keys</b> arrows move · Space rotate · X back · Q/E pick tile · Enter place · Del lift · Ctrl+Z/Y · R reset · H hint · Esc pause<br><b>Pad</b> A rotate/place · X back · B lift · LT/RT pick tile · LB/RB undo/redo · Y hint · Select reset · Start pause</div><div id="sm"></div>';
+  openModal('settings', html, typeof back === 'function' ? back : null);
+  Array.prototype.forEach.call(document.querySelectorAll('#mcard input[type=range]'), function (inp) {
+    inp.addEventListener('input', function () { s[inp.id.slice(2)] = +inp.value; Audio.applyVolumes(); });
+    inp.addEventListener('change', function () { persist(); Audio.play('ui'); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#mcard .tog'), function (b) {
+    b.addEventListener('click', function () { var k = b.dataset.k; if (k === 'text') s.text = s.text > 1 ? 1 : 1.2; else s[k] = !s[k]; b.classList.toggle('on'); applySettings(); persist(); Audio.play('ui'); });
+  });
+  addBtn($('sm'), 'Done', closeModal, 'primary');
+  focusFirst($('mcard'));
+}
+function applySettings() { var s = save.settings; document.body.classList.toggle('scan', !!s.scan); document.body.classList.toggle('rm', !!s.reduce); document.documentElement.style.fontSize = (16 * s.text) + 'px'; if (G) updateHud(); }
+function openLog() {
+  var html = '<h2>RADIO LOG</h2><h3>Intercepted transmissions</h3><div class="log">' + TRANSMISSIONS.map(function (tx, i) {
+    var ok = save.decoded.indexOf(i + 1) >= 0;
+    return '<div class="tx' + (ok ? '' : ' locked') + '"><small>RX ' + tx.f + ' MHZ · ' + REGIONS[i].name.toUpperCase() + '</small>' + (ok ? tx.t : scramble(tx.t, i)) + '</div>';
+  }).join('') + '</div><div id="lm"></div>';
+  openModal('log', html); addBtn($('lm'), 'Close', closeModal, 'primary'); focusFirst($('lm'));
+}
+function scramble(t, seed) { var r = SL.mulberry32(seed + 11), g = '▒░▓·'; return t.replace(/[^\s]/g, function () { return g[Math.floor(r() * g.length)]; }); }
+function showComplete(stars, res, decoded) {
+  var par = G.level.par, isDaily = G.daily, best = isDaily ? save.daily[G.level.daily] : save.best[G.level.id];
+  var html = '<h2>' + (isDaily ? 'DAILY SIGNAL · ' + G.level.daily : 'SECTOR ' + G.level.id + ' RESTORED') + '</h2><h3>' + ['', 'Signal found', 'Clean route', 'Perfect lock'][stars] + '</h3>' +
+    '<div class="stars">' + [0, 1, 2].map(function (i) { return '<div class="star' + (i < stars ? '' : ' off') + '" id="st' + i + '"><svg viewBox="0 0 24 24"><path d="M12 2.8l2.7 5.9 6.4.7-4.8 4.3 1.4 6.3L12 16.8 6.3 20l1.4-6.3L2.9 9.4l6.4-.7z" fill="' + COL.teal + '" stroke="' + COL.teal + '" stroke-width="1.2" stroke-linejoin="round"/></svg></div>'; }).join('') + '</div>' +
+    '<div class="res"><span>Relays</span><b class="' + (res.relays <= par.relays ? 'ok' : 'over') + '">' + res.relays + '</b><span>par ' + par.relays + '</span>' +
+    '<span>Moves</span><b class="' + (G.moves <= par.moves ? 'ok' : 'over') + '">' + G.moves + '</b><span>par ' + par.moves + '</span>' +
+    '<span>Leaks</span><b class="' + (res.leaks.length ? 'over' : 'ok') + '">' + res.leaks.length + '</b><span>' + (G.hintUsed ? 'hint used' : '') + '</span>' +
+    (best ? '<span>Local best</span><b>' + best.r + '/' + best.m + '</b><span>relays/moves</span>' : '') + '</div>' +
+    (decoded > 0 ? '<div class="tx" id="dtx"><small>TRANSMISSION DECODED · RX ' + TRANSMISSIONS[decoded - 1].f + ' MHZ</small><span></span></div>' : '') +
+    '<div id="cm"></div>';
+  openModal('complete', html);
+  var m = $('cm'), nxt = isDaily ? null : nextLevel();
+  if (nxt) addBtn(m, 'Next', function () { closeModal(); startLevel(nxt); }, 'primary', nxt.id);
+  addBtn(m, 'Replay', function () { closeModal(); if (isDaily) startLevel(G.level, { daily: true }); else startLevel(G.level); }, nxt ? '' : 'primary');
+  addBtn(m, 'World Map', function () { closeModal(); if (!isDaily) mapSel = +G.level.id.split('-')[0]; setScreen('map'); });
+  focusFirst(m);
+  [0, 1, 2].forEach(function (i) { setTimeout(function () { var el = $('st' + i); if (!el) return; el.classList.add('drop'); if (i < stars) Audio.play('star', i); }, 250 + i * 330); });
+  if (decoded > 0) setTimeout(function () { var el = document.querySelector('#dtx span'); if (el) typeLine(el, TRANSMISSIONS[decoded - 1].t); }, 1300);
+}
+function nextLevel() {
+  var i = LEVELS.indexOf(G.level);
+  for (var j = i + 1; j < LEVELS.length; j++) if (levelUnlocked(LEVELS[j]) && !save.stars[LEVELS[j].id]) return LEVELS[j];
+  var n = LEVELS[i + 1]; return n && levelUnlocked(n) ? n : null;
+}
+function utcDate() { return new Date().toISOString().slice(0, 10); }
+function startDaily() {
+  var d = utcDate(); toast('Tuning to today’s frequency…');
+  Solver.daily(d).then(function (g) { if (!g || !g.level) { toast('No signal today. Try again'); return; } startLevel(g.level, { daily: true }); G.sol = g.sol; });
+}
+
+/* ------------------------------------------------------------------ focus navigation (keys + pad in menus) */
+function focusables() {
+  var root = modalOpen() ? $('mcard') : screen === 'title' ? $('title') : screen === 'map' ? $('mapPanel') : null;
+  if (!root) return [];
+  return Array.prototype.filter.call(root.querySelectorAll('button,input'), function (e) { return !e.disabled && e.offsetParent !== null; });
+}
+function focusEl(e) { try { e.focus({ preventScroll: false }); } catch (x) {} }
+function focusFirst(root) { var b = root && root.querySelector('button:not(:disabled),input'); if (b) setTimeout(function () { focusEl(b); }, 30); }
+function moveFocus(dx, dy) {
+  var list = focusables(); if (!list.length) return false;
+  var cur = document.activeElement; if (list.indexOf(cur) < 0) { focusEl(list[0]); return true; }
+  if (cur.type === 'range' && dx) { cur.value = Math.max(0, Math.min(1, +cur.value + dx * 0.05)); cur.dispatchEvent(new Event('input')); cur.dispatchEvent(new Event('change')); return true; }
+  var a = cur.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2, best = null, bd = 1e9;
+  list.forEach(function (e) {
+    if (e === cur) return; var b = e.getBoundingClientRect(), bx = b.left + b.width / 2, by = b.top + b.height / 2, vx = bx - ax, vy = by - ay;
+    var along = vx * dx + vy * dy; if (along <= 4) return; var perp = Math.abs(vx * dy) + Math.abs(vy * dx); var d = along + perp * 2.2; if (d < bd) { bd = d; best = e; }
+  });
+  if (best) { focusEl(best); Audio.play('ui'); return true; }
+  return false;
+}
+function backAction() {
+  if (modalKind === 'complete') return;
+  if (modalOpen()) { Audio.play('back'); closeModal(); return; }
+  if (screen === 'puzzle') { openPause(); return; }
+  if (screen === 'map') { Audio.play('back'); setScreen('title'); }
+}
+
+/* ------------------------------------------------------------------ input: pointer */
+var ptr = null;
+cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+cv.addEventListener('pointerdown', function (e) {
+  Audio.init();
+  if (screen === 'map') { mapClick(e.clientX, e.clientY); return; }
+  if (screen !== 'puzzle' || !canAct()) return;
+  cursor.show = false;
+  var c = cellAt(e.clientX, e.clientY);
+  if (e.button === 2) { if (c >= 0) rotateAt(c, -1); return; }
+  try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+  ptr = { id: e.pointerId, x0: e.clientX, y0: e.clientY, c: c, slot: slotAt(e.clientX, e.clientY), moved: false, type: e.pointerType, long: false };
+  if (e.pointerType !== 'mouse' && c >= 0 && G.tiles[c]) ptr.lt = setTimeout(function () { if (ptr && !ptr.moved) { ptr.long = true; rotateAt(c, -1); } }, 430);
+});
+cv.addEventListener('pointermove', function (e) {
+  if (!ptr || e.pointerId !== ptr.id) return;
+  var dx = e.clientX - ptr.x0, dy = e.clientY - ptr.y0;
+  if (!ptr.moved && dx * dx + dy * dy > 64) {
+    ptr.moved = true; clearTimeout(ptr.lt);
+    if (ptr.slot && G.inv[ptr.slot.key] > 0) { drag = { key: ptr.slot.key, fromCell: null, rot: 0 }; Audio.play('lift'); }
+    else if (ptr.c >= 0 && G.tiles[ptr.c] && !G.tiles[ptr.c].fx) { var t = G.tiles[ptr.c]; drag = { key: t.k || SL.keyOf(t.t, t.f), fromCell: ptr.c, rot: t.r }; Audio.play('lift'); }
+  }
+  if (drag) { drag.x = e.clientX; drag.y = e.clientY - (ptr.type === 'touch' ? Lay.cs * 0.5 : 0); }
+});
+function endPtr(e, cancel) {
+  if (!ptr || e.pointerId !== ptr.id) return; clearTimeout(ptr.lt);
+  var p = ptr; ptr = null;
+  if (drag) {
+    var d = drag; drag = null; if (cancel) return;
+    var tc = cellAt(d.x, d.y);
+    if (tc >= 0 && cellFree(tc)) placeAt(tc, d.key, d.rot, d.fromCell);
+    else if (d.fromCell != null && tc === d.fromCell) rotateAt(tc, 1);
+    else if (d.fromCell != null && tc < 0) pickUp(d.fromCell);
+    return;
+  }
+  if (cancel || p.long) return;
+  if (p.slot) { var ks = invKeys(), si = ks.indexOf(p.slot.key); if (si >= 0) { invSel = si; Audio.play('ui'); } return; }
+  if (p.c >= 0) {
+    if (G.tiles[p.c]) rotateAt(p.c, 1);
+    else if (cellFree(p.c)) { var keys = invKeys(); if (keys.length) { var k = keys[Math.min(invSel, keys.length - 1)]; placeAt(p.c, k, 0, null); } }
+  }
+}
+cv.addEventListener('pointerup', function (e) { endPtr(e, false); });
+cv.addEventListener('pointercancel', function (e) { endPtr(e, true); });
+function slotAt(x, y) { for (var i = 0; i < Lay.slots.length; i++) { var s = Lay.slots[i]; if (x >= s.x && x <= s.x + s.s && y >= s.y && y <= s.y + s.s) return s; } return null; }
+
+$('bMap').addEventListener('click', function () { Audio.init(); Audio.play('ui'); openPause(); });
+$('bUndo').addEventListener('click', function () { Audio.init(); undo(); });
+$('bRedo').addEventListener('click', function () { Audio.init(); redo(); });
+$('bReset').addEventListener('click', function () { Audio.init(); resetLevel(); });
+$('bHint').addEventListener('click', function () { Audio.init(); hint(); });
+
+/* ------------------------------------------------------------------ input: keyboard */
+function puzzleAction(kind) {
+  if (!canAct()) return;
+  cursor.show = true;
+  var c = cursor.y * G.L.W + cursor.x, keys = invKeys();
+  if (kind === 'act') { if (G.tiles[c]) rotateAt(c, 1); else if (cellFree(c) && keys.length) placeAt(c, keys[Math.min(invSel, keys.length - 1)], 0, null); }
+  else if (kind === 'place') { if (cellFree(c) && keys.length) placeAt(c, keys[Math.min(invSel, keys.length - 1)], 0, null); else if (G.tiles[c]) rotateAt(c, 1); }
+  else if (kind === 'back') rotateAt(c, -1);
+  else if (kind === 'lift') pickUp(c);
+  else if (kind === 'inv+' || kind === 'inv-') { if (keys.length) { invSel = (invSel + (kind === 'inv+' ? 1 : -1) + keys.length) % keys.length; Audio.play('ui'); } }
+}
+function moveCursor(dx, dy) { if (!canAct()) return; if (!cursor.show) { cursor.show = true; return; } cursor.x = Math.max(0, Math.min(G.L.W - 1, cursor.x + dx)); cursor.y = Math.max(0, Math.min(G.L.H - 1, cursor.y + dy)); }
+window.addEventListener('keydown', function (e) {
+  Audio.init();
+  var k = e.key, ctrl = e.ctrlKey || e.metaKey;
+  var dir = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] }[k.length === 1 ? k.toLowerCase() : k];
+  if (k === 'Escape' || (k === 'p' && screen === 'puzzle')) { e.preventDefault(); backAction(); return; }
+  if (modalOpen() || screen !== 'puzzle') {
+    if ((k === 'Enter' || k === ' ') && focusables().indexOf(document.activeElement) < 0) { var f0 = focusables()[0]; if (f0) { e.preventDefault(); f0.click(); } return; }
+    if (dir && !(document.activeElement && document.activeElement.type === 'range' && !dir[0] && false)) { if (k.length > 1 || screen !== 'puzzle') { e.preventDefault(); moveFocus(dir[0], dir[1]); } }
+    return;
+  }
+  if (ctrl && (k === 'z' || k === 'Z')) { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+  if (ctrl && (k === 'y' || k === 'Y')) { e.preventDefault(); redo(); return; }
+  if (ctrl) return;
+  if (dir) { e.preventDefault(); moveCursor(dir[0], dir[1]); return; }
+  var kl = k.toLowerCase();
+  if (k === ' ') { e.preventDefault(); puzzleAction('act'); }
+  else if (k === 'Enter') { e.preventDefault(); puzzleAction('place'); }
+  else if (kl === 'x' || k === 'Backspace') { e.preventDefault(); puzzleAction('back'); }
+  else if (k === 'Delete' || kl === 'f') puzzleAction('lift');
+  else if (kl === 'e' || k === ']' || k === 'Tab') { e.preventDefault(); puzzleAction('inv+'); }
+  else if (kl === 'q' || k === '[') puzzleAction('inv-');
+  else if (kl === 'r') resetLevel();
+  else if (kl === 'h') hint();
+});
+
+/* ------------------------------------------------------------------ input: gamepad */
+var padPrev = [], padRep = { d: null, t: 0 };
+function pollPad() {
+  var pads = navigator.getGamepads ? navigator.getGamepads() : []; var gp = null;
+  for (var i = 0; i < pads.length; i++) if (pads[i] && pads[i].connected) { gp = pads[i]; break; }
+  if (!gp) return;
+  var b = gp.buttons.map(function (x) { return x && (x.pressed || x.value > 0.5); });
+  function pr(i) { return b[i] && !padPrev[i]; }
+  if (b.some(Boolean)) Audio.init();
+  var ax = gp.axes[0] || 0, ay = gp.axes[1] || 0, d = null;
+  if (b[12] || ay < -0.55) d = [0, -1]; else if (b[13] || ay > 0.55) d = [0, 1]; else if (b[14] || ax < -0.55) d = [-1, 0]; else if (b[15] || ax > 0.55) d = [1, 0];
+  var fire = false, tn = performance.now();
+  if (d) { var key = d.join(); if (padRep.d !== key) { fire = true; padRep.d = key; padRep.t = tn + 260; } else if (tn > padRep.t) { fire = true; padRep.t = tn + 120; } } else padRep.d = null;
+  if (modalOpen() || screen !== 'puzzle') {
+    if (fire) moveFocus(d[0], d[1]);
+    if (pr(0)) { var a = document.activeElement; if (a && a.click && (a.tagName === 'BUTTON')) a.click(); else { var f = focusables()[0]; if (f) focusEl(f); } }
+    if (pr(1)) backAction();
+    if (pr(9) && modalKind === 'pause') closeModal();
+    if (screen === 'map' && !modalOpen()) { if (pr(4)) { mapSel = mapSel > 1 ? mapSel - 1 : REGIONS.length; renderMapPanel(); } if (pr(5)) { mapSel = mapSel < REGIONS.length ? mapSel + 1 : 1; renderMapPanel(); } }
+  } else {
+    if (fire) { cursor.show = true; moveCursor(d[0], d[1]); }
+    if (pr(0)) puzzleAction('act');
+    if (pr(2)) puzzleAction('back');
+    if (pr(1)) puzzleAction('lift');
+    if (pr(3)) hint();
+    if (pr(4)) undo();
+    if (pr(5)) redo();
+    if (pr(6)) puzzleAction('inv-');
+    if (pr(7)) puzzleAction('inv+');
+    if (pr(8)) resetLevel();
+    if (pr(9)) openPause();
+  }
+  padPrev = b;
+}
+
+/* ------------------------------------------------------------------ console bridge */
+var paused = false;
+window.addEventListener('message', function (e) {
+  if (e.source !== window.parent || !e.data || typeof e.data !== 'object') return;
+  var m = e.data;
+  if (m.type === 'playchain:loaded') { if (!booted) { mergeSave(m.data); boot(); } }
+  else if (m.type === 'playchain:pause') { paused = true; Audio.setMute(true); if (screen === 'puzzle' && !modalOpen()) openPause(true); }
+  else if (m.type === 'playchain:resume') { paused = false; if (!document.hidden) Audio.setMute(false); }
+});
+document.addEventListener('visibilitychange', function () { Audio.setMute(document.hidden || paused); });
+
+/* ------------------------------------------------------------------ loop + boot */
+function frame(t) {
+  now = t; requestAnimationFrame(frame);
+  pollPad();
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (screen === 'title') drawTitle(t);
+  else if (screen === 'map') drawMap(t);
+  else if (screen === 'puzzle' && G) drawPuzzle(t);
+  else drawBackground(t);
+}
+var booted = false;
+function boot() {
+  if (booted) return; booted = true;
+  $('boot').classList.add('hide');
+  applySettings(); resize(); setScreen('title');
+  requestAnimationFrame(frame);
+  post({ type: 'playchain:ready' });
+}
+window.addEventListener('pointerdown', function () { Audio.init(); }, true);
+if (inFrame) { post({ type: 'playchain:load' }); setTimeout(boot, 800); }
+else { try { mergeSave(JSON.parse(localStorage.getItem('signal-lost-save') || 'null')); } catch (e) {} boot(); }
+
+window.__SL = { get G() { return G; }, get screen() { return screen; }, startLevel: startLevel, LEVELS: LEVELS, save: save, Solver: Solver, rotateAt: rotateAt, placeAt: placeAt, setScreen: setScreen };
+})();
+</script>
+</body>
+</html>

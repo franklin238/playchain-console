@@ -230,6 +230,19 @@ const recipes = {
 const counts = { 1: 10, 2: 8, 3: 8, 4: 8, 5: 8, 6: 6 };
 const handmade = { 1: R[0], 2: R[1], 3: R[2], 4: R[3], 5: R[4], 6: R6 };
 
+// trim empty rows/cols, keeping a one-cell margin (tower column stays at x=0)
+function crop(lv) {
+  const pts = [[lv.tower.x, lv.tower.y], ...lv.receivers.map(r => [r.x, r.y]), ...lv.fixed.map(f => [f.x, f.y]), ...lv.decoys.map(d => [d.x, d.y])];
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const W = lv.size[0], H = lv.size[1];
+  const y0 = Math.max(0, Math.min(...ys) - 1), y1 = Math.min(H - 1, Math.max(...ys) + 1);
+  const x1 = Math.min(W - 1, Math.max(...xs) + 1);
+  const inb = (x, y) => x <= x1 && y >= y0 && y <= y1;
+  const sh = (o) => { o.y -= y0; return o; };
+  lv.tower = sh(lv.tower); lv.receivers.forEach(sh); lv.fixed.forEach(sh); lv.decoys.forEach(sh);
+  lv.static = lv.static.filter(p => inb(p[0], p[1])).map(p => [p[0], p[1] - y0]);
+  lv.size = [x1 + 1, y1 - y0 + 1];
+}
 const out = [];
 for (let reg = 1; reg <= 6; reg++) {
   const list = [];
@@ -261,6 +274,7 @@ for (let reg = 1; reg <= 6; reg++) {
       if (!g) n = n; // keep trying
     }
     g.level.id = `${reg}-${list.length + 1}`;
+    crop(g.level);
     console.error('gen', g.level.id, 'tries', tries, 'seed', seed - 1);
     list.push(g.level);
   }
