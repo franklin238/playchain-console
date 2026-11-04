@@ -1,0 +1,16 @@
+# Build log
+
+Dated entries of what was built. Building for the World is Flat hackathon started 21 Oct 2026, 17:30 UTC. Submissions close 12 Nov 2026, 17:30 UTC.
+
+## 2026-11-04
+
+- Verified chain facts against mainnet: chain id 4663 from `https://rpc.mainnet.chain.robinhood.com`; $WIF at `0x5173b8eA6923c2d40267890D45C46a3480954773` returns symbol `WIF`, name `World is Flat`, 18 decimals, total supply about 1e9, contract code present.
+- Wrote `PlayChainArcade.sol`: listing fee burn, Spotlight voting with a 50/40/10 burn/developer/treasury split, self-vote rule, per-epoch leader tracking in constant time, capped owner powers, Ownable2Step, Pausable, ReentrancyGuard, no custody.
+- Tests: 41 unit and fuzz tests, 4 invariants (contract never holds $WIF, conservation, lifetime totals, leader is max), 2 mainnet fork tests against the real $WIF. 100% line, branch and function coverage on the contract.
+- Fork test confirmed $WIF has no fee on transfer, so the split lands exactly.
+- Slither: 2 informational findings, explained in the README.
+- Ported the console shell from the main PlayChain project (input and focus navigation, gamepad, boot screen, wallpapers, settings) into a new repo, re-skinned it, and replaced its Solana/Supabase backend with Robinhood Chain reads and wagmi/viem wallet code.
+- Built the console screens: Spotlight hero, game shelf, Live Race, vote sheet with live split preview, Developers (list and edit), Activity feed with totals, About with flywheel diagram, disclaimer footer.
+- Built a sandboxed game player with a validated postMessage bridge (ready, score, exit, save, load).
+- End-to-end test on a local fork of mainnet: deployed the arcade, listed 3 games, voted 500 WIF through the UI with a test wallet. Onchain: 250 burned, 200 to developer, 50 to treasury.
+- Games: Neon Tide, Hollow Kingdom and Signal Lost built from their specs as single-file browser games. Rise of Gamdom Man (made before the event) added to the shelf.

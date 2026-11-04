@@ -1,0 +1,12 @@
+{
+  "name": "Rise of Gamdom Man",
+  "slug": "rise-of-gamdom-man",
+  "tagline": "See it coming. Call it first.",
+  "description": "A street-fighting story game. Ike Okafor fuses with the Gamdom Core, sees one second into the future, and takes down Lord Rigg and the Crooked Hand. Seven story stages, Arcade Rush and two-player Versus.",
+  "genre": "Action",
+  "developer": { "name": "Steeve", "x": "gamersteeve" },
+  "cover": "https://playchain-flat.vercel.app/games/rise-of-gamdom-man/cover.png",
+  "playUrl": "https://playchain-flat.vercel.app/games/rise-of-gamdom-man/index.html",
+  "controls": "Keyboard, gamepad or touch",
+  "version": "1.0.0"
+}
