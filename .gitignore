@@ -1,0 +1,17 @@
+node_modules/
+dist/
+dist-e2e/
+.vercel/
+coverage/
+playwright-report/
+test-results/
+*.log
+.env
+.env.local
+.env.*.local
+.claude/
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/31337/
+contracts/lcov.info
+crytic-export/
