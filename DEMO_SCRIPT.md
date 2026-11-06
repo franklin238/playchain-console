@@ -1,3 +1,15 @@
+# 60-second judge walkthrough (demo mode, no wallet needed)
+
+Open the site (double-click `Start PlayChain.bat`, or `npm run dev` in `web/`).
+
+1. **Home (0:00).** Point at the Spotlight hero: yesterday's most-voted game, with *Next Spotlight in …*. Hover the shelf tiles: each one takes over the hero.
+2. **Connect (0:10).** *Connect wallet* → *Demo wallet*: 5,000 test $WIF appear in the top bar.
+3. **Vote (0:15).** *Vote* on the hero, pick *2x*. The sheet shows the split before you confirm: half burns, 40% to the developer, 10% to the treasury. *Approve and vote*.
+4. **Watch it move (0:25).** The Live Race reorders, and *Total $WIF burned* counts up.
+5. **Activity (0:35).** Your vote is at the top of the feed ("just now"). Show the three leaderboards: games today, developers by earnings, voting streaks.
+6. **Play (0:45).** Open Neon Tide → *Levels* → level 1. Ride two waves. Open the round PlayChain button in the corner: the game pauses and the platform menu is there.
+7. **Flywheel (0:55).** About page: the five-step flywheel and the burn counter.
+
 # Demo video script (2 minutes)
 
 Record at 1920x1080 in a fresh browser profile with one wallet (MetaMask or Rabby) on Robinhood Chain holding some $WIF. Have the second tab open on the Blockscout page of the contract.

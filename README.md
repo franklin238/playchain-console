@@ -22,7 +22,18 @@ You need [Node.js](https://nodejs.org) 20 or newer.
   npm run dev -- --open
   ```
 
-No wallet is needed to look around: until a contract address is set, the site runs in preview mode and every game is playable. The three games also open on their own at `/games/neon-tide/`, `/games/hollow-kingdom/` and `/games/signal-lost/`.
+No wallet or tokens are needed. Until a contract address is set, the site runs in **demo mode** (below) and every game is playable. The three games also open on their own at `/games/neon-tide/`, `/games/hollow-kingdom/` and `/games/signal-lost/`.
+
+### Demo mode (for judges)
+
+Before `VITE_ARCADE_ADDRESS` is set, PlayChain Flat runs a simulated arcade in your browser (`web/src/arcade/demo.ts`) with the same rules as the contract:
+
+- **Demo wallet:** Connect wallet → *Demo wallet* gives you 5,000 test $WIF (and a faucet for more). No extension, nothing real.
+- **Votes split exactly like the contract:** 50% burned, 40% to the game's developer, 10% to the treasury; a developer's vote on their own game burns the developer share too.
+- **Live Race and Spotlight:** today's most-voted game (UTC day) becomes tomorrow's Spotlight. The demo starts with three days of history, and other players keep voting while you watch.
+- **Activity:** the feed, the total burned and paid out, and leaderboards for games, developers and voting streaks all update as you vote. *Reset demo* on the home page starts it fresh.
+
+Once the contract is deployed and its address configured, the same screens read and write Robinhood Chain instead.
 
 ### What's in this folder
 
@@ -173,7 +184,7 @@ Console:
 cd web
 npm install --legacy-peer-deps
 npm test
-npm run dev            # http://localhost:5173, preview mode until VITE_ARCADE_ADDRESS is set
+npm run dev            # http://localhost:5173, demo mode until VITE_ARCADE_ADDRESS is set
 ```
 
 Full end-to-end rehearsal on a mainnet fork (real $WIF, local test wallets): see `web/tests/e2e/fork-setup.sh`.
