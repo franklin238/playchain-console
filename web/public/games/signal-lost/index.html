@@ -109,6 +109,21 @@ body.rm .star.drop{animation:none;opacity:1;transform:none}
 .keys b{color:var(--text);font-weight:600}
 .log{margin:6px 0 10px}
 .log .tx.locked{color:var(--dead)}
+#modal .card.wide{width:min(580px,100%)}
+.howto h4{margin:1.1em 0 .4em;font-size:12px;letter-spacing:.18em;color:var(--teal);font-family:var(--mono)}
+.howto p,.howto li{color:#c3cdd0;line-height:1.5;font-size:14px;margin:.3em 0}
+.howto ul{padding-left:1.1em;margin:.3em 0}
+.howto b{color:#fff}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin:.4em 0}
+.tiles div{display:flex;gap:9px;align-items:center;font-size:13px;color:#c3cdd0;line-height:1.3}
+.tiles canvas.ico{width:40px;height:40px;flex:none;border-radius:8px;background:rgba(26,32,36,.9)}
+.ach{display:grid;gap:6px;margin:8px 0 12px}
+.ach div{border:1px solid var(--dead);border-radius:10px;padding:8px 10px;font-size:13px;color:var(--muted)}
+.ach div b{display:block;color:var(--muted);font-size:14px}
+.ach div.on{border-color:var(--dimteal);color:#c3cdd0}
+.ach div.on b{color:var(--teal)}
+#bPulse.live{border-color:var(--amber)}
+.ib .badge.amber{background:var(--amber)}
 #toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:35;font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--teal);
   background:rgba(16,20,23,.92);border:1px solid var(--dimteal);border-radius:20px;padding:7px 14px;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}
@@ -136,6 +151,7 @@ body.rm .star.drop{animation:none;opacity:1;transform:none}
   <button class="ib" id="bRedo" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
   <button class="ib" id="bReset" aria-label="Reset"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
   <button class="ib" id="bHint" aria-label="Hint"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg><span class="badge" id="hintBadge">0</span></button>
+  <button class="ib hide" id="bPulse" aria-label="Pulse: clear soft static for 5 seconds (P)"><svg viewBox="0 0 24 24"><path d="M2 12h4l3-7 4 14 3-7h6"/></svg><span class="badge amber" id="pulseBadge">0</span></button>
 </div>
 <div id="legend" class="hide"></div>
 
@@ -162,17 +178,39 @@ var REGIONS = [
   { n: 3, name: 'Static Fields', rule: 'Static blocks the way. Boosters restore full strength.', icon: 'booster' },
   { n: 4, name: 'Frequency Bay', rule: 'Tuners change the frequency. Some receivers are picky.', icon: 'tuner' },
   { n: 5, name: 'Overpass', rule: 'Bridges let two signals cross without mixing.', icon: 'bridge' },
-  { n: 6, name: 'Ghost Lines', rule: 'Decoy receivers must stay dark.', icon: 'decoy' },
-  { n: 7, name: 'Orbit', rule: 'Satellite dishes. In one, out the other.', icon: 'dish' }
+  { n: 6, name: 'Spectrum Labs', rule: 'Mixers take two signals and send one out. Two colours make white.', icon: 'mixer' },
+  { n: 7, name: 'Ghost Lines', rule: 'Decoy receivers must stay dark.', icon: 'decoy' },
+  { n: 8, name: 'Orbit', rule: 'Satellite dishes. In one, out the other.', icon: 'dish' },
+  { n: 9, name: 'The Last Tower', rule: 'Every rule at once. Somebody is waiting at the end.', icon: 'tower' }
 ];
+/* t: decoded when a region is fully restored. h: a fragment decoded at half way. */
 var TRANSMISSIONS = [
-  { f: '88.1', t: 'Relay post nine, still here. Power is out past the ridge.\nIf you can hear this, keep the tower lit.' },
-  { f: '91.4', t: 'Junction crew left at dawn and took the batteries.\nThey left the music on so the next one would not feel alone.' },
-  { f: '96.0', t: 'The static is not weather. It moves when you stop watching.\nBoosters are in the shed by the pylon.' },
-  { f: '99.7', t: 'Amber for the harbour, violet for the hill.\nTeal was always for home.' },
-  { f: '102.3', t: 'Two lines can cross without touching.\nTook me a year to learn that about people too.' },
-  { f: '104.9', t: 'Do not answer every voice out here.\nSome receivers are listening for the wrong reasons.' },
-  { f: '107.5', t: 'Dishes are up. If you are reading this, you found me.\nI am at the last tower. I never stopped transmitting.' }
+  { f: '88.1', h: 'Day three. The hum is gone from the wires.\nI counted the pylons twice. Nine still standing.', t: 'Relay post nine, still here. Power is out past the ridge.\nIf you can hear this, keep the tower lit.' },
+  { f: '91.4', h: 'Somebody painted arrows on the junction boxes.\nOne way to the river, two ways home.', t: 'Junction crew left at dawn and took the batteries.\nThey left the music on so the next one would not feel alone.' },
+  { f: '96.0', h: 'Do not stand in the static too long.\nIt hums back if you hum at it.', t: 'The static is not weather. It moves when you stop watching.\nBoosters are in the shed by the pylon.' },
+  { f: '99.7', h: 'The harbour lights run amber now.\nThe hill answered in violet last night. I think.', t: 'Amber for the harbour, violet for the hill.\nTeal was always for home.' },
+  { f: '102.3', h: 'Found the overpass maps under the bridge.\nEvery line drawn twice, like they were scared of losing one.', t: 'Two lines can cross without touching.\nTook me a year to learn that about people too.' },
+  { f: '103.6', h: 'Lab notebook, page forty. Two colours in, one comes out brighter.\nNobody wrote down why.', t: 'Mixing was never about losing the colours.\nTeal and amber still live inside the white. Listen closely.' },
+  { f: '104.9', h: 'A receiver lit up on its own tonight.\nNothing was sending. I unplugged it anyway.', t: 'Do not answer every voice out here.\nSome receivers are listening for the wrong reasons.' },
+  { f: '107.5', h: 'The dishes turn when nobody is looking.\nOr I am turning, and they are still.', t: 'Dishes are up. If you are reading this, you found me.\nI am at the last tower. I never stopped transmitting.' },
+  { f: '108.0', h: 'The last tower is louder than the others.\nIt is not music any more. It is a voice.', t: 'Every relay between us is lit.\nI can hear the whole network breathing. Stay on the line.' }
+];
+var FINAL_TX = { f: '108.9', t: 'This is the last tower. You found every relay, every dish, every lost colour.\nI kept transmitting because someone had to believe the signal would come back.\nIt did. It was you. The network is yours now. Keep it lit.' };
+var ACH = [
+  { id: 'first', name: 'First Light', d: 'Restore your first sector.' },
+  { id: 'perfect', name: 'Perfect Lock', d: 'Earn 3 stars on a sector.' },
+  { id: 'perfect10', name: 'Clean Hands', d: 'Earn 3 stars on 10 sectors.' },
+  { id: 'half', name: 'Halfway Home', d: 'Restore 50 sectors.' },
+  { id: 'stars150', name: 'Star Chart', d: 'Collect 150 stars.' },
+  { id: 'mixer', name: 'White Light', d: 'Light a receiver with a mixed signal.' },
+  { id: 'orbit', name: 'Uplink', d: 'Send a signal through a satellite pair.' },
+  { id: 'ghost', name: 'Ghost Whisperer', d: 'Clear a decoy sector without ever lighting a decoy.' },
+  { id: 'decoder', name: 'Decoder', d: 'Decode 5 full transmissions.' },
+  { id: 'last', name: 'The Last Tower', d: 'Hear the final transmission.' },
+  { id: 'daily', name: 'Daily Listener', d: 'Solve a Daily Signal.' },
+  { id: 'storm5', name: 'Storm Chaser', d: 'Solve 5 puzzles in one Static Storm.' },
+  { id: 'storm12', name: 'Eye of the Storm', d: 'Solve 12 puzzles in one Static Storm.' },
+  { id: 'pulse', name: 'Through the Static', d: 'Finish a Storm puzzle while the static is pulsed open.' }
 ];
 var byRegion = {}; LEVELS.forEach(function (l) { var r = +l.id.split('-')[0]; (byRegion[r] = byRegion[r] || []).push(l); });
 var LEVEL_BY_ID = {}; LEVELS.forEach(function (l) { LEVEL_BY_ID[l.id] = l; });
@@ -183,15 +221,34 @@ var inFrame = window.parent !== window;
 function post(msg) { if (inFrame) try { window.parent.postMessage(msg, '*'); } catch (e) {} }
 var prefersRM = false; try { prefersRM = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
 var save = {
-  v: 1, stars: {}, best: {}, hintsUsed: 0, hinted: {}, unlocked: [1], decoded: [], daily: {}, lastRegion: 1,
+  v: 2, stars: {}, best: {}, hintsUsed: 0, hinted: {}, unlocked: [1], decoded: [], daily: {}, lastRegion: 1,
+  partial: [], ach: {}, storm: { best: 0, runs: 0 }, finalHeard: false,
   settings: { music: 0.8, amb: 0.55, sfx: 0.8, ui: 0.6, scan: true, reduce: prefersRM, patterns: true, text: 1 }
 };
+/* v1 saves had 7 regions. v2 inserts Spectrum Labs as region 6, so old 6 and 7 move up one. */
+function migrateV1(d) {
+  var re = function (id) { var p = String(id).split('-'); return p[0] === '6' ? '7-' + p[1] : p[0] === '7' ? '8-' + p[1] : id; };
+  ['stars', 'best', 'hinted'].forEach(function (k) {
+    if (!d[k] || typeof d[k] !== 'object') return;
+    var o = {}; Object.keys(d[k]).forEach(function (id) { o[re(id)] = d[k][id]; }); d[k] = o;
+  });
+  var up = function (r) { return r === 6 || r === 7 ? r + 1 : r; };
+  if (Array.isArray(d.decoded)) d.decoded = d.decoded.map(up);
+  if (typeof d.lastRegion === 'number') d.lastRegion = up(d.lastRegion);
+  d.v = 2;
+  return d;
+}
 function mergeSave(d) {
   if (!d || typeof d !== 'object') return;
+  if (!(d.v >= 2)) d = migrateV1(d);
   ['stars', 'best', 'hinted', 'daily'].forEach(function (k) { if (d[k] && typeof d[k] === 'object') save[k] = d[k]; });
   if (Array.isArray(d.decoded)) save.decoded = d.decoded;
   if (typeof d.hintsUsed === 'number') save.hintsUsed = d.hintsUsed;
   if (typeof d.lastRegion === 'number') save.lastRegion = d.lastRegion;
+  if (Array.isArray(d.partial)) save.partial = d.partial;
+  if (d.ach && typeof d.ach === 'object') save.ach = d.ach;
+  if (d.storm && typeof d.storm === 'object') { save.storm.best = +d.storm.best || 0; save.storm.runs = +d.storm.runs || 0; }
+  save.finalHeard = !!d.finalHeard;
   if (d.settings) for (var k in save.settings) if (k in d.settings) save.settings[k] = d.settings[k];
 }
 function persist() {
@@ -205,7 +262,14 @@ function persist() {
 function totalStars() { var s = 0; for (var k in save.stars) if (LEVEL_BY_ID[k]) s += save.stars[k]; return s; }
 function hintsAvail() { return Math.max(0, Math.floor(totalStars() / 3) - save.hintsUsed); }
 function regionSolved(n) { return (byRegion[n] || []).filter(function (l) { return save.stars[l.id] > 0; }).length; }
-function regionUnlocked(n) { return n === 1 || regionSolved(n - 1) >= 3; }
+function regionUnlocked(n) { return n === 1 || regionSolved(n - 1) >= 3 || regionSolved(n) > 0; }
+function stormUnlocked() { return regionUnlocked(4); }
+function unlock(id) {
+  if (save.ach[id]) return;
+  var a = ACH.filter(function (x) { return x.id === id; })[0]; if (!a) return;
+  save.ach[id] = 1; persist();
+  setTimeout(function () { toast('★ Achievement: ' + a.name); Audio.play('star', 2); }, 900);
+}
 function levelUnlocked(l) {
   var r = +l.id.split('-')[0], list = byRegion[r], i = list.indexOf(l);
   return regionUnlocked(r) && (i < 2 || regionSolved(r) >= i - 1 || save.stars[l.id] > 0);
@@ -215,13 +279,13 @@ function levelUnlocked(l) {
 var Solver = (function () {
   var worker = null, seq = 0, pending = {};
   try {
-    var code = SL_ENGINE_FACTORY.toString() + '\nvar SL=SL_ENGINE_FACTORY();\nonmessage=function(e){var d=e.data,r;try{if(d.kind==="solve")r=SL.solve(d.level,{maxNodes:d.maxNodes||400000});else r=SL.dailyLevel(d.date);}catch(err){r={error:String(err)}}postMessage({id:d.id,result:r});};';
+    var code = SL_ENGINE_FACTORY.toString() + '\nvar SL=SL_ENGINE_FACTORY();\nonmessage=function(e){var d=e.data,r;try{if(d.kind==="solve")r=SL.solve(d.level,{maxNodes:d.maxNodes||400000});else if(d.kind==="storm")r=SL.stormLevel(d.n,d.seed);else r=SL.dailyLevel(d.date);}catch(err){r={error:String(err)}}postMessage({id:d.id,result:r});};';
     var url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
     worker = new Worker(url);
     worker.onmessage = function (e) { var p = pending[e.data.id]; if (p) { delete pending[e.data.id]; clearTimeout(p.to); p.res(e.data.result); } };
     worker.onerror = function () { worker = null; flush(); };
   } catch (e) { worker = null; }
-  function sync(msg) { return msg.kind === 'solve' ? SL.solve(msg.level, { maxNodes: msg.maxNodes || 400000 }) : SL.dailyLevel(msg.date); }
+  function sync(msg) { return msg.kind === 'solve' ? SL.solve(msg.level, { maxNodes: msg.maxNodes || 400000 }) : msg.kind === 'storm' ? SL.stormLevel(msg.n, msg.seed) : SL.dailyLevel(msg.date); }
   function flush() { for (var id in pending) { var p = pending[id]; delete pending[id]; clearTimeout(p.to); p.res(sync(p.msg)); } }
   function req(msg) {
     return new Promise(function (res) {
@@ -233,7 +297,7 @@ var Solver = (function () {
       try { worker.postMessage(msg); } catch (e) { delete pending[id]; clearTimeout(p.to); res(sync(msg)); }
     });
   }
-  return { solve: function (level) { return req({ kind: 'solve', level: level }); }, daily: function (date) { return req({ kind: 'daily', date: date }); }, usingWorker: function () { return !!worker; } };
+  return { solve: function (level) { return req({ kind: 'solve', level: level }); }, daily: function (date) { return req({ kind: 'daily', date: date }); }, storm: function (n, seed) { return req({ kind: 'storm', n: n, seed: seed }); }, usingWorker: function () { return !!worker; } };
 })();
 
 /* ------------------------------------------------------------------ audio */
@@ -248,8 +312,11 @@ var Audio = (function () {
     3: { bpm: 72, root: 45, sc: [0, 2, 3, 5, 7, 8, 10], prog: [0, 5, 3, 4] },
     4: { bpm: 88, root: 53, sc: [0, 2, 4, 6, 7, 9, 11], prog: [0, 1, 4, 5] },
     5: { bpm: 92, root: 48, sc: [0, 2, 3, 5, 7, 9, 10], prog: [0, 3, 6, 4] },
-    6: { bpm: 70, root: 47, sc: [0, 1, 3, 5, 7, 8, 10], prog: [0, 1, 5, 3] },
-    7: { bpm: 80, root: 55, sc: [0, 2, 4, 5, 7, 9, 11], prog: [0, 4, 5, 3] },
+    6: { bpm: 86, root: 49, sc: [0, 2, 4, 5, 7, 9, 11], prog: [0, 3, 4, 5] },
+    7: { bpm: 70, root: 47, sc: [0, 1, 3, 5, 7, 8, 10], prog: [0, 1, 5, 3] },
+    8: { bpm: 80, root: 55, sc: [0, 2, 4, 5, 7, 9, 11], prog: [0, 4, 5, 3] },
+    9: { bpm: 66, root: 43, sc: [0, 2, 3, 5, 7, 8, 11], prog: [0, 5, 3, 4] },
+    storm: { bpm: 112, root: 50, sc: [0, 2, 3, 5, 7, 8, 10], prog: [0, 6, 5, 4] },
     daily: { bpm: 90, root: 51, sc: [0, 2, 3, 5, 7, 9, 10], prog: [0, 3, 5, 4] }
   };
   Object.keys(THEMES).forEach(function (k) {
@@ -286,13 +353,21 @@ var Audio = (function () {
     // static
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); var nd = noiseBuf.getChannelData(0), nr = SL.mulberry32(3);
     for (var j = 0; j < nd.length; j++) nd[j] = nr() * 2 - 1;
-    var ns = ctx.createBufferSource(); ns.buffer = noiseBuf; ns.loop = true;
-    var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2400; bp.Q.value = 0.45;
-    var hum = ctx.createBiquadFilter(); hum.type = 'peaking'; hum.frequency.value = 900; hum.gain.value = 5;
+    // Ambience: a dead channel. A low detuned carrier hum and a faint shortwave whistle that drifts,
+    // both fading out as receivers lock on (setTune). Tonal on purpose: no white-noise hiss.
     ambGain = ctx.createGain(); ambGain.gain.value = 0.35;
-    var am = ctx.createGain(); am.gain.value = 0.75; var lfo = ctx.createOscillator(); lfo.frequency.value = 0.31; var lfoG = ctx.createGain(); lfoG.gain.value = 0.25; lfo.connect(lfoG); lfoG.connect(am.gain); lfo.start();
-    ns.connect(bp); bp.connect(hum); hum.connect(am); am.connect(ambGain); ambGain.connect(buses.amb); ns.start();
+    var am = ctx.createGain(); am.gain.value = 0.8; var lfo = ctx.createOscillator(); lfo.frequency.value = 0.13; var lfoG = ctx.createGain(); lfoG.gain.value = 0.2; lfo.connect(lfoG); lfoG.connect(am.gain); lfo.start();
+    var carLp = ctx.createBiquadFilter(); carLp.type = 'lowpass'; carLp.frequency.value = 420; carLp.Q.value = 0.7;
+    var carG = ctx.createGain(); carG.gain.value = 0.22; carLp.connect(carG); carG.connect(am);
+    [[55, -6], [55, 6], [82.4, 0]].forEach(function (v) { var o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = v[0]; o.detune.value = v[1]; o.connect(carLp); o.start(); });
+    var wh = ctx.createOscillator(); wh.type = 'sine'; wh.frequency.value = 1320;
+    var whDrift = ctx.createOscillator(); whDrift.frequency.value = 0.07; var whDriftG = ctx.createGain(); whDriftG.gain.value = 60; whDrift.connect(whDriftG); whDriftG.connect(wh.frequency); whDrift.start();
+    var whG = ctx.createGain(); whG.gain.value = 0.018; wh.connect(whG); whG.connect(am); wh.start();
+    am.connect(ambGain); ambGain.connect(buses.amb);
+    // Leaks: a quiet steady mains buzz whose level follows the number of open ends (see leaks()).
     leakGain = ctx.createGain(); leakGain.gain.value = 0; leakGain.connect(buses.sfx);
+    var buzzLp = ctx.createBiquadFilter(); buzzLp.type = 'lowpass'; buzzLp.frequency.value = 700; buzzLp.connect(leakGain);
+    var buzz = ctx.createOscillator(); buzz.type = 'square'; buzz.frequency.value = 100; buzz.connect(buzzLp); buzz.start();
     applyVolumes(); on = true;
     nextT = ctx.currentTime + 0.1; step = 0;
     timer = setInterval(tick, 25);
@@ -367,7 +442,6 @@ var Audio = (function () {
     if (pos === 0 || pos === 8) {
       var g = voice(layers.drone, t, 0.02, 0.32, 0.004, 0.12, 0, 0.12); var o = osc('sine', 92, t, t + 0.5, g); o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.25);
     }
-    if (pos % 4 === 2) { var hg = voice(layers.drone, t, 0.01, 0.025, 0.001, 0.03, 0, 0.03); var hs = ctx.createBufferSource(); hs.buffer = noiseBuf; var hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000; hs.connect(hp); hp.connect(hg); hs.start(t, (s * 0.137) % 1.5); hs.stop(t + 0.08); }
     if (pos === 0 && bar % 2 === 0) { var dg = voice(layers.drone, t, spb * 30, 0.05, 1.5, 3, 0.8, 1.5); osc('sine', mtof(deg(th, chord, -1)), t, t + spb * 32 + 5, dg); }
     if (pos === 0) padChord(th, chord, t, spb * 15);
     if (layerCount >= 2 && (pos === 0 || pos === 6 || pos === 10)) {
@@ -399,17 +473,18 @@ var Audio = (function () {
     var g = voice(bus || buses.sfx, t, dur, peak, 0.002, dur, 0.4, 0.03); s.connect(f); f.connect(g); s.start(t, (t * 7.31) % 1.5); s.stop(t + dur + 0.3); return f;
   }
   var sfx = {
-    rotate: function (p) { var t = ctx.currentTime; noiseBurst(t, 0.025, 0.25, 'bandpass', 3000 + p * 900, 3); var g = voice(buses.sfx, t, 0.01, 0.07, 0.001, 0.03, 0, 0.03); osc('square', 1500 + p * 300, t, t + 0.08, g); },
+    rotate: function (p) { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.01, 0.09, 0.001, 0.04, 0, 0.04); var o = osc('triangle', 900 + p * 250, t, t + 0.12, g); o.frequency.exponentialRampToValueAtTime(600 + p * 200, t + 0.06); },
     locked: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.05, 0.08, 0.002, 0.05, 0, 0.05); osc('square', 140, t, t + 0.2, g); },
-    place: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.01, 0.2, 0.002, 0.06, 0, 0.05); var o = osc('sine', 300, t, t + 0.25, g); o.frequency.exponentialRampToValueAtTime(140, t + 0.08); noiseBurst(t, 0.02, 0.12, 'lowpass', 1200); },
+    place: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.01, 0.2, 0.002, 0.06, 0, 0.05); var o = osc('sine', 300, t, t + 0.25, g); o.frequency.exponentialRampToValueAtTime(140, t + 0.08); },
     lift: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.03, 0.1, 0.01, 0.06, 0, 0.05); var o = osc('sine', 180, t, t + 0.25, g); o.frequency.exponentialRampToValueAtTime(420, t + 0.1); },
     connect: function (f) { var t = ctx.currentTime + 0.02; [0, 1].forEach(function (i) { var g = voice(buses.sfx, t + i * 0.09, 0.03, 0.13, 0.003, 0.15, 0, 0.2); osc('sine', [1320, 1980][i], t + i * 0.09, t + i * 0.09 + 0.8, g); }); var g2 = voice(buses.sfx, t, 0.05, 0.05, 0.003, 0.1, 0, 0.1); var o = osc('sine', 600, t, t + 0.3, g2); o.frequency.exponentialRampToValueAtTime(2200, t + 0.12); },
-    lost: function () { var t = ctx.currentTime; [0, 1].forEach(function (i) { var g = voice(buses.sfx, t + i * 0.09, 0.03, 0.1, 0.003, 0.12, 0, 0.15); osc('sine', [1500, 900][i], t + i * 0.09, t + i * 0.09 + 0.6, g); }); noiseBurst(t + 0.05, 0.25, 0.18, 'bandpass', 2200, 0.6); },
+    lost: function () { var t = ctx.currentTime; [0, 1].forEach(function (i) { var g = voice(buses.sfx, t + i * 0.09, 0.03, 0.1, 0.003, 0.12, 0, 0.15); osc('sine', [1500, 900][i], t + i * 0.09, t + i * 0.09 + 0.6, g); }); },
     booster: function () { var t = ctx.currentTime; var f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(200, t); f.frequency.exponentialRampToValueAtTime(2400, t + 0.45); var g = voice(buses.sfx, t, 0.4, 0.07, 0.15, 0.2, 0.8, 0.15); f.connect(g); var o = osc('sawtooth', 70, t, t + 1, f); o.frequency.exponentialRampToValueAtTime(140, t + 0.45); },
-    leak: function () { var t = ctx.currentTime; noiseBurst(t, 0.012, 0.09, 'highpass', 4000); },
     decoy: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.35, 0.12, 0.003, 0.3, 0.8, 0.05); var gate = ctx.createGain(); gate.connect(g); var lfo = ctx.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 23; var lg = ctx.createGain(); lg.gain.value = 0.5; lfo.connect(lg); lg.connect(gate.gain); lfo.start(t); lfo.stop(t + 0.5); osc('sawtooth', 92, t, t + 0.5, gate); osc('square', 97, t, t + 0.5, gate); noiseBurst(t, 0.3, 0.15, 'bandpass', 1800, 0.5); },
     solved: function (notes) {
-      var t = ctx.currentTime; var f = noiseBurst(t, 0.9, 0.18, 'bandpass', 400, 1.2); f.frequency.exponentialRampToValueAtTime(6000, t + 0.8);
+      var t = ctx.currentTime;
+      var sw = ctx.createBiquadFilter(); sw.type = 'lowpass'; sw.Q.value = 6; sw.frequency.setValueAtTime(300, t); sw.frequency.exponentialRampToValueAtTime(4000, t + 0.8);
+      var sg = voice(buses.sfx, t, 0.7, 0.06, 0.2, 0.5, 0.6, 0.3); sw.connect(sg); osc('sawtooth', 110, t, t + 1.4, sw, -8); osc('sawtooth', 110, t, t + 1.4, sw, 8);
       var th = theme || THEMES.title;
       (notes || [0, 2, 4, 7]).forEach(function (d, i) { bell(deg(th, d, 1), t + 0.15 + i * 0.11, 0.9, buses.sfx); });
       var ct = t + 0.15 + (notes ? notes.length : 4) * 0.11;
@@ -418,14 +493,14 @@ var Audio = (function () {
     },
     star: function (i) { var t = ctx.currentTime; var th = theme || THEMES.title; bell(deg(th, [4, 7, 9][i] || 4, 1), t, 1, buses.sfx); },
     undo: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.08, 0.08, 0.005, 0.1, 0, 0.05); var o = osc('triangle', 900, t, t + 0.25, g); o.frequency.exponentialRampToValueAtTime(260, t + 0.12); },
-    reset: function () { var t = ctx.currentTime; noiseBurst(t, 0.22, 0.2, 'bandpass', 1500, 0.4); var g = voice(buses.sfx, t, 0.15, 0.06, 0.005, 0.2, 0, 0.05); var o = osc('triangle', 1200, t, t + 0.4, g); o.frequency.exponentialRampToValueAtTime(150, t + 0.25); },
+    reset: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 0.15, 0.06, 0.005, 0.2, 0, 0.05); var o = osc('triangle', 1200, t, t + 0.4, g); o.frequency.exponentialRampToValueAtTime(150, t + 0.25); },
     hint: function () { var t = ctx.currentTime; [0.06, 0.06, 0.18, 0.06].forEach(function (d, i) { var st = t + i * 0.16; var g = voice(buses.sfx, st, d, 0.07, 0.003, 1, 1, 0.01); osc('sine', 1750, st, st + d + 0.1, g); }); },
     unlock: function () { var t = ctx.currentTime; var g = voice(buses.sfx, t, 1.2, 0.2, 0.05, 0.8, 0.6, 0.8); osc('sine', 55, t, t + 3, g); osc('sine', 82.5, t, t + 3, g); for (var i = 0; i < 6; i++) { var st = t + 0.3 + i * 0.07; var sg = voice(buses.sfx, st, 0.02, 0.03, 0.003, 0.2, 0, 0.3); osc('sine', 2400 + i * 300, st, st + 1, sg); } },
     ui: function () { var t = ctx.currentTime; var g = voice(buses.ui, t, 0.005, 0.12, 0.001, 0.02, 0, 0.02); osc('sine', 2200, t, t + 0.05, g); },
     back: function () { var t = ctx.currentTime; var g = voice(buses.ui, t, 0.005, 0.12, 0.001, 0.02, 0, 0.02); osc('sine', 1400, t, t + 0.05, g); }
   };
   function play(name, a) { if (!ctx || muted || !on) return; try { sfx[name](a); } catch (e) {} }
-  function leaks(n) { if (!ctx) return; var now = performance.now(); if (n > 0 && now - lastLeak > 70 + 140 / n) { lastLeak = now; if ((now * 13.7) % 1 < 0.6) play('leak'); } }
+  function leaks(n) { if (!ctx || n === lastLeak) return; lastLeak = n; leakGain.gain.setTargetAtTime(n > 0 ? 0.012 + 0.006 * Math.min(n, 4) : 0, ctx.currentTime, 0.25); }
   return { init: init, setMode: setMode, setTune: setTune, applyVolumes: applyVolumes, setMute: setMute, play: play, netNote: netNote, leaks: leaks, ready: function () { return !!ctx; } };
 })();
 
@@ -522,19 +597,20 @@ var cursor = { x: 0, y: 0, show: false }, invSel = 0, drag = null;
 
 function startLevel(level, opts) {
   opts = opts || {};
+  if (!opts.storm && Storm) Storm.active = false;
   modalKind = null; modalBack = null; $('modal').classList.add('hide');
   var L = SL.compile(level);
   G = {
     level: level, L: L, tiles: SL.cloneTiles(L.tiles0), inv: Object.assign({}, L.inv0), moves: 0,
     hist: [], redo: [], res: null, won: false, solveAnim: null, anim: {}, hint: null, hintUsed: !!save.hinted[level.id],
-    daily: !!opts.daily, sol: null, recvAnim: level.receivers.map(function () { return { a: 0, ta: 0 }; }), rotArr: {}
+    daily: !!opts.daily, storm: !!opts.storm, pulseUntil: 0, decoyEver: false, sol: null, recvAnim: level.receivers.map(function () { return { a: 0, ta: 0 }; }), rotArr: {}
   };
   cursor.x = L.tower.x + 1; cursor.y = L.tower.y; invSel = 0;
   rings = []; sparks = [];
   G.res = SL.walk(L, G.tiles); G.prevLit = 0;
   setScreen('puzzle');
   var region = +level.id.split('-')[0];
-  Audio.setMode('puzzle', G.daily ? 'daily' : region);
+  Audio.setMode('puzzle', G.storm ? 'storm' : G.daily ? 'daily' : region);
   Audio.setTune(0, true);
   updateHud(); layout();
   Solver.solve(level).then(function (s) { if (G && G.level === level) G.sol = s; });
@@ -556,7 +632,7 @@ function recompute(silent) {
       if (r.lit && !was) { Audio.play('connect', r.f); addRing(rc.x, rc.y, FRGB[r.f]); }
       if (!r.lit && was) { Audio.play('lost'); addRing(rc.x, rc.y, [90, 30, 42]); }
     });
-    res.dec.forEach(function (d, i) { if (d.lit && !(old && old.dec[i].lit)) { Audio.play('decoy'); glitchT = now; if (!RM()) shake = 12; } });
+    res.dec.forEach(function (d, i) { if (d.lit && !(old && old.dec[i].lit)) { G.decoyEver = true; Audio.play('decoy'); glitchT = now; if (!RM()) shake = 12; } });
   }
   var lit = res.rx.filter(function (r) { return r.lit; }).length;
   Audio.setTune(res.dec.some(function (d) { return d.lit; }) ? 0 : lit / L.receivers.length);
@@ -586,15 +662,16 @@ function pickUp(c) {
   var prev = snapshot(); G.tiles[c] = null; var key = t.k || SL.keyOf(t.t, t.f); G.inv[key] = (G.inv[key] || 0) + 1;
   Audio.play('lift'); commit(prev);
 }
-function cellFree(c) { return G.L.kind[c] === SL.K_EMPTY && !G.tiles[c]; }
-function invKeys() { return Object.keys(G.inv).filter(function (k) { return G.inv[k] > 0; }).sort(function (a, b) { return order(a) - order(b); }); function order(k) { return ['straight', 'corner', 'tee', 'booster', 'tuner', 'bridge'].indexOf(SL.parseKey(k).t) * 10 + (k.length % 10); } }
+function cellFree(c) { var k = G.L.kind[c]; return (k === SL.K_EMPTY || (k === SL.K_SOFT && G.L.softOpen)) && !G.tiles[c]; }
+function invKeys() { return Object.keys(G.inv).filter(function (k) { return G.inv[k] > 0; }).sort(function (a, b) { return order(a) - order(b); }); function order(k) { return ['straight', 'corner', 'tee', 'booster', 'tuner', 'bridge', 'mixer'].indexOf(SL.parseKey(k).t) * 10 + (k.length % 10); } }
 function undo() { if (!canAct() || !G.hist.length) return; G.redo.push(snapshot()); var s = G.hist.pop(); G.tiles = s.tiles; G.inv = s.inv; Audio.play('undo'); recompute(); }
 function redo() { if (!canAct() || !G.redo.length) return; G.hist.push(snapshot()); var s = G.redo.pop(); G.tiles = s.tiles; G.inv = s.inv; Audio.play('undo'); recompute(); }
-function resetLevel() { if (!G || modalOpen()) return; G.tiles = SL.cloneTiles(G.L.tiles0); G.inv = Object.assign({}, G.L.inv0); G.hist = []; G.redo = []; G.moves = 0; G.won = false; G.solveAnim = null; G.hint = null; Audio.play('reset'); recompute(); }
+function resetLevel() { if (!G || modalOpen()) return; G.L.softOpen = false; G.pulseUntil = 0; G.tiles = SL.cloneTiles(G.L.tiles0); G.inv = Object.assign({}, G.L.inv0); G.hist = []; G.redo = []; G.moves = 0; G.won = false; G.solveAnim = null; G.hint = null; Audio.play('reset'); recompute(); }
 
 function hint() {
   if (!canAct()) return;
   if (G.daily) { toast('No hints on the Daily Signal'); return; }
+  if (G.storm) { toast('No hints in the storm. Press P to pulse'); return; }
   if (!G.sol || !G.sol.ok) { toast('Solver still tuning…'); return; }
   var step = nextHintStep();
   if (!step) { toast('Route is right. Clean up stray relays'); return; }
@@ -626,8 +703,10 @@ function win() {
   G.solveAnim = { t0: now, order: res.order.slice(), dur: RM() ? 500 : Math.min(1800, 500 + res.order.length * 70) };
   var notes = []; res.order.forEach(function (o, i) { if (i % 2 === 0 && notes.length < 7) notes.push(Math.min(12, i >> 1)); });
   Audio.play('solved', notes);
-  var id = G.level.id, prevStars = save.stars[id] || 0, newRegion = false, decoded = -1;
+  if (G.storm) { stormSolved(res); return; }
+  var id = G.level.id, prevStars = save.stars[id] || 0, newRegion = false, decoded = -1, partial = -1;
   if (G.daily) {
+    unlock('daily');
     var b = save.daily[G.level.daily];
     if (!b || res.relays < b.r || (res.relays === b.r && G.moves < b.m)) save.daily[G.level.daily] = { r: res.relays, m: G.moves, s: stars };
   } else {
@@ -637,11 +716,14 @@ function win() {
     var bb = save.best[id]; if (!bb || res.relays < bb.r || (res.relays === bb.r && G.moves < bb.m)) save.best[id] = { r: res.relays, m: G.moves };
     if (region < REGIONS.length && !wasUnlocked && regionUnlocked(region + 1)) newRegion = region + 1;
     if (regionSolved(region) === byRegion[region].length && save.decoded.indexOf(region) < 0) { save.decoded.push(region); decoded = region; }
+    else if (regionSolved(region) >= Math.ceil(byRegion[region].length / 2) && save.partial.indexOf(region) < 0 && save.decoded.indexOf(region) < 0) { save.partial.push(region); partial = region; }
+    if (G.level.final) save.finalHeard = true;
+    checkCampaignAch(stars, res);
     save.lastRegion = region; mapFx = { id: id, t0: 0, newRegion: newRegion, fresh: prevStars === 0 };
   }
   persist();
   post({ type: 'playchain:score', score: totalStars() * 100 });
-  setTimeout(function () { showComplete(stars, res, decoded); }, G.solveAnim.dur + 250);
+  setTimeout(function () { showComplete(stars, res, decoded, partial); }, G.solveAnim.dur + 250);
   if (!RM()) flareT = now + G.solveAnim.dur - 150;
 }
 
@@ -690,6 +772,13 @@ function drawTile(t, cx, cy, cs, angle, sideInfo, S, ghost) {
     ctx.beginPath(); ctx.arc(0, 0, cs * 0.15, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = ghost ? col : FCOL[fi]; ctx.globalAlpha = anyP || ghost ? 1 : 0.6; ctx.stroke();
     ctx.beginPath(); ctx.moveTo(-cs * 0.08, cs * 0.04); ctx.lineTo(-cs * 0.03, -cs * 0.05); ctx.lineTo(cs * 0.02, cs * 0.05); ctx.lineTo(cs * 0.08, -cs * 0.04); ctx.stroke(); ctx.globalAlpha = 1;
+  } else if (t.t === 'mixer') {
+    // two overlapping rings; they take the colour of the mixed output once both inputs arrive
+    var outI = null; if (sideInfo) for (var oi = 0; oi < openSides.length; oi++) { var si = sideInfo[openSides[oi]]; if (si && !si.in) outI = si; }
+    ctx.fillStyle = COL.void; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(0, 0, cs * 0.18, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = ghost ? col : outI ? rgba(FRGB[outI.f], 0.95) : col; ctx.stroke();
+    ctx.beginPath(); ctx.arc(-cs * 0.045, 0, cs * 0.08, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cs * 0.045, 0, cs * 0.08, 0, Math.PI * 2); ctx.stroke();
   } else if (t.t === 'dish') {
     ctx.strokeStyle = col; ctx.lineWidth = lw; var a0 = [-Math.PI / 2, 0, Math.PI / 2, Math.PI][t.r & 3];
     ctx.beginPath(); ctx.arc(-Math.cos(a0) * cs * 0.06, -Math.sin(a0) * cs * 0.06, cs * 0.2, a0 + Math.PI - 1.0, a0 + Math.PI + 1.0, false); ctx.stroke();
@@ -757,6 +846,16 @@ function drawDecoy(i, cx, cy, cs) {
 function sideInfoFor(c) {
   var t = G.tiles[c], res = G.res; if (!t) return null;
   var info = {}, any = false;
+  if (t.t === 'mixer') {
+    var i0 = c * 2, i1 = i0 + 1;
+    if (res.pw[i0] > 0) { info[res.pin[i0]] = { v: res.pw[i0], f: res.pf[i0], in: true }; any = true; }
+    if (res.pw[i1] > 0) {
+      info[res.pin[i1]] = { v: res.pw[i1], f: res.pf[i1], in: true };
+      var mv = Math.max(1, Math.min(res.pw[i0], res.pw[i1]) - 1), mf = SL.mixOf(res.pf[i0], res.pf[i1]);
+      for (var ms = 0; ms < 4; ms++) if (ms !== res.pin[i0] && ms !== res.pin[i1] && SL.isOpen('mixer', t.r, ms)) info[ms] = { v: mv, f: mf };
+    }
+    return any ? info : null;
+  }
   for (var s = 0; s < 4; s++) {
     if (!SL.isOpen(t.t, t.r, s)) continue;
     var ch = t.t === 'bridge' ? (s & 1) : 0, i = c * 2 + ch, v = res.pw[i];
@@ -780,6 +879,13 @@ function drawPuzzle(t) {
   // cells
   for (var c = 0; c < L.N; c++) {
     var x = Lay.ox + (c % L.W) * cs, y = Lay.oy + (c / L.W | 0) * cs, k = L.kind[c];
+    if (k === SL.K_SOFT && !L.softOpen) {
+      ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 0.6;
+      ctx.drawImage(noiseTex[(Math.floor(now / (RM() ? 600 : 90)) + c) % noiseTex.length], x + 2, y + 2, cs - 4, cs - 4); ctx.globalAlpha = 1;
+      ctx.fillStyle = 'rgba(227,168,87,0.16)'; ctx.fillRect(x + 2, y + 2, cs - 4, cs - 4);
+      ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(227,168,87,0.75)'; ctx.lineWidth = 1.2; ctx.strokeRect(x + 3.5, y + 3.5, cs - 7, cs - 7); ctx.setLineDash([]);
+      continue;
+    }
     if (k === SL.K_STATIC) {
       ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 0.85;
       ctx.drawImage(noiseTex[(Math.floor(now / (RM() ? 600 : 70)) + c) % noiseTex.length], x + 2, y + 2, cs - 4, cs - 4); ctx.globalAlpha = 1;
@@ -790,6 +896,10 @@ function drawPuzzle(t) {
     ctx.fillStyle = tile && !tile.fx ? '#1c2629' : COL.panel; rr(x + 2, y + 2, cs - 4, cs - 4, Math.max(4, cs * 0.1)); ctx.fill();
     ctx.strokeStyle = tile && !tile.fx ? 'rgba(62,127,132,0.35)' : COL.dead; ctx.lineWidth = 1; ctx.stroke();
     if (!tile && k === SL.K_EMPTY) { ctx.fillStyle = COL.dead; ctx.fillRect(x + cs / 2 - 1, y + cs / 2 - 1, 2, 2); }
+    if (k === SL.K_SOFT && G.pulseUntil) {
+      var left = Math.max(0, (G.pulseUntil - now) / PULSE_MS);
+      ctx.strokeStyle = 'rgba(227,168,87,0.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x + cs / 2, y + cs / 2, cs * 0.42, -Math.PI / 2, -Math.PI / 2 + left * Math.PI * 2); ctx.stroke();
+    }
   }
   // tiles
   for (c = 0; c < L.N; c++) {
@@ -882,8 +992,9 @@ function drawPackets(S) {
       var outs = [];
       if (t.t === 'bridge') outs = [(sIn + 2) & 3];
       else if (t.t === 'dish') outs = sIn === -2 ? [t.r & 3] : [];
+      else if (t.t === 'mixer') outs = ch === 1 ? [0, 1, 2, 3].filter(function (o) { return o !== sIn && o !== res.pin[c * 2] && SL.isOpen('mixer', t.r, o); }) : [];
       else for (var s = 0; s < 4; s++) if (s !== sIn && SL.isOpen(t.t, t.r, s)) outs.push(s);
-      var fo = t.t === 'tuner' ? SL.fIndex(t.f) : res.pf[i];
+      var fo = t.t === 'tuner' ? SL.fIndex(t.f) : t.t === 'mixer' && ch === 1 ? SL.mixOf(res.pf[c * 2], res.pf[i]) : res.pf[i];
       if (u < 0.5 && sIn >= 0) { var k = 1 - u * 2; dot(p[0] + SL.DX[sIn] * h * k, p[1] + SL.DY[sIn] * h * k, res.pf[i], v); }
       else if (u >= 0.5) outs.forEach(function (o) { var k2 = (u - 0.5) * 2; dot(p[0] + SL.DX[o] * h * k2, p[1] + SL.DY[o] * h * k2, fo, v); });
     }
@@ -929,14 +1040,14 @@ function drawInventory() {
 }
 
 /* ------------------------------------------------------------------ world map */
-var MAPPOS = [[0.1, 0.72], [0.24, 0.44], [0.38, 0.7], [0.52, 0.38], [0.65, 0.66], [0.78, 0.36], [0.9, 0.62]];
+var MAPPOS = [[0.08, 0.72], [0.19, 0.44], [0.3, 0.7], [0.41, 0.38], [0.52, 0.66], [0.62, 0.34], [0.72, 0.64], [0.82, 0.36], [0.92, 0.6]];
 var mapSel = 1, mapFx = null, mapRect = { x: 0, y: 0, w: 0, h: 0 };
 function mapArea() {
   var p = $('mapPanel').getBoundingClientRect();
   if (W < 760) return { x: 0, y: 0, w: W, h: p.top };
   return { x: 0, y: 0, w: p.left, h: H };
 }
-function regionXY(i) { var a = mapRect; var px = MAPPOS[i][0], py = MAPPOS[i][1]; if (a.w < 500) { px = 0.14 + (i % 4) * 0.24 + (i >= 4 ? 0.12 : 0); py = i >= 4 ? 0.72 : 0.36; } return [a.x + a.w * px, a.y + a.h * py]; }
+function regionXY(i) { var a = mapRect; var px = MAPPOS[i][0], py = MAPPOS[i][1]; if (a.w < 500) { px = 0.12 + (i % 5) * 0.19 + (i >= 5 ? 0.095 : 0); py = i >= 5 ? 0.72 : 0.36; } return [a.x + a.w * px, a.y + a.h * py]; }
 function drawMap(t) {
   mapRect = mapArea();
   drawBackground(t, mapRect.h * 0.82, mapRect.w / 2);
@@ -1004,6 +1115,9 @@ function renderTitle() {
   addBtn(m, anyProgress ? 'Continue' : 'Start', function () { startLevel(nextUnsolved()); }, 'primary', anyProgress ? nextUnsolved().id : '1-1');
   addBtn(m, 'World Map', function () { mapSel = save.lastRegion || 1; setScreen('map'); }, '', totalStars() + ' ★');
   addBtn(m, 'Daily Signal', startDaily, '', utcDate().slice(5));
+  addBtn(m, 'Static Storm', startStorm, '', stormUnlocked() ? (save.storm.best ? 'best ' + save.storm.best : 'timed') : 'locked');
+  addBtn(m, 'How to Play', function () { openHowTo(); });
+  addBtn(m, 'Achievements', function () { openAch(); }, '', achCount() + '/' + ACH.length);
   addBtn(m, 'Settings', function () { openSettings(); });
   if (inFrame) addBtn(m, 'Quit to PlayChain', function () { post({ type: 'playchain:exit' }); });
   typeLine($('tline'), 'Somebody is still transmitting. Find them.');
@@ -1023,7 +1137,7 @@ function starStr(n) { var s = ''; for (var i = 0; i < 3; i++) s += i < n ? '<spa
 function renderMapPanel() {
   var p = $('mapPanel'), reg = REGIONS[mapSel - 1], list = byRegion[mapSel], unl = regionUnlocked(mapSel);
   var hints = hintsAvail();
-  p.innerHTML = '<h2>WORLD MAP</h2><div class="tot"><b>' + totalStars() + '</b> / ' + MAX_STARS + ' ★ · ' + hints + ' hint' + (hints === 1 ? '' : 's') + ' · ' + save.decoded.length + '/' + REGIONS.length + ' decoded</div>' +
+  p.innerHTML = '<h2>WORLD MAP</h2><div class="tot"><b>' + totalStars() + '</b> / ' + MAX_STARS + ' ★ · ' + hints + ' hint' + (hints === 1 ? '' : 's') + ' · ' + logCount() + '/' + LOG_TOTAL + ' decoded</div>' +
     '<h2>REGION ' + reg.n + '</h2><h3>' + reg.name + '</h3><p class="rule">' + (unl ? reg.rule : 'Restore 3 sectors in ' + REGIONS[mapSel - 2].name + ' to reach this region.') + '</p><div class="grid" id="lvGrid"></div><div class="row" id="mapRow"></div><div id="mapRow2"></div>';
   var g = $('lvGrid');
   list.forEach(function (l) {
@@ -1038,7 +1152,10 @@ function renderMapPanel() {
   addBtn(row, '▶', function () { mapSel = mapSel < REGIONS.length ? mapSel + 1 : 1; renderMapPanel(); Audio.setMode('map', mapSel); });
   var r2 = $('mapRow2');
   addBtn(r2, 'Daily Signal', startDaily, '', utcDate());
-  addBtn(r2, 'Radio Log', openLog, '', save.decoded.length + '/' + REGIONS.length);
+  addBtn(r2, 'Radio Log', openLog, '', logCount() + '/' + LOG_TOTAL);
+  addBtn(r2, 'Static Storm', startStorm, '', stormUnlocked() ? (save.storm.best ? 'best ' + save.storm.best : 'new') : 'locked');
+  addBtn(r2, 'Achievements', function () { openAch(); }, '', achCount() + '/' + ACH.length);
+  addBtn(r2, 'How to Play', function () { openHowTo(); });
   addBtn(r2, 'Settings', openSettings);
   addBtn(r2, 'Title', function () { setScreen('title'); });
   var firstOpen = g.querySelector('button:not(:disabled):not(.done)') || g.querySelector('button:not(:disabled)') || r2.querySelector('button');
@@ -1047,7 +1164,7 @@ function renderMapPanel() {
 function updateHud() {
   if (!G) return;
   var par = G.level.par, res = G.res, region = REGIONS[+G.level.id.split('-')[0] - 1];
-  $('hudLv').innerHTML = G.daily ? '<b>DAILY</b>' + G.level.daily : '<b>' + G.level.id + '</b>' + (region ? region.name.toUpperCase() : '');
+  $('hudLv').innerHTML = G.storm ? stormLabel() : G.daily ? '<b>DAILY</b>' + G.level.daily : '<b>' + G.level.id + '</b>' + (region ? region.name.toUpperCase() : '');
   function cls(v, p) { return v <= p ? 'ok' : 'over'; }
   var lit = res.rx.filter(function (r) { return r.lit; }).length;
   $('hudStats').innerHTML =
@@ -1056,6 +1173,8 @@ function updateHud() {
     '<div class="stat"><span>LEAKS</span><b class="' + (res.leaks.length ? 'bad' : 'ok') + '">' + res.leaks.length + '</b></div>' +
     '<div class="stat"><span>LOCKED</span><b class="' + (lit === res.rx.length ? 'ok' : '') + '">' + lit + '<i>/' + res.rx.length + '</i></b></div>';
   $('bUndo').disabled = !G.hist.length; $('bRedo').disabled = !G.redo.length;
+  var pb = $('bPulse'); pb.classList.toggle('hide', !G.storm); $('bHint').classList.toggle('hide', !!G.storm);
+  if (G.storm) { pb.disabled = !(G.level.soft || []).length || !Storm || Storm.charges <= 0 || !!G.pulseUntil; pb.classList.toggle('live', !!G.pulseUntil); $('pulseBadge').textContent = Storm ? Storm.charges : 0; }
   var h = hintsAvail(), hb = $('hintBadge'); hb.textContent = G.hintUsed ? '✓' : h; hb.className = 'badge' + (h || G.hintUsed ? '' : ' zero');
   // frequency legend
   var used = {}; used[SL.fIndex(G.level.tower.freq)] = 1; G.level.receivers.forEach(function (r) { if (r.freq !== 'any') used[SL.fIndex(r.freq)] = 1; });
@@ -1071,26 +1190,28 @@ function toast(msg) { var el = $('toast'); el.textContent = msg; el.classList.ad
 /* ------------------------------------------------------------------ modals */
 var modalKind = null, modalBack = null;
 function modalOpen() { return !!modalKind; }
-function openModal(kind, html, back) { modalKind = kind; modalBack = back || null; $('mcard').innerHTML = html; $('modal').classList.remove('hide'); }
+function openModal(kind, html, back) { $('mcard').className = 'card'; modalKind = kind; modalBack = back || null; $('mcard').innerHTML = html; $('modal').classList.remove('hide'); }
 function closeModal() { modalKind = null; $('modal').classList.add('hide'); var b = modalBack; modalBack = null; if (b) b(); else restoreFocus(); }
 function restoreFocus() { if (screen === 'title') focusFirst($('tmenu')); else if (screen === 'map') { var b = $('mapPanel').querySelector('button:not(:disabled)'); if (b) focusEl(b); } else if (document.activeElement) document.activeElement.blur(); }
 function openPause(fromConsole) {
   if (screen !== 'puzzle' || modalKind === 'complete') return;
-  openModal('pause', '<h2>PAUSED</h2><h3>' + (G.daily ? 'Daily Signal' : 'Sector ' + G.level.id) + '</h3><div id="pm"></div>');
+  openModal('pause', '<h2>PAUSED</h2><h3>' + (G.storm ? 'Static Storm · puzzle ' + G.level.storm : G.daily ? 'Daily Signal' : 'Sector ' + G.level.id) + '</h3><div id="pm"></div>');
   var m = $('pm');
   addBtn(m, 'Resume', closeModal, 'primary');
   addBtn(m, 'Restart', function () { closeModal(); resetLevel(); });
+  addBtn(m, 'How to Play', function () { openHowTo(openPause); });
   addBtn(m, 'Settings', function () { openSettings(openPause); });
-  addBtn(m, 'World Map', function () { closeModal(); mapSel = G.daily ? mapSel : +G.level.id.split('-')[0]; setScreen('map'); });
+  if (G.storm) addBtn(m, 'End storm', function () { closeModal(); stormOver(); });
+  else addBtn(m, 'World Map', function () { closeModal(); mapSel = G.daily ? mapSel : +G.level.id.split('-')[0]; setScreen('map'); });
   if (inFrame) addBtn(m, 'Quit to PlayChain', function () { post({ type: 'playchain:exit' }); });
   focusFirst(m);
 }
 function openSettings(back) {
   var s = save.settings;
   var html = '<h2>SETTINGS</h2><h3>Tuning</h3><div class="set">' +
-    ['music:Music', 'amb:Ambience (static)', 'sfx:Effects', 'ui:Interface'].map(function (x) { var k = x.split(':'); return '<label for="v_' + k[0] + '">' + k[1] + '</label><input type="range" min="0" max="1" step="0.05" id="v_' + k[0] + '" value="' + s[k[0]] + '">'; }).join('') +
+    ['music:Music', 'amb:Ambience', 'sfx:Effects', 'ui:Interface'].map(function (x) { var k = x.split(':'); return '<label for="v_' + k[0] + '">' + k[1] + '</label><input type="range" min="0" max="1" step="0.05" id="v_' + k[0] + '" value="' + s[k[0]] + '">'; }).join('') +
     ['scan:Scanlines + CRT', 'reduce:Reduce motion', 'patterns:Colourblind line patterns', 'text:Large text'].map(function (x) { var k = x.split(':'); var on = k[0] === 'text' ? s.text > 1 : s[k[0]]; return '<span>' + k[1] + '</span><button class="tog' + (on ? ' on' : '') + '" data-k="' + k[0] + '" aria-label="' + k[1] + '"></button>'; }).join('') +
-    '</div><div class="keys"><b>Mouse</b> click rotate · right click rotate back · drag to place<br><b>Touch</b> tap rotate · long press back · drag to place<br><b>Keys</b> arrows move · Space rotate · X back · Q/E pick tile · Enter place · Del lift · Ctrl+Z/Y · R reset · H hint · Esc pause<br><b>Pad</b> A rotate/place · X back · B lift · LT/RT pick tile · LB/RB undo/redo · Y hint · Select reset · Start pause</div><div id="sm"></div>';
+    '</div><div class="keys">' + KEYS_HTML + '</div><div id="sm"></div>';
   openModal('settings', html, typeof back === 'function' ? back : null);
   Array.prototype.forEach.call(document.querySelectorAll('#mcard input[type=range]'), function (inp) {
     inp.addEventListener('input', function () { s[inp.id.slice(2)] = +inp.value; Audio.applyVolumes(); });
@@ -1104,14 +1225,18 @@ function openSettings(back) {
 }
 function applySettings() { var s = save.settings; document.body.classList.toggle('scan', !!s.scan); document.body.classList.toggle('rm', !!s.reduce); document.documentElement.style.fontSize = (16 * s.text) + 'px'; if (G) updateHud(); }
 function openLog() {
-  var html = '<h2>RADIO LOG</h2><h3>Intercepted transmissions</h3><div class="log">' + TRANSMISSIONS.map(function (tx, i) {
-    var ok = save.decoded.indexOf(i + 1) >= 0;
-    return '<div class="tx' + (ok ? '' : ' locked') + '"><small>RX ' + tx.f + ' MHZ · ' + REGIONS[i].name.toUpperCase() + '</small>' + (ok ? tx.t : scramble(tx.t, i)) + '</div>';
-  }).join('') + '</div><div id="lm"></div>';
+  var html = '<h2>RADIO LOG</h2><h3>Intercepted transmissions</h3><p>' + logCount() + ' of ' + LOG_TOTAL + ' decoded. Restore half a region for a fragment, all of it for the full message.</p><div class="log">' + TRANSMISSIONS.map(function (tx, i) {
+    var full = save.decoded.indexOf(i + 1) >= 0, half = full || save.partial.indexOf(i + 1) >= 0, name = REGIONS[i].name.toUpperCase();
+    return '<div class="tx' + (half ? '' : ' locked') + '"><small>RX ' + tx.f + ' MHZ · ' + name + ' · FRAGMENT</small>' + (half ? tx.h : scramble(tx.h, i + 40)) + '</div>' +
+      '<div class="tx' + (full ? '' : ' locked') + '"><small>RX ' + tx.f + ' MHZ · ' + name + '</small>' + (full ? tx.t : scramble(tx.t, i)) + '</div>';
+  }).join('') + '<div class="tx' + (save.finalHeard ? '' : ' locked') + '"><small>RX ' + FINAL_TX.f + ' MHZ · THE LAST TOWER · FINAL</small>' + (save.finalHeard ? FINAL_TX.t : scramble(FINAL_TX.t, 99)) + '</div></div><div id="lm"></div>';
   openModal('log', html); addBtn($('lm'), 'Close', closeModal, 'primary'); focusFirst($('lm'));
 }
 function scramble(t, seed) { var r = SL.mulberry32(seed + 11), g = '▒░▓·'; return t.replace(/[^\s]/g, function () { return g[Math.floor(r() * g.length)]; }); }
-function showComplete(stars, res, decoded) {
+function showComplete(stars, res, decoded, partial) {
+  var txShow = G.level.final ? { label: 'FINAL TRANSMISSION', f: FINAL_TX.f, t: FINAL_TX.t }
+    : decoded > 0 ? { label: 'TRANSMISSION DECODED', f: TRANSMISSIONS[decoded - 1].f, t: TRANSMISSIONS[decoded - 1].t }
+    : partial > 0 ? { label: 'FRAGMENT DECODED', f: TRANSMISSIONS[partial - 1].f, t: TRANSMISSIONS[partial - 1].h } : null;
   var par = G.level.par, isDaily = G.daily, best = isDaily ? save.daily[G.level.daily] : save.best[G.level.id];
   var html = '<h2>' + (isDaily ? 'DAILY SIGNAL · ' + G.level.daily : 'SECTOR ' + G.level.id + ' RESTORED') + '</h2><h3>' + ['', 'Signal found', 'Clean route', 'Perfect lock'][stars] + '</h3>' +
     '<div class="stars">' + [0, 1, 2].map(function (i) { return '<div class="star' + (i < stars ? '' : ' off') + '" id="st' + i + '"><svg viewBox="0 0 24 24"><path d="M12 2.8l2.7 5.9 6.4.7-4.8 4.3 1.4 6.3L12 16.8 6.3 20l1.4-6.3L2.9 9.4l6.4-.7z" fill="' + COL.teal + '" stroke="' + COL.teal + '" stroke-width="1.2" stroke-linejoin="round"/></svg></div>'; }).join('') + '</div>' +
@@ -1119,7 +1244,7 @@ function showComplete(stars, res, decoded) {
     '<span>Moves</span><b class="' + (G.moves <= par.moves ? 'ok' : 'over') + '">' + G.moves + '</b><span>par ' + par.moves + '</span>' +
     '<span>Leaks</span><b class="' + (res.leaks.length ? 'over' : 'ok') + '">' + res.leaks.length + '</b><span>' + (G.hintUsed ? 'hint used' : '') + '</span>' +
     (best ? '<span>Local best</span><b>' + best.r + '/' + best.m + '</b><span>relays/moves</span>' : '') + '</div>' +
-    (decoded > 0 ? '<div class="tx" id="dtx"><small>TRANSMISSION DECODED · RX ' + TRANSMISSIONS[decoded - 1].f + ' MHZ</small><span></span></div>' : '') +
+    (txShow ? '<div class="tx" id="dtx"><small>' + txShow.label + ' · RX ' + txShow.f + ' MHZ</small><span></span></div>' : '') +
     '<div id="cm"></div>';
   openModal('complete', html);
   var m = $('cm'), nxt = isDaily ? null : nextLevel();
@@ -1128,7 +1253,7 @@ function showComplete(stars, res, decoded) {
   addBtn(m, 'World Map', function () { closeModal(); if (!isDaily) mapSel = +G.level.id.split('-')[0]; setScreen('map'); });
   focusFirst(m);
   [0, 1, 2].forEach(function (i) { setTimeout(function () { var el = $('st' + i); if (!el) return; el.classList.add('drop'); if (i < stars) Audio.play('star', i); }, 250 + i * 330); });
-  if (decoded > 0) setTimeout(function () { var el = document.querySelector('#dtx span'); if (el) typeLine(el, TRANSMISSIONS[decoded - 1].t); }, 1300);
+  if (txShow) setTimeout(function () { var el = document.querySelector('#dtx span'); if (el) typeLine(el, txShow.t); }, 1300);
 }
 function nextLevel() {
   var i = LEVELS.indexOf(G.level);
@@ -1139,6 +1264,174 @@ function utcDate() { return new Date().toISOString().slice(0, 10); }
 function startDaily() {
   var d = utcDate(); toast('Tuning to today’s frequency…');
   Solver.daily(d).then(function (g) { if (!g || !g.level) { toast('No signal today. Try again'); return; } startLevel(g.level, { daily: true }); G.sol = g.sol; });
+}
+
+/* ------------------------------------------------------------------ radio log + achievements */
+var LOG_TOTAL = TRANSMISSIONS.length * 2 + 1;
+function logCount() {
+  var frag = 0; for (var r = 1; r <= REGIONS.length; r++) if (save.partial.indexOf(r) >= 0 || save.decoded.indexOf(r) >= 0) frag++;
+  return frag + save.decoded.length + (save.finalHeard ? 1 : 0);
+}
+function achCount() { return ACH.filter(function (a) { return save.ach[a.id]; }).length; }
+function checkCampaignAch(stars, res) {
+  unlock('first');
+  if (stars === 3) unlock('perfect');
+  var three = 0, solved = 0;
+  for (var k in save.stars) if (LEVEL_BY_ID[k]) { solved++; if (save.stars[k] === 3) three++; }
+  if (three >= 10) unlock('perfect10');
+  if (solved >= 50) unlock('half');
+  if (totalStars() >= 150) unlock('stars150');
+  if (res.rx.some(function (r) { return r.lit && r.f === 3; }) && G.tiles.some(function (t) { return t && t.t === 'mixer'; })) unlock('mixer');
+  if (G.tiles.some(function (t, c) { return t && t.t === 'dish' && res.pw[c * 2] > 0; })) unlock('orbit');
+  if (G.L.decoys.length && !G.decoyEver) unlock('ghost');
+  if (save.decoded.length >= 5) unlock('decoder');
+  if (G.level.final) unlock('last');
+}
+function openAch(back) {
+  openModal('ach', '<h2>ACHIEVEMENTS</h2><h3>' + achCount() + ' of ' + ACH.length + '</h3><div class="ach">' + ACH.map(function (a) {
+    var on = !!save.ach[a.id];
+    return '<div class="' + (on ? 'on' : '') + '"><b>' + (on ? '★ ' : '') + a.name + '</b>' + a.d + '</div>';
+  }).join('') + '</div><div id="am"></div>', typeof back === 'function' ? back : null);
+  addBtn($('am'), 'Close', closeModal, 'primary'); focusFirst($('am'));
+}
+
+/* ------------------------------------------------------------------ Static Storm (spec 5: solve small puzzles against the clock) */
+var Storm = null, PULSE_MS = 5000;
+function startStorm() {
+  if (!stormUnlocked()) { toast('Restore 3 sectors in Static Fields to unlock the storm'); Audio.play('locked'); return; }
+  Storm = { left: 90, solved: 0, charges: 1, seed: (Math.random() * 4294967295) >>> 0, active: true, next: null, shown: -1 };
+  toast('Tuning into the storm…');
+  loadStormPuzzle();
+}
+function stormSeed(n) { return (Storm.seed + n * 104729) >>> 0; }
+function loadStormPuzzle() {
+  var n = Storm.solved, run = Storm, p = Storm.next || Solver.storm(n, stormSeed(n));
+  Storm.next = null;
+  p.then(function (g) {
+    if (Storm !== run || !run.active) return;
+    if (!g || !g.level) { toast('The storm lost signal'); stormOver(); return; }
+    startLevel(g.level, { storm: true }); G.sol = g.sol;
+    run.next = Solver.storm(n + 1, stormSeed(n + 1));
+  });
+}
+function stormTick(dt) {
+  if (G && G.pulseUntil && now >= G.pulseUntil) closePulse();
+  if (!Storm || !Storm.active || screen !== 'puzzle' || !G || !G.storm || G.won || modalOpen() || paused || document.hidden) return;
+  Storm.left -= dt;
+  var sec = Math.ceil(Math.max(0, Storm.left));
+  if (sec !== Storm.shown) { Storm.shown = sec; updateHud(); if (sec <= 5 && sec > 0) Audio.play('ui'); }
+  if (Storm.left <= 0) stormOver();
+}
+function stormLabel() {
+  var sec = Math.ceil(Math.max(0, Storm ? Storm.left : 0)), mm = Math.floor(sec / 60), ss = sec % 60;
+  return '<b>STORM</b><span' + (sec <= 10 ? ' style="color:var(--amber)"' : '') + '>' + mm + ':' + (ss < 10 ? '0' : '') + ss + '</span> · ' + (Storm ? Storm.solved : 0) + ' SOLVED';
+}
+function stormSolved(res) {
+  if (G.L.softOpen) unlock('pulse');
+  Storm.solved++;
+  var bonus = Math.max(8, 20 - Storm.solved);
+  Storm.left += bonus; Storm.charges = Math.min(3, Storm.charges + 1);
+  if (Storm.solved >= 5) unlock('storm5');
+  if (Storm.solved >= 12) unlock('storm12');
+  post({ type: 'playchain:score', score: Storm.solved * 100 });
+  toast('+' + bonus + ' seconds');
+  var run = Storm;
+  setTimeout(function () { if (Storm === run && run.active) loadStormPuzzle(); }, G.solveAnim.dur + 200);
+}
+function stormOver() {
+  if (!Storm || !Storm.active) return;
+  Storm.active = false;
+  if (G) { G.won = true; G.pulseUntil = 0; G.L.softOpen = false; }
+  var n = Storm.solved, isBest = n > save.storm.best;
+  if (isBest) save.storm.best = n;
+  save.storm.runs++; persist();
+  Audio.play(n ? 'solved' : 'lost', [0, 2, 4]);
+  openModal('storm', '<h2>STATIC STORM</h2><h3>' + (n ? 'The storm passed' : 'Lost in the static') + '</h3>' +
+    '<div class="res"><span>Puzzles solved</span><b class="ok">' + n + '</b><span>' + (isBest && n ? 'new best' : '') + '</span>' +
+    '<span>Best run</span><b>' + save.storm.best + '</b><span></span><span>Storms weathered</span><b>' + save.storm.runs + '</b><span></span></div>' +
+    '<p>Every solve adds time and a pulse charge. Pulse (P) clears soft static for five seconds.</p><div id="sto"></div>');
+  var m = $('sto');
+  addBtn(m, 'Play again', function () { closeModal(); startStorm(); }, 'primary');
+  addBtn(m, 'World Map', function () { closeModal(); setScreen('map'); });
+  addBtn(m, 'Title', function () { closeModal(); setScreen('title'); });
+  focusFirst(m);
+}
+/* Pulse: soft static opens for PULSE_MS. Tiles still inside when it closes go back to the tray. */
+function pulse() {
+  if (!canAct() || !G.storm || G.pulseUntil) return;
+  if (!(G.level.soft || []).length) { toast('No soft static on this board'); return; }
+  if (!Storm || Storm.charges <= 0) { toast('No pulse left. Solve a puzzle to recharge'); Audio.play('locked'); return; }
+  Storm.charges--; G.L.softOpen = true; G.pulseUntil = now + PULSE_MS; flareT = now;
+  Audio.play('booster'); recompute(true);
+}
+function closePulse() {
+  G.pulseUntil = 0;
+  if (G.won) { updateHud(); return; }
+  var L = G.L, back = false;
+  for (var c = 0; c < L.N; c++) {
+    var t = G.tiles[c];
+    if (L.kind[c] !== SL.K_SOFT || !t || t.fx) continue;
+    var key = t.k || SL.keyOf(t.t, t.f); G.inv[key] = (G.inv[key] || 0) + 1; G.tiles[c] = null; back = true;
+  }
+  L.softOpen = false;
+  if (back) { Audio.play('lost'); toast('The static came back'); if (!RM()) shake = 6; }
+  recompute(true);
+}
+
+/* ------------------------------------------------------------------ how to play */
+var KEYS_HTML = '<b>Mouse</b> click rotate · right click rotate back · drag to place<br><b>Touch</b> tap rotate · long press back · drag to place<br><b>Keys</b> arrows move · Space rotate · X back · Q/E pick tile · Enter place · Del lift · Ctrl+Z/Y · R reset · H hint · P pulse (Storm) · Esc pause<br><b>Pad</b> A rotate/place · X back · B lift · LT/RT pick tile · LB/RB undo/redo · Y hint or pulse · Select reset · Start pause';
+/* Tile pictures for the guide, drawn with the game's own tile renderer. */
+function iconFor(k) {
+  var cvs = document.createElement('canvas'), px = 80; cvs.width = cvs.height = px; cvs.className = 'ico';
+  var saved = ctx; ctx = cvs.getContext('2d');
+  try {
+    if (k === 'static' || k === 'soft') {
+      var r = SL.mulberry32(k === 'soft' ? 7 : 3);
+      for (var i = 0; i < 400; i++) { var g = 40 + r() * 120 | 0; ctx.fillStyle = 'rgb(' + g + ',' + g + ',' + g + ')'; ctx.fillRect((r() * 20 | 0) * 4, (r() * 20 | 0) * 4, 4, 4); }
+      ctx.fillStyle = k === 'soft' ? 'rgba(227,168,87,0.22)' : 'rgba(90,30,42,0.45)'; ctx.fillRect(0, 0, px, px);
+      if (k === 'soft') { ctx.setLineDash([6, 6]); ctx.strokeStyle = 'rgba(227,168,87,0.9)'; ctx.lineWidth = 3; ctx.strokeRect(4, 4, px - 8, px - 8); }
+    } else if (k === 'recv') {
+      ctx.strokeStyle = COL.amber; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(40, 40, 22, 0, 7); ctx.stroke();
+      ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(40, 39, 11, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke(); ctx.beginPath(); ctx.moveTo(40, 46); ctx.lineTo(40, 54); ctx.stroke();
+    } else if (k === 'decoy') {
+      ctx.strokeStyle = 'rgb(230,70,90)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(40, 18); ctx.lineTo(62, 40); ctx.lineTo(40, 62); ctx.lineTo(18, 40); ctx.closePath(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(32, 32); ctx.lineTo(48, 48); ctx.moveTo(48, 32); ctx.lineTo(32, 48); ctx.stroke();
+    } else {
+      var rot = { straight: 1, corner: 0, tee: 0, booster: 1, tuner: 1, bridge: 0, mixer: 0, dish: 1 }[k] || 0;
+      var t = { t: k, r: rot, f: k === 'tuner' ? 'amber' : null }, info = {};
+      for (var s = 0; s < 4; s++) if (SL.isOpen(k, rot, s)) info[s] = { v: 6, f: 0, in: s === 3 };
+      if (k === 'tuner') info[1] = { v: 6, f: 1 };
+      if (k === 'mixer') info = { 0: { v: 6, f: 0, in: true }, 2: { v: 6, f: 1, in: true }, 1: { v: 5, f: 3 } };
+      drawTile(t, 40, 40, 74, 0, info, 6);
+    }
+  } catch (e) {}
+  ctx = saved;
+  return cvs;
+}
+function openHowTo(back) {
+  var T = function (k, label) { return '<div><span class="ico" data-k="' + k + '"></span><span>' + label + '</span></div>'; };
+  openModal('howto', '<h2>HOW TO PLAY</h2><h3>Bring the network back</h3><div class="howto">' +
+    '<p>Carry the signal from the <b>tower</b> to every <b>receiver</b>. A receiver locks on when signal reaches it in the right colour. <b>Decoys</b> must stay dark.</p>' +
+    '<h4>STRENGTH</h4><p>The tower sends signal at the strength printed in its corner. Every relay costs 1. When strength runs out the signal dies, so short routes win.</p>' +
+    '<h4>TILES</h4><div class="tiles">' +
+    T('straight', '<b>Straight</b> passes signal across.') + T('corner', '<b>Corner</b> turns the signal.') +
+    T('tee', '<b>T-split</b>: one in, two out at the same strength.') + T('booster', '<b>Booster</b> refills strength to full.') +
+    T('tuner', '<b>Tuner</b> changes the colour passing through.') + T('bridge', '<b>Bridge</b>: two signals cross without touching.') +
+    T('mixer', '<b>Mixer</b>: two signals in, one out. Two colours make white.') + T('dish', '<b>Satellite dish</b>: signal into one leaves from its partner.') +
+    T('static', '<b>Static</b> blocks everything.') + T('soft', '<b>Soft static</b> (Storm): a pulse clears it for 5 seconds.') +
+    T('recv', '<b>Receiver</b>: a coloured ring needs that colour.') + T('decoy', '<b>Decoy</b>: lighting it fails the sector.') +
+    '</div><h4>MOVES</h4><ul><li>Tap or click a tile to rotate it. Right click or long press turns it back.</li>' +
+    '<li>Drag tiles from the tray at the bottom onto empty cells. Delete (or B on a pad) lifts a placed tile back to the tray.</li>' +
+    '<li>A lock badge means a tile cannot turn. A curved arrow means it can.</li><li>Undo, redo and reset are always free.</li></ul>' +
+    '<h4>STARS</h4><p>★ Solve the sector. ★★ Use no more relays than par. ★★★ Also stay within par moves with no leaks. A leak is an open end sparking into nothing.</p>' +
+    '<p>You earn a hint for every 3 stars. A hint shows one correct tile and caps that sector at 2 stars.</p>' +
+    '<h4>MODES</h4><ul><li><b>Campaign</b>: 9 regions, ' + LEVELS.length + ' sectors, one new rule per region. Restore half a region for a radio fragment and all of it for the full transmission. The last sector plays the final one.</li>' +
+    '<li><b>Daily Signal</b>: one puzzle a day, the same for everyone.</li>' +
+    '<li><b>Static Storm</b>: small puzzles against the clock. Each solve adds time and a pulse charge. Pulse (P) opens soft static for 5 seconds; tiles left inside go back to the tray when it closes. Unlocks after 3 sectors in Static Fields.</li></ul>' +
+    '<h4>CONTROLS</h4><div class="keys">' + KEYS_HTML + '</div></div><div id="hm"></div>', typeof back === 'function' ? back : null);
+  $('mcard').classList.add('wide');
+  Array.prototype.forEach.call(document.querySelectorAll('#mcard span.ico[data-k]'), function (el) { el.parentNode.replaceChild(iconFor(el.dataset.k), el); });
+  addBtn($('hm'), 'Got it', closeModal, 'primary'); focusFirst($('hm'));
 }
 
 /* ------------------------------------------------------------------ focus navigation (keys + pad in menus) */
@@ -1219,6 +1512,7 @@ $('bUndo').addEventListener('click', function () { Audio.init(); undo(); });
 $('bRedo').addEventListener('click', function () { Audio.init(); redo(); });
 $('bReset').addEventListener('click', function () { Audio.init(); resetLevel(); });
 $('bHint').addEventListener('click', function () { Audio.init(); hint(); });
+$('bPulse').addEventListener('click', function () { Audio.init(); pulse(); });
 
 /* ------------------------------------------------------------------ input: keyboard */
 function puzzleAction(kind) {
@@ -1255,6 +1549,7 @@ window.addEventListener('keydown', function (e) {
   else if (kl === 'q' || k === '[') puzzleAction('inv-');
   else if (kl === 'r') resetLevel();
   else if (kl === 'h') hint();
+  else if (kl === 'p') pulse();
 });
 
 /* ------------------------------------------------------------------ input: gamepad */
@@ -1281,7 +1576,7 @@ function pollPad() {
     if (pr(0)) puzzleAction('act');
     if (pr(2)) puzzleAction('back');
     if (pr(1)) puzzleAction('lift');
-    if (pr(3)) hint();
+    if (pr(3)) { if (G && G.storm) pulse(); else hint(); }
     if (pr(4)) undo();
     if (pr(5)) redo();
     if (pr(6)) puzzleAction('inv-');
@@ -1305,8 +1600,11 @@ window.addEventListener('message', function (e) {
 document.addEventListener('visibilitychange', function () { Audio.setMute(document.hidden || paused || shellMuted); });
 
 /* ------------------------------------------------------------------ loop + boot */
+var lastT = 0;
 function frame(t) {
+  var dt = lastT ? Math.min(0.1, (t - lastT) / 1000) : 0; lastT = t;
   now = t; requestAnimationFrame(frame);
+  stormTick(dt);
   pollPad();
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (screen === 'title') drawTitle(t);
@@ -1326,7 +1624,7 @@ window.addEventListener('pointerdown', function () { Audio.init(); }, true);
 if (inFrame) { post({ type: 'playchain:load' }); setTimeout(boot, 800); }
 else { try { mergeSave(JSON.parse(localStorage.getItem('signal-lost-save') || 'null')); } catch (e) {} boot(); }
 
-window.__SL = { get G() { return G; }, get screen() { return screen; }, startLevel: startLevel, LEVELS: LEVELS, save: save, Solver: Solver, rotateAt: rotateAt, placeAt: placeAt, setScreen: setScreen };
+window.__SL = { get G() { return G; }, get screen() { return screen; }, startLevel: startLevel, LEVELS: LEVELS, save: save, Solver: Solver, rotateAt: rotateAt, placeAt: placeAt, setScreen: setScreen, startStorm: startStorm, pulse: pulse, closePulse: closePulse, get Storm() { return Storm; } };
 })();
 </script>
 </body>
