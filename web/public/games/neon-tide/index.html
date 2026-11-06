@@ -646,51 +646,51 @@ body.rm #banner.show{animation:none}
   // ---- Neon Tide audio: adaptive synthwave built entirely with the Web Audio API ----
   // Key: A minor. All music layers run in lockstep from one scheduler and are mixed by gain only.
   var mtof = function (m) { return 440 * Math.pow(2, (m - 69) / 12); };
-  var A_PENT = [57, 60, 62, 64, 67, 69, 72, 74, 76, 79, 81, 84, 86, 88];   // A minor pentatonic, used by musical SFX
+  var A_PENT = [53, 56, 58, 60, 63, 65, 68, 70, 72, 75, 77, 80, 82, 84];   // F minor pentatonic, used by musical SFX
 
   // Songs are plain data so notes can be tweaked later.
   var SONGS = {
-    // Ride: outrun at 116 BPM in E minor, i-VI-III-VII. Drums arrive with speed, arp at x3, lead at x6.
+    // Riptide: 124 BPM in F minor, i-iv-VI-V. Drums arrive with speed, arp at x3, lead at x6.
     ride: {
-      bpm: 116,
+      bpm: 124,
       prog: [
-        { root: 40, pad: [59, 64, 67, 71] },   // Em
-        { root: 36, pad: [60, 64, 67, 71] },   // Cmaj7
-        { root: 43, pad: [59, 62, 67, 71] },   // G
-        { root: 38, pad: [57, 62, 66, 69] }    // D
+        { root: 41, pad: [53, 56, 60, 65] },   // Fm
+        { root: 46, pad: [53, 58, 61, 65] },   // Bbm
+        { root: 37, pad: [53, 56, 61, 65] },   // Db
+        { root: 36, pad: [52, 55, 60, 64] }    // C
       ],
-      bass: '0.0.0.0.0.0.0.0.',                 // driving 8ths, octave jump on the "and" of 2 and 4
-      bassOct: '0000001000000010',
+      bass: '0.00.0.00.0.0.00',
+      bassOct: '0001000100010001',
       kick: 'x...x...x...x...',
       snare: '....x.......x...',
       hat: '..x...x...x...x.',
-      hat2: '..x.x.x...x.x.xx',
-      arp: [0, 2, 1, 3, 2, 4, 3, 1, 0, 2, 1, 3, 4, 3, 2, 1],
-      // lead over 4 bars on an 8th grid (MIDI, -1 rest, 0 hold): rises with the swell, falls back on D
+      hat2: '.xx..xx..xx..xxx',
+      arp: [0, 2, 3, 1, 2, 4, 3, 2, 0, 2, 3, 1, 4, 3, 2, 1],
+      // hook over 4 bars on an 8th grid: climbs with the swell, the E natural pulls back home
       lead: [
-        71, 0, 74, 0, 76, 0, 0, 74,   72, 0, 0, 71, 67, 0, 0, 0,
-        74, 0, 76, 0, 79, 0, 0, 81,   78, 0, 0, 0, 74, 0, -1, 0
+        77, 0, 75, 72, 0, 0, 75, 0,   73, 0, 72, 0, 70, 0, -1, 0,
+        73, 0, 75, 77, 0, 80, 0, 77,  76, 0, 0, 0, 72, 0, -1, 0
       ]
     },
-    // Title: a calm sea at night, open add9 chords and a slow bell line
+    // Title: a calm night sea, slow open chords and a bell line
     title: {
-      bpm: 84,
+      bpm: 80,
       prog: [
-        { root: 40, pad: [55, 59, 66, 71] },   // Em(add9)
-        { root: 36, pad: [55, 59, 64, 71] },   // Cmaj7
-        { root: 43, pad: [57, 62, 67, 71] },   // G(add9)
-        { root: 38, pad: [57, 62, 66, 69] }    // D
+        { root: 41, pad: [56, 60, 63, 67] },   // Fm9
+        { root: 37, pad: [56, 60, 65, 68] },   // Dbmaj7
+        { root: 39, pad: [55, 58, 63, 67] },   // Eb
+        { root: 36, pad: [55, 58, 64, 67] }    // C7
       ],
-      bell: [3, -1, 1, -1, 2, -1, -1, 0, 3, -1, 4, -1, 2, -1, 1, -1]
+      bell: [3, -1, -1, 1, 2, -1, 0, -1, 3, -1, 4, -1, 2, -1, -1, -1]
     },
-    // Results: lifts and resolves home to E minor
+    // Results: lifts and lands on a bright F major
     results: {
-      bpm: 96,
+      bpm: 98,
       prog: [
-        { root: 36, pad: [60, 64, 67, 71] },   // Cmaj7
-        { root: 38, pad: [57, 62, 66, 69] },   // D
-        { root: 35, pad: [59, 62, 66, 71] },   // Bm
-        { root: 40, pad: [59, 64, 67, 76] }    // Em, home
+        { root: 37, pad: [56, 60, 65, 68] },   // Db
+        { root: 39, pad: [55, 58, 63, 67] },   // Eb
+        { root: 36, pad: [55, 60, 64, 67] },   // C
+        { root: 41, pad: [57, 60, 65, 69] }    // F (major)
       ],
       bell: [0, 1, 2, 3, 4, 3, 2, -1, 1, 2, 4, -1, 3, -1, -1, -1]
     }
@@ -875,12 +875,13 @@ body.rm #banner.show{animation:none}
     if (i16 === 0) this.pad(ch.pad, t, spb * 16 + 0.3);
     if (name === 'ride') {
       if (song.bass[i16] !== '.') this.bass(ch.root + (song.bassOct[i16] === '1' ? 12 : 0), t, spb * 1.6);
-      if (song.kick[i16] === 'x') { this.kick(t); this.pumpAt(t); }
-      if (song.snare[i16] === 'x') this.snare(t);
-      if ((bar % 2 ? song.hat2 : song.hat)[i16] === 'x') this.hat(t, i16 % 4 === 2 ? 0.5 : 0.25);
+      var drumsOn = this.state.speed > 0.4;   // only schedule parts you can hear (layerMix gates the same way)
+      if (drumsOn && song.kick[i16] === 'x') { this.kick(t); this.pumpAt(t); }
+      if (drumsOn && song.snare[i16] === 'x') this.snare(t);
+      if (drumsOn && (bar % 2 ? song.hat2 : song.hat)[i16] === 'x') this.hat(t, i16 % 4 === 2 ? 0.5 : 0.25);
       var ai = song.arp[i16], p = ch.pad, an = ai < p.length ? p[ai] : p[ai - p.length] + 12;
-      this.arp(an + 12, t, spb * 0.9);
-      if (i16 % 2 === 0) {
+      if (this.state.combo >= 3) this.arp(an + 12, t, spb * 0.9);
+      if (i16 % 2 === 0 && this.state.combo >= 6) {
         var li = ((bar % 4) * 8) + (i16 / 2), ln = song.lead[li];
         if (ln > 0) { var len = 1; while (li + len < song.lead.length && song.lead[li + len] === 0) len++; this.lead(ln, t, spb * 2 * len); }
       }
@@ -919,7 +920,7 @@ body.rm #banner.show{animation:none}
     f.connect(g); g.connect(this.pump); g.connect(this.reverb);
     for (var i = 0; i < notes.length; i++) {
       var fr = mtof(notes[i]);
-      this.osc('sawtooth', fr, t, dur + 2, f, -8); this.osc('sawtooth', fr, t, dur + 2, f, 8);
+      this.osc('sawtooth', fr, t, dur + 1.2, f, -8); this.osc('sawtooth', fr, t, dur + 1.2, f, 8);
     }
   };
   P.pumpAt = function (t) { var p = this.pump.gain; p.setTargetAtTime(0.45, t, 0.008); p.setTargetAtTime(1, t + 0.03, 0.07); };
@@ -1017,125 +1018,103 @@ body.rm #banner.show{animation:none}
     this.lastSfx[name] = now; this.active++;
     var self = this; setTimeout(function () { self.active--; }, ((SFX_LEN[name] || 0.4) + 0.05) * 1000);
     var t = now + 0.005, S = this.pool[this.poolI++ % this.pool.length], n, o, g, f, i;
+    var self = this;
+    // small helpers: a ramped tone, a ramped filtered sweep
+    function tone(type, f, at, dur, peak, dest) {
+      var gg = c.createGain(); self.hit(gg.gain, t + at, peak, t + at + dur); gg.connect(dest || S);
+      var oo = c.createOscillator(); oo.type = type; oo.frequency.value = f; oo.connect(gg); oo.start(t + at); oo.stop(t + at + dur + 0.05); return oo;
+    }
+    function sweep(f0, f1, dur, peak, q, dest) {
+      var gg = c.createGain(); gg.gain.setValueAtTime(0.0001, t); gg.gain.linearRampToValueAtTime(peak, t + dur * 0.3); gg.gain.exponentialRampToValueAtTime(0.0008, t + dur); gg.connect(dest || S);
+      var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = q || 3; bp.frequency.setValueAtTime(f0, t); bp.frequency.exponentialRampToValueAtTime(f1, t + dur); bp.connect(gg);
+      [-14, 14].forEach(function (d) { var oo = c.createOscillator(); oo.type = 'sawtooth'; oo.frequency.value = 98; oo.detune.value = d; oo.connect(bp); oo.start(t); oo.stop(t + dur + 0.05); });
+      return gg;
+    }
     switch (name) {
-      case 'dive':
-        n = this.noise(t, 0.4, 'lowpass', 2400, 1.5, S, 0.22, 0.38);
-        n.f.frequency.setValueAtTime(2400, t); n.f.frequency.exponentialRampToValueAtTime(300, t + 0.35);
+      case 'dive':     // a downward zoom
+        o = tone('sawtooth', 520, 0, 0.32, 0.12); o.frequency.exponentialRampToValueAtTime(130, t + 0.3);
         break;
-      case 'launch':
-        n = this.noise(t, 0.6, 'bandpass', 500, 1.2, S, 0.001, 0.6);
-        n.g.gain.cancelScheduledValues(t); n.g.gain.setValueAtTime(0.02, t); n.g.gain.linearRampToValueAtTime(0.28, t + 0.15); n.g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-        n.f.frequency.setValueAtTime(400, t); n.f.frequency.exponentialRampToValueAtTime(3500, t + 0.45);
-        g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.05, t + 0.25); g.gain.exponentialRampToValueAtTime(0.001, t + 1.2); g.connect(S); g.connect(this.reverb);
-        [69, 72, 76].forEach(function (m) { this.osc('triangle', mtof(m), t, 1.3, g); }, this);
+      case 'launch':   // synth whoosh up + a sparkle chord
+        sweep(300, 4200, 0.55, 0.22, 2.5);
+        [72, 77, 80].forEach(function (m, k) { self.bell(m + 12, t + 0.12 + k * 0.04, 0.6, S, 0.07); });
         break;
-      case 'perfect':
-        o = c.createOscillator(); g = c.createGain();
-        o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.2);
-        this.hit(g.gain, t, 0.9, t + 0.45);
-        o.connect(g); g.connect(S); o.start(t); o.stop(t + 0.5);
-        var m = A_PENT[Math.min(A_PENT.length - 1, 4 + (a || 1))];
-        this.bell(m + 12, t, 0.9, S, 0.35); this.bell(m + 19, t + 0.06, 0.7, S, 0.15);
+      case 'perfect':  // punchy impact + bright chord stab, pitch climbs with the combo
+        o = tone('sine', 130, 0, 0.35, 0.9); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
+        var stab = A_PENT[Math.min(A_PENT.length - 3, 4 + (a || 1))] + 12;
+        [0, 4, 7].forEach(function (iv) { var st = tone('sawtooth', mtof(stab + iv), 0.005, 0.28, 0.07); st.detune.value = iv ? 6 : -6; });
+        this.bell(stab + 12, t + 0.02, 0.7, S, 0.22);
         this.duckMusic();
         break;
       case 'good':
-        o = c.createOscillator(); g = c.createGain();
-        o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.15);
-        this.hit(g.gain, t, 0.45, t + 0.25);
-        o.connect(g); g.connect(S); o.start(t); o.stop(t + 0.3);
-        this.bell(A_PENT[4] + 12, t, 0.4, S, 0.12);
+        o = tone('sine', 100, 0, 0.22, 0.45); o.frequency.exponentialRampToValueAtTime(48, t + 0.12);
+        this.bell(A_PENT[5] + 12, t, 0.4, S, 0.12);
         break;
-      case 'splash':
-        var ws = S;   // was a bit-crusher waveshaper, which crackled
-        n = this.noise(t, 0.6, 'lowpass', 5000, 0.5, ws, 0.45, 0.55);
-        n.f.frequency.setValueAtTime(5000, t); n.f.frequency.exponentialRampToValueAtTime(400, t + 0.5);
-        o = c.createOscillator(); g = c.createGain(); o.type = 'square';
-        o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(50, t + 0.3);
-        this.hit(g.gain, t, 0.2, t + 0.3); o.connect(g); g.connect(ws); o.start(t); o.stop(t + 0.35);
+      case 'splash':   // water slap: short soft noise plus a sub drop, no crusher
+        n = this.noise(t, 0.4, 'lowpass', 2200, 0.7, S, 0.3, 0.35);
+        n.f.frequency.setValueAtTime(2200, t); n.f.frequency.exponentialRampToValueAtTime(300, t + 0.35);
+        o = tone('sine', 160, 0, 0.4, 0.45); o.frequency.exponentialRampToValueAtTime(40, t + 0.3);
         this.duckMusic();
         break;
-      case 'orb':
-        var idx = Math.min(A_PENT.length - 1, (a || 0) % 10);
-        g = c.createGain(); this.hit(g.gain, t, 0.18, t + 0.18); g.connect(S);
-        var sd = c.createGain(); sd.gain.value = 0.4; g.connect(sd); sd.connect(this.delay);
-        this.osc('square', mtof(A_PENT[idx] + 12), t, 0.08, g); this.osc('square', mtof(A_PENT[Math.min(A_PENT.length - 1, idx + 2)] + 12), t + 0.05, 0.1, g);
+      case 'orb':      // bell pluck that climbs the scale while you chain orbs
+        var idx = Math.min(A_PENT.length - 1, 5 + (a || 0) % 9);
+        this.bell(A_PENT[idx] + 12, t, 0.35, S, 0.2);
+        tone('square', mtof(A_PENT[idx] + 24), 0.03, 0.06, 0.05);
+        g = c.createGain(); g.gain.value = 0.35; g.connect(this.delay); var og = tone('triangle', mtof(A_PENT[idx] + 12), 0, 0.15, 0.08); og.connect(g);
         break;
-      case 'gate':
-        o = c.createOscillator(); g = c.createGain(); f = c.createBiquadFilter(); o.type = 'sawtooth'; f.type = 'bandpass'; f.Q.value = 6;
-        o.frequency.setValueAtTime(1800, t); o.frequency.exponentialRampToValueAtTime(180, t + 0.35);
-        f.frequency.setValueAtTime(4000, t); f.frequency.exponentialRampToValueAtTime(600, t + 0.35);
-        this.hit(g.gain, t, 0.25, t + 0.4);
-        o.connect(f); f.connect(g); g.connect(S); g.connect(this.reverb); o.start(t); o.stop(t + 0.42);
-        this.bell(A_PENT[7] + 12, t + 0.02, 0.5, S, 0.12);
+      case 'gate':     // laser zap down + a chime
+        o = tone('sawtooth', 2400, 0, 0.3, 0.16); o.frequency.exponentialRampToValueAtTime(220, t + 0.28);
+        this.bell(A_PENT[8] + 12, t + 0.05, 0.5, S, 0.14);
         break;
-      case 'near':
-        var pan = c.createStereoPanner ? c.createStereoPanner() : null;
-        var dst = S; if (pan) { pan.connect(S); pan.pan.setValueAtTime(-(a || 1), t); pan.pan.linearRampToValueAtTime(a || 1, t + 0.25); dst = pan; }
-        n = this.noise(t, 0.3, 'bandpass', 1200, 2, dst, 0.35, 0.28);
-        n.f.frequency.setValueAtTime(800, t); n.f.frequency.exponentialRampToValueAtTime(3000, t + 0.25);
-        g = c.createGain(); this.hit(g.gain, t + 0.05, 0.12, t + 0.25); g.connect(S);
-        this.osc('sine', mtof(A_PENT[11] + 12), t + 0.05, 0.22, g);
+      case 'near': {   // stereo swish past the hazard
+        var pan = c.createStereoPanner ? c.createStereoPanner() : null, dst = S;
+        if (pan) { pan.connect(S); pan.pan.setValueAtTime(-(a || 1), t); pan.pan.linearRampToValueAtTime(a || 1, t + 0.25); dst = pan; }
+        sweep(700, 3000, 0.28, 0.2, 4, dst);
+        tone('sine', mtof(A_PENT[11] + 12), 0.06, 0.2, 0.1);
         break;
-      case 'boost':
-        o = c.createOscillator(); g = c.createGain(); f = c.createBiquadFilter(); o.type = 'sawtooth'; f.type = 'lowpass'; f.Q.value = 8;
-        o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(880, t + 0.7);
-        f.frequency.setValueAtTime(400, t); f.frequency.exponentialRampToValueAtTime(6000, t + 0.7);
-        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.6); g.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
-        o.connect(f); f.connect(g); g.connect(S); o.start(t); o.stop(t + 1.05);
-        // sidechain the music
-        var d = this.duck.gain; d.cancelScheduledValues(t); d.setTargetAtTime(0.45, t, 0.03); d.setTargetAtTime(1, t + 0.3, 0.15);
+      }
+      case 'boost':    // jet: saw riser and a sub rumble; the music ducks under it
+        o = tone('sawtooth', 110, 0, 0.9, 0.2); o.frequency.exponentialRampToValueAtTime(660, t + 0.7);
+        o = tone('sine', 55, 0, 1.0, 0.35); o.frequency.exponentialRampToValueAtTime(82, t + 0.8);
+        var d = this.duck.gain; d.cancelScheduledValues(t); d.setTargetAtTime(0.5, t, 0.03); d.setTargetAtTime(1, t + 0.35, 0.15);
         break;
-      case 'boltWarn':
-        o = c.createOscillator(); g = c.createGain(); o.type = 'sawtooth';
-        o.frequency.setValueAtTime(300, t); o.frequency.exponentialRampToValueAtTime(2400, t + 1.0);
-        f = c.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 4; f.frequency.setValueAtTime(600, t); f.frequency.exponentialRampToValueAtTime(4000, t + 1);
-        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.1, t + 0.95); g.gain.linearRampToValueAtTime(0, t + 1.02);
-        o.connect(f); f.connect(g); g.connect(S); o.start(t); o.stop(t + 1.05);
+      case 'boltWarn': // rising alarm pulses
+        for (i = 0; i < 4; i++) { o = tone('square', 600 + i * 220, i * 0.22, 0.14, 0.07); }
         break;
-      case 'bolt':
-        n = this.noise(t, 0.8, 'highpass', 900, 0.5, S, 0.8, 0.7); n.g.connect(this.reverb);
-        o = c.createOscillator(); g = c.createGain(); o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(30, t + 0.6);
-        this.hit(g.gain, t, 0.6, t + 0.7); o.connect(g); g.connect(S); o.start(t); o.stop(t + 0.75);
+      case 'bolt':     // deep boom
+        o = tone('sine', 90, 0, 0.9, 0.85); o.frequency.exponentialRampToValueAtTime(28, t + 0.7);
+        sweep(1800, 200, 0.6, 0.18, 1);
         this.duckMusic();
         break;
-      case 'pearl':
-        for (i = 0; i < 5; i++) this.bell(A_PENT[5 + i] + 12, t + i * 0.05, 0.8, S, 0.18);
+      case 'pearl':    // harp run up the scale
+        for (i = 0; i < 7; i++) this.bell(A_PENT[4 + i] + 12, t + i * 0.045, 0.9, S, 0.15);
         this.duckMusic();
         break;
-      case 'whirl':
-        n = this.noise(t, 1.0, 'bandpass', 300, 8, S, 0.25, 1.0);
-        n.f.frequency.setValueAtTime(800, t); n.f.frequency.exponentialRampToValueAtTime(150, t + 1);
+      case 'whirl':    // swirling detuned drop
+        o = tone('triangle', 700, 0, 0.9, 0.12); o.frequency.exponentialRampToValueAtTime(140, t + 0.85);
+        o = tone('triangle', 712, 0, 0.9, 0.12); o.frequency.exponentialRampToValueAtTime(150, t + 0.85);
         break;
       case 'comboLost':
-        o = c.createOscillator(); g = c.createGain(); o.type = 'triangle';
-        o.frequency.setValueAtTime(mtof(64), t); o.frequency.exponentialRampToValueAtTime(mtof(52), t + 0.3);
-        this.hit(g.gain, t, 0.15, t + 0.35); o.connect(g); g.connect(S); o.start(t); o.stop(t + 0.4);
+        [72, 68, 65].forEach(function (m, k) { tone('triangle', mtof(m), k * 0.07, 0.18, 0.1); });
         break;
       case 'caught':
-        // everything pitches down and fades into static
+        // everything pitches down and fades out
         this.songName = 'caught'; this.song = null; this.pending = null;
         this.fade.gain.cancelScheduledValues(t); this.fade.gain.setValueAtTime(this.fade.gain.value, t); this.fade.gain.linearRampToValueAtTime(0, t + 1.4);
         this.lpf.frequency.cancelScheduledValues(t); this.lpf.frequency.setValueAtTime(this.lpf.frequency.value, t); this.lpf.frequency.exponentialRampToValueAtTime(120, t + 1.3);
-        o = c.createOscillator(); g = c.createGain(); o.type = 'sawtooth'; f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1200;
-        o.frequency.setValueAtTime(mtof(57), t); o.frequency.exponentialRampToValueAtTime(mtof(21), t + 1.5);
-        g.gain.setValueAtTime(0.2, t); g.gain.linearRampToValueAtTime(0, t + 1.5);
-        o.connect(f); f.connect(g); g.connect(S); o.start(t); o.stop(t + 1.55);
-        n = this.noise(t, 1.8, 'highpass', 1500, 0.3, S, 0.001, 1.8);
-        n.g.gain.cancelScheduledValues(t); n.g.gain.setValueAtTime(0.001, t); n.g.gain.linearRampToValueAtTime(0.3, t + 0.6); n.g.gain.linearRampToValueAtTime(0, t + 1.8);
+        o = tone('sawtooth', mtof(65), 0, 1.5, 0.18); o.frequency.exponentialRampToValueAtTime(mtof(29), t + 1.5);
         break;
       case 'newBest':
-        var seq = [69, 72, 76, 81, 84, 88];
-        for (i = 0; i < seq.length; i++) this.bell(seq[i], t + i * 0.07, 0.6, this.uiBus, 0.3);
+        [65, 68, 72, 77, 80, 84].forEach(function (m, k) { self.bell(m, t + k * 0.07, 0.6, self.uiBus, 0.3); });
         break;
       case 'tick':
         g = c.createGain(); this.hit(g.gain, t, 0.06, t + 0.03); g.connect(this.uiBus);
         this.osc('square', mtof(A_PENT[(a || 0) % 6 + 6]), t, 0.035, g);
         break;
       case 'hover': case 'select': case 'back':
-        var mm = name === 'hover' ? 81 : name === 'select' ? 88 : 76;
-        g = c.createGain(); this.hit(g.gain, t, name === 'hover' ? 0.08 : 0.14, t + 0.07); g.connect(this.uiBus);
-        this.osc('triangle', mtof(mm), t, 0.08, g);
-        if (name === 'select') this.osc('triangle', mtof(mm + 7), t + 0.04, 0.08, g);
+        var mm = name === 'hover' ? 80 : name === 'select' ? 84 : 77;
+        g = c.createGain(); this.hit(g.gain, t, name === 'hover' ? 0.08 : 0.14, t + 0.08); g.connect(this.uiBus);
+        this.osc('triangle', mtof(mm), t, 0.09, g);
+        if (name === 'select') this.osc('triangle', mtof(mm + 5), t + 0.04, 0.09, g);
         break;
     }
   };
