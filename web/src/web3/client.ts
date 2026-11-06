@@ -33,11 +33,15 @@ export function wagmiConfig(): Config {
   return config;
 }
 
-export function txUrl(hash: string): string {
+/** Explorer link for a transaction, or undefined in the demo (its transactions only exist in this browser). */
+export function txUrl(hash: string): string | undefined {
+  if (!consoleConfig.arcadeAddress) return undefined;
   return `${consoleConfig.explorer}/tx/${hash}`;
 }
 
-export function addressUrl(address: string): string {
+/** Explorer link for an address; in the demo only real addresses (like $WIF) get one. */
+export function addressUrl(address: string): string | undefined {
+  if (!consoleConfig.arcadeAddress && address.toLowerCase() !== consoleConfig.wifAddress.toLowerCase()) return undefined;
   return `${consoleConfig.explorer}/address/${address}`;
 }
 

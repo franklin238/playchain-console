@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
-import { useArcade, useEntry } from "../arcade/store";
+import { hasVoting, useArcade, useEntry } from "../arcade/store";
 import { Button } from "../components/controls";
 import { Footer } from "../components/Footer";
 import { Screen } from "../components/Screen";
@@ -15,6 +16,10 @@ export default function GameScreen() {
   const { mode, decimals, race, spotlight } = useArcade();
   const navigate = useNavigate();
   const openVote = useSheets((s) => s.openVote);
+  const gameName = game?.meta?.name;
+  useEffect(() => {
+    if (gameName) document.title = `${gameName} · PlayChain Flat`;
+  }, [gameName]);
 
   if (!game?.meta) {
     return (
@@ -35,7 +40,7 @@ export default function GameScreen() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-2">
             <span className="rounded-md bg-white/10 px-2.5 py-1 text-sm font-bold uppercase tracking-wide">{m.genre}</span>
-            {spotlight?.key === game.key && mode === "live" && (
+            {spotlight?.key === game.key && hasVoting(mode) && (
               <span className="rounded-md bg-accent px-2.5 py-1 text-sm font-extrabold uppercase tracking-wide text-on-accent">Spotlight</span>
             )}
             {rank > 0 && <span className="rounded-md bg-accent/15 px-2.5 py-1 text-sm font-bold text-accent-text">#{rank} today</span>}

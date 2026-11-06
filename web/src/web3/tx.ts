@@ -3,7 +3,16 @@
 import { getConnection, writeContract } from "@wagmi/core";
 import { consoleConfig } from "../config/console.config";
 import { arcadeAbi, erc20Abi } from "../config/contracts";
+import { DEMO_WALLET, demoApprove, demoList, demoVote } from "../arcade/demo";
 import { CHAIN, publicClient, wagmiConfig } from "./client";
+import { useWallet } from "./wallet";
+
+/** No contract yet: approvals, votes and listings go to the demo arcade in this browser. */
+function demo(): boolean {
+  if (consoleConfig.arcadeAddress) return false;
+  if (useWallet.getState().address !== DEMO_WALLET) throw new Error("Use the demo wallet: this is a demo with test $WIF.");
+  return true;
+}
 
 export type TxStep = "idle" | "approving" | "approved" | "sending" | "done" | "error";
 
@@ -36,6 +45,7 @@ export async function allowance(owner: `0x${string}`): Promise<bigint> {
 
 /** Approve exactly `amount` unless the current allowance already covers it. Returns the tx hash, or null if skipped. */
 export async function approveExact(amount: bigint, onHash?: (h: `0x${string}`) => void): Promise<`0x${string}` | null> {
+  if (demo()) { const h = await demoApprove(amount); onHash?.(h); return h; }
   const owner = account();
   if ((await allowance(owner)) >= amount) return null;
   const hash = await writeContract(wagmiConfig(), {
@@ -52,6 +62,7 @@ export async function approveExact(amount: bigint, onHash?: (h: `0x${string}`) =
 }
 
 export async function sendVote(id: bigint, amount: bigint, onHash?: (h: `0x${string}`) => void): Promise<`0x${string}`> {
+  if (demo()) { const h = await demoVote(Number(id), amount); onHash?.(h); return h; }
   const owner = account();
   // Simulate first so a revert reason shows before the wallet pops up.
   await publicClient().simulateContract({ address: arcade(), abi: arcadeAbi, functionName: "vote", args: [id, amount], account: owner });
@@ -69,6 +80,7 @@ export async function sendVote(id: bigint, amount: bigint, onHash?: (h: `0x${str
 }
 
 export async function sendListGame(uri: string, onHash?: (h: `0x${string}`) => void): Promise<`0x${string}`> {
+  if (demo()) { const h = await demoList(uri); onHash?.(h); return h; }
   const owner = account();
   await publicClient().simulateContract({ address: arcade(), abi: arcadeAbi, functionName: "listGame", args: [uri], account: owner });
   const hash = await writeContract(wagmiConfig(), {

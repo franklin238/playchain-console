@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { refreshArcade, refreshBalance, useArcade, type GameEntry } from "../arcade/store";
+import { refreshArcade, refreshBalance, useArcade, type GameEntry, hasVoting } from "../arcade/store";
 import { refreshActivity } from "../arcade/activity";
 import { Button, Section } from "../components/controls";
 import { Footer } from "../components/Footer";
@@ -134,7 +134,7 @@ function ListForm() {
             The playUrl's domain isn't on the allowlist yet, so players won't be able to open it. Ask on X to have your domain added before listing.
           </p>
         )}
-        {mode !== "live" ? (
+        {!hasVoting(mode) ? (
           <p className="text-muted">Listing opens once the arcade contract is live.</p>
         ) : status !== "connected" ? (
           <Button variant="primary" className="self-start" onClick={openWallet}>
@@ -162,12 +162,12 @@ function ListForm() {
         )}
         {(txs.approve || txs.list) && (
           <div className="flex flex-wrap gap-4 text-sm">
-            {txs.approve && (
+            {txs.approve && txUrl(txs.approve) && (
               <a className="text-accent-text underline underline-offset-4" href={txUrl(txs.approve)} target="_blank" rel="noreferrer">
                 Approval on Blockscout
               </a>
             )}
-            {txs.list && (
+            {txs.list && txUrl(txs.list) && (
               <a className="text-accent-text underline underline-offset-4" href={txUrl(txs.list)} target="_blank" rel="noreferrer">
                 Listing on Blockscout
               </a>

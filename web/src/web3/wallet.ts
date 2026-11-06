@@ -12,7 +12,9 @@ import {
   type Connector,
 } from "@wagmi/core";
 import { create } from "zustand";
+import { DEMO_WALLET } from "../arcade/demo";
 import { readJson, writeJson } from "../lib/storage";
+import { consoleConfig } from "../config/console.config";
 import { CHAIN, wagmiConfig } from "./client";
 
 export interface WalletState {
@@ -85,7 +87,7 @@ function watch() {
           chainId: conn.chainId,
           walletName: conn.connector?.name ?? null,
         });
-      } else if (conn.status === "disconnected") {
+      } else if (conn.status === "disconnected" && useWallet.getState().address !== DEMO_WALLET) {
         useWallet.setState({ status: "disconnected", address: null, chainId: null, walletName: null });
       }
     },
@@ -158,6 +160,12 @@ export async function switchToRobinhood(): Promise<boolean> {
   }
 }
 
+/** Demo wallet: test $WIF in this browser only (demo mode, before the contract is deployed). */
+export function connectDemoWallet(): void {
+  writeJson(LAST_KEY, "demo");
+  useWallet.setState({ status: "connected", address: DEMO_WALLET, chainId: CHAIN.id, walletName: "Demo wallet", error: null });
+}
+
 export async function disconnectWallet(): Promise<void> {
   writeJson(LAST_KEY, null);
   await disconnect(wagmiConfig()).catch(() => {});
@@ -169,6 +177,10 @@ export async function restoreWallet(): Promise<void> {
   watch();
   const last = readJson<string | null>(LAST_KEY, null);
   if (!last) return;
+  if (last === "demo") {
+    if (!consoleConfig.arcadeAddress) connectDemoWallet();
+    return;
+  }
   try {
     await reconnect(wagmiConfig());
     const conn = getConnection(wagmiConfig());

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import { startArcadePolling } from "./arcade/store";
 import { AfterPlayPrompt } from "./components/AfterPlayPrompt";
@@ -22,6 +22,32 @@ const ActivityScreen = lazy(() => import("./screens/ActivityScreen"));
 const AboutScreen = lazy(() => import("./screens/AboutScreen"));
 const SettingsScreen = lazy(() => import("./screens/SettingsScreen"));
 const ControllerTestScreen = lazy(() => import("./screens/ControllerTestScreen"));
+
+/** A page that throws shows a way out instead of a blank screen. */
+class PageBoundary extends Component<{ children: ReactNode; resetKey: string }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidUpdate(prev: { resetKey: string }) {
+    if (prev.resetKey !== this.props.resetKey && this.state.failed) this.setState({ failed: false });
+  }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <main className="page grid min-h-[70vh] place-items-center pt-24 text-center">
+        <div className="max-w-md">
+          <h1 className="mb-2 font-display text-2xl font-extrabold">Something went wrong on this page</h1>
+          <p className="mb-5 text-muted">Your games and votes are safe. Reload, or head back home.</p>
+          <div className="flex justify-center gap-3">
+            <button type="button" onClick={() => window.location.reload()} className="rounded-lg bg-accent px-5 py-2.5 font-bold text-on-accent">Reload</button>
+            <a href="/" className="rounded-lg border border-line-strong px-5 py-2.5 font-bold">Go home</a>
+          </div>
+        </div>
+      </main>
+    );
+  }
+}
 
 function useMotionPreference() {
   const reduceMotion = useSettings((s) => s.reduceMotion);
@@ -91,6 +117,7 @@ function Shell() {
     <InputProvider>
       {!inPlayer && <Wallpaper />}
       {!inPlayer && <TopBar />}
+      <PageBoundary resetKey={location.pathname}>
       <Suspense fallback={null}>
         <Routes>
           <Route path="/" element={<HomeScreen />} />
@@ -104,6 +131,7 @@ function Shell() {
           <Route path="*" element={<HomeScreen />} />
         </Routes>
       </Suspense>
+      </PageBoundary>
       {!inPlayer && <HintBar />}
       {!inPlayer && <AfterPlayPrompt />}
       <VoteSheet />

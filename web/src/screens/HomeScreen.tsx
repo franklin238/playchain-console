@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { shelfGames, useArcade, type GameEntry } from "../arcade/store";
+import { resetDemo } from "../arcade/demo";
+import { hasVoting, refreshArcade, shelfGames, useArcade, type GameEntry } from "../arcade/store";
+import { refreshActivity } from "../arcade/activity";
+import { BurnCounter } from "../components/BurnCounter";
 import { Button } from "../components/controls";
 import { Footer } from "../components/Footer";
 import { GameTile } from "../components/GameTile";
@@ -31,9 +34,15 @@ function SpotlightHero({
   const openVote = useSheets((s) => s.openVote);
   const decimals = useArcade((s) => s.decimals);
   const mode = useArcade((s) => s.mode);
+  const current = useArcade((s) => s.epoch);
   const m = game.meta!;
-  const label =
-    mode !== "live" ? "Featured" : epoch == null ? "Newest game" : `Spotlight · winner of day ${(epoch + 1n).toString()}`;
+  const label = !hasVoting(mode)
+    ? "Featured"
+    : epoch == null
+      ? "Newest game"
+      : epoch === current - 1n
+        ? "Spotlight · yesterday's winner"
+        : `Spotlight · winner of day ${(epoch + 1n).toString()}`;
   const layers = covers.some((g) => g.key === game.key) ? covers : [...covers, game];
 
   return (
@@ -83,6 +92,7 @@ function SpotlightHero({
             </>
           )}
         </p>
+        {!previewing && <EpochCountdown className="-mt-2 text-sm" label="Next Spotlight in " />}
         <div className="mt-1 flex flex-wrap gap-3">
           <Button variant="primary" icon="play" data-nav-default={previewing ? undefined : ""} onClick={() => navigate(`/play/${game.key}`)}>
             Play
@@ -111,11 +121,11 @@ function LiveRace() {
       </div>
       <p className="mb-4 text-sm text-muted">
         Today's most-voted game becomes tomorrow's Spotlight.
-        {mode === "live" && epochTotal > 0n ? ` ${formatWifShort(epochTotal, decimals)} WIF voted today.` : ""}
+        {hasVoting(mode) && epochTotal > 0n ? ` ${formatWifShort(epochTotal, decimals)} WIF voted today.` : ""}
       </p>
       {race.length === 0 ? (
         <div className="rounded-xl border border-dashed border-line-strong p-5 text-center text-muted">
-          {mode === "live" ? "No votes yet today. Yours could decide tomorrow's Spotlight." : "The race starts when the arcade goes live onchain."}
+          {hasVoting(mode) ? "No votes yet today. Yours could decide tomorrow's Spotlight." : "The race starts when the arcade goes live onchain."}
         </div>
       ) : (
         <ol className="grid gap-2">
@@ -153,6 +163,7 @@ function HowItWorks() {
   const tre = params ? params.treasuryBps / 100 : 10;
   return (
     <section aria-label="How votes work" className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
+      <BurnCounter className="mb-4" />
       <h2 className="mb-3 font-display text-xl font-extrabold sm:text-2xl">Every vote does three things</h2>
       <div className="mb-4 flex h-3 overflow-hidden rounded-full">
         <div className="bg-accent-2" style={{ width: `${burn}%` }} />
@@ -179,6 +190,18 @@ export default function HomeScreen() {
   useAutoFocus(ref, [mode, games.length > 0]);
 
   const shelf = useMemo(() => shelfGames(games).sort((a, b) => (b.totalVotes > a.totalVotes ? 1 : b.totalVotes < a.totalVotes ? -1 : 0)), [games]);
+  // Shelf search, genre filter and sort. The hero always uses the full shelf.
+  const [query, setQuery] = useState("");
+  const [genre, setGenre] = useState<string | null>(null);
+  const [sort, setSort] = useState<"votes" | "new">("votes");
+  const genres = useMemo(() => [...new Set(shelf.map((g) => g.meta!.genre))].sort(), [shelf]);
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const list = shelf.filter(
+      (g) => (!genre || g.meta!.genre === genre) && (!q || `${g.meta!.name} ${g.meta!.tagline} ${g.meta!.developer.name}`.toLowerCase().includes(q)),
+    );
+    return sort === "new" ? [...list].sort((a, b) => b.listedAt - a.listedAt) : list;
+  }, [shelf, query, genre, sort]);
   const hero = games.find((g) => g.key === spotlight?.key && g.meta) ?? shelf[0];
 
   // Hovering, focusing or touching a shelf tile puts that game in the hero, and it
@@ -192,6 +215,9 @@ export default function HomeScreen() {
   const shown = previewGame ?? hero;
   const previewing = !!previewGame && previewGame.key !== hero?.key;
 
+  useEffect(() => {
+    document.title = "PlayChain Flat · play games, vote with $WIF";
+  }, []);
   const setArt = useWallpaper((s) => s.setArt);
   const heroCover = hero?.meta ? localize(hero.meta.cover) : null;
   useEffect(() => setArt(heroCover), [heroCover, setArt]);
@@ -201,6 +227,21 @@ export default function HomeScreen() {
       {mode === "preview" && (
         <div className="mb-5 rounded-xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm">
           Preview: the arcade contract isn't live yet, so voting is off. Every game is playable.
+        </div>
+      )}
+      {mode === "demo" && (
+        <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3 text-sm">
+          <span className="min-w-0 flex-1">
+            <b>Demo mode.</b> The arcade contract isn't deployed yet, so everything here runs in your browser with test $WIF: connect the
+            demo wallet, vote, and watch the burn, the developer payout and the Live Race update. Nothing touches a real wallet.
+          </span>
+          <button
+            type="button"
+            onClick={() => { resetDemo(); void refreshArcade(); void refreshActivity(); }}
+            className="shrink-0 rounded-lg border border-line-strong px-3 py-1.5 font-bold hover:border-fg"
+          >
+            Reset demo
+          </button>
         </div>
       )}
       {error && mode === "live" && (
@@ -224,12 +265,48 @@ export default function HomeScreen() {
       {mode !== "loading" && hero && (
       <>
       <section aria-label="Games" className="mb-8">
-        <div className="mb-1 flex items-baseline justify-between gap-4">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-xl font-extrabold sm:text-2xl">Game shelf</h2>
-          <span className="text-sm text-muted">{shelf.length} games</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search games"
+              aria-label="Search games"
+              className="w-40 rounded-lg border border-line bg-bg-2 px-3 py-1.5 text-sm sm:w-52"
+            />
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as "votes" | "new")}
+              aria-label="Sort games"
+              className="rounded-lg border border-line bg-bg-2 px-2 py-1.5 text-sm"
+            >
+              <option value="votes">Most voted</option>
+              <option value="new">Newest</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by genre">
+          {[null, ...genres].map((gn) => (
+            <button
+              key={gn ?? "all"}
+              type="button"
+              aria-pressed={genre === gn}
+              onClick={() => setGenre(gn)}
+              className={`rounded-full border px-3 py-1 text-sm font-bold ${genre === gn ? "border-accent bg-accent text-on-accent" : "border-line text-muted hover:text-fg"}`}
+            >
+              {gn ?? `All (${shelf.length})`}
+            </button>
+          ))}
         </div>
         <div className="no-scrollbar -mx-2 flex gap-4 overflow-x-auto px-2 pb-6 pt-4 sm:gap-5">
-          {shelf.map((g, i) => (
+          {visible.length === 0 && (
+            <div className="flex w-[15rem] shrink-0 items-center justify-center rounded-xl border border-dashed border-line-strong p-6 text-center text-muted sm:w-[17.5rem]">
+              No games match. Try another search or genre.
+            </div>
+          )}
+          {visible.map((g, i) => (
             <GameTile
               key={g.key}
               game={g}

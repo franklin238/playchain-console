@@ -4,6 +4,7 @@ import { parseAbiItem, type Log } from "viem";
 import { create } from "zustand";
 import { consoleConfig } from "../config/console.config";
 import { arcadeDeployed, publicClient } from "../web3/client";
+import { demoChain } from "./demo";
 
 const VOTED = parseAbiItem(
   "event Voted(uint256 indexed epoch, uint256 indexed id, address indexed voter, uint256 amount, uint256 burned, uint256 toDev, uint256 toTreasury)",
@@ -23,8 +24,10 @@ export type ActivityRow =
       toDev: bigint;
       toTreasury: bigint;
       epoch: bigint;
+      /** unix seconds, when known (demo events) */
+      time?: number;
     }
-  | { kind: "list"; key: string; block: bigint; tx: `0x${string}`; gameId: number; who: `0x${string}`; burned: bigint };
+  | { kind: "list"; key: string; block: bigint; tx: `0x${string}`; gameId: number; who: `0x${string}`; burned: bigint; time?: number };
 
 interface ActivityState {
   rows: ActivityRow[];
@@ -50,8 +53,34 @@ function keyOf(l: Log): string {
 
 let busy = false;
 
+function setRows(rows: ActivityRow[], head: bigint) {
+  const totals = { ...emptyTotals };
+  const voters = new Set<string>();
+  for (const r of rows) {
+    totals.burned += r.burned;
+    if (r.kind === "vote") {
+      totals.toDevs += r.toDev;
+      totals.toTreasury += r.toTreasury;
+      totals.votes++;
+      voters.add(r.who.toLowerCase());
+    } else totals.listings++;
+  }
+  totals.voters = voters.size;
+  useActivity.setState({ rows, lastBlock: head, totals, loading: false, error: null });
+}
+
 export async function refreshActivity(): Promise<void> {
-  if (!arcadeDeployed() || busy) return;
+  if (!arcadeDeployed()) {
+    const c = demoChain();
+    const rows: ActivityRow[] = c.events
+      .map((e): ActivityRow => e.kind === "vote"
+        ? { kind: "vote", key: e.tx, block: e.block, tx: e.tx, gameId: e.id, who: e.who, amount: e.amount, burned: e.burned, toDev: e.toDev, toTreasury: e.toTreasury, epoch: e.epoch, time: e.time }
+        : { kind: "list", key: e.tx, block: e.block, tx: e.tx, gameId: e.id, who: e.who, burned: e.burned, time: e.time })
+      .sort((a, b) => (a.block > b.block ? -1 : 1));
+    setRows(rows, c.block);
+    return;
+  }
+  if (busy) return;
   busy = true;
   useActivity.setState({ loading: true });
   try {
@@ -101,19 +130,7 @@ export async function refreshActivity(): Promise<void> {
     const rows = [...state.rows, ...fresh.filter((r) => !seen.has(r.key))].sort((a, b) =>
       a.block === b.block ? b.key.localeCompare(a.key) : a.block > b.block ? -1 : 1,
     );
-    const totals = { ...emptyTotals };
-    const voters = new Set<string>();
-    for (const r of rows) {
-      totals.burned += r.burned;
-      if (r.kind === "vote") {
-        totals.toDevs += r.toDev;
-        totals.toTreasury += r.toTreasury;
-        totals.votes++;
-        voters.add(r.who.toLowerCase());
-      } else totals.listings++;
-    }
-    totals.voters = voters.size;
-    useActivity.setState({ rows, lastBlock: head, totals, loading: false, error: null });
+    setRows(rows, head);
   } catch (err) {
     useActivity.setState({ loading: false, error: err instanceof Error ? err.message.split("\n")[0] : "Could not load activity." });
   } finally {

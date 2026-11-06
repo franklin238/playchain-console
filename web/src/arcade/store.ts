@@ -8,6 +8,7 @@ import { fetchMeta, LOCAL_SLUGS, localMetaUrl, type GameMeta } from "../games/me
 import { arcadeDeployed, publicClient } from "../web3/client";
 import { wifBalance, wifDecimals } from "../web3/tokens";
 import { useWallet } from "../web3/wallet";
+import { DEMO_PARAMS, DEMO_WALLET, demoBackgroundVote, demoBalance, demoChain, epochEnds, epochOf, leaderOf, nowSec, totalVotes, votesIn } from "./demo";
 import { liveRace, pickSpotlight, spotlightEpochs, type ChainGame, type RaceRow } from "./logic";
 
 export interface GameEntry {
@@ -35,7 +36,8 @@ export interface ArcadeParams {
 }
 
 interface ArcadeState {
-  mode: "loading" | "live" | "preview";
+  /** demo: the in-browser arcade (arcade/demo.ts) used until the contract is deployed. */
+  mode: "loading" | "live" | "preview" | "demo";
   games: GameEntry[];
   epoch: bigint;
   epochEndsAt: number;
@@ -94,6 +96,48 @@ async function refreshPreview() {
     games,
     spotlight: games[0] ? { key: games[0].key, epoch: null, votes: 0n } : null,
     race: [],
+    error: null,
+    updatedAt: Date.now(),
+  });
+}
+
+/** Live or demo: both have votes, a Live Race and a Spotlight. */
+export const hasVoting = (mode: ArcadeState["mode"]) => mode === "live" || mode === "demo";
+
+async function refreshDemo() {
+  const c = demoChain(), epoch = epochOf(nowSec());
+  const prev = new Map(useArcade.getState().games.map((g) => [g.key, g]));
+  let entries: GameEntry[] = c.games.map((g) => {
+    const old = prev.get(String(g.id));
+    return {
+      key: String(g.id),
+      id: g.id,
+      developer: g.developer,
+      active: true,
+      listedAt: g.listedAt,
+      totalVotes: totalVotes(g.id),
+      epochVotes: votesIn(epoch, g.id),
+      uri: g.uri,
+      meta: old && old.uri === g.uri ? old.meta : null,
+      metaErrors: old && old.uri === g.uri ? old.metaErrors : [],
+    };
+  });
+  entries = await loadMetas(entries);
+  const shown = entries.filter((g) => g.meta);
+  const lookback = spotlightEpochs(epoch, consoleConfig.spotlightLookback);
+  const pick = pickSpotlight(lookback, lookback.map(leaderOf), shown.map((g) => ({ id: g.id!, active: true })));
+  const spotEntry = pick ? entries.find((g) => g.id === pick.id) : undefined;
+  const race = liveRace(shown.map((g) => g.id!), shown.map((g) => g.epochVotes), leaderOf(epoch));
+  useArcade.setState({
+    mode: "demo",
+    games: entries,
+    epoch,
+    epochEndsAt: epochEnds(epoch),
+    spotlight: spotEntry ? { key: spotEntry.key, epoch: pick!.epoch, votes: pick!.epoch != null ? votesIn(pick!.epoch, spotEntry.id!) : 0n } : null,
+    race,
+    epochTotal: shown.reduce((a, g) => a + g.epochVotes, 0n),
+    params: DEMO_PARAMS,
+    decimals: 18,
     error: null,
     updatedAt: Date.now(),
   });
@@ -209,7 +253,7 @@ export function refreshArcade(): Promise<void> {
   inflight ??= (async () => {
     try {
       if (arcadeDeployed()) await refreshLive();
-      else await refreshPreview();
+      else await refreshDemo();
       await refreshBalance();
     } catch (err) {
       useArcade.setState({
@@ -230,6 +274,10 @@ export async function refreshBalance(): Promise<void> {
     useArcade.setState({ balance: null });
     return;
   }
+  if (address === DEMO_WALLET) {
+    useArcade.setState({ balance: demoBalance() });
+    return;
+  }
   try {
     useArcade.setState({ balance: await wifBalance(address) });
   } catch {
@@ -242,7 +290,10 @@ let timer: number | null = null;
 export function startArcadePolling(): () => void {
   void refreshArcade();
   timer ??= window.setInterval(() => {
-    if (!document.hidden) void refreshArcade();
+    if (document.hidden) return;
+    // In the demo, another player votes now and then so the race and the feed keep moving.
+    if (useArcade.getState().mode === "demo" && Math.random() < 0.5) demoBackgroundVote();
+    void refreshArcade();
   }, consoleConfig.refreshMs);
   const unsub = useWallet.subscribe((s, p) => {
     if (s.address !== p.address || s.status !== p.status) void refreshBalance();

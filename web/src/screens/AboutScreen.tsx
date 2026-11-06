@@ -1,6 +1,7 @@
 import { useArcade } from "../arcade/store";
 import { Section } from "../components/controls";
 import { Flywheel } from "../components/Flywheel";
+import { BurnCounter } from "../components/BurnCounter";
 import { Footer } from "../components/Footer";
 import { Screen } from "../components/Screen";
 import { consoleConfig, DISCLAIMER } from "../config/console.config";
@@ -24,6 +25,8 @@ export default function AboutScreen() {
           burns $WIF, pays the game's developer and funds the platform in one transaction, so players decide what gets seen and developers get
           paid for making games people come back to.
         </p>
+
+        <BurnCounter className="my-4 max-w-sm" />
 
         <Section title="The flywheel">
           <Flywheel />

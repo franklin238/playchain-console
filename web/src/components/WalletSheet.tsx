@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { useArcade } from "../arcade/store";
+import { demoFaucet } from "../arcade/demo";
+import { refreshBalance, useArcade } from "../arcade/store";
 import { useAutoFocus, useBackHandler, useRestoreFocus } from "../input/hooks";
 import { useSheets } from "../stores/sheets";
 import { addressUrl, CHAIN } from "../web3/client";
 import { formatWif } from "../web3/tokens";
 import {
+  connectDemoWallet,
   connectWallet,
   disconnectWallet,
   listWallets,
@@ -24,6 +26,7 @@ export function WalletSheet() {
   const wrong = useWrongNetwork();
   const balance = useArcade((s) => s.balance);
   const decimals = useArcade((s) => s.decimals);
+  const isDemo = useArcade((s) => s.mode === "demo");
   const [wallets, setWallets] = useState<WalletOption[]>([]);
   const ref = useRef<HTMLDivElement>(null);
   useRestoreFocus(open);
@@ -62,6 +65,11 @@ export function WalletSheet() {
                 {balance == null ? "…" : `${formatWif(balance, decimals)} WIF`}
               </div>
             </div>
+            {isDemo && walletName === "Demo wallet" && (
+              <Button icon="plus" onClick={() => { demoFaucet(); void refreshBalance(); }}>
+                Get 5,000 test $WIF
+              </Button>
+            )}
             {wrong && (
               <Button variant="primary" data-nav-default="" onClick={() => void switchToRobinhood()}>
                 Switch to {CHAIN.name}
@@ -76,12 +84,27 @@ export function WalletSheet() {
             <p className="mb-2 text-muted">
               You can browse and play without a wallet. Connect one to vote with $WIF or list a game on {CHAIN.name}.
             </p>
-            {wallets.length === 0 && (
+            {isDemo && (
+              <button
+                type="button"
+                data-nav-default=""
+                onClick={() => { connectDemoWallet(); void refreshBalance(); close(); }}
+                className="flex items-center gap-3 rounded-xl border border-accent bg-accent/10 px-4 py-3 text-left font-bold hover:bg-accent/20"
+              >
+                <Icon name="wallet" />
+                <span>
+                  Demo wallet
+                  <span className="block text-sm font-normal text-muted">5,000 test $WIF in this browser. No extension, nothing real.</span>
+                </span>
+              </button>
+            )}
+            {isDemo && <p className="mt-2 text-sm text-muted">The arcade contract isn't deployed yet, so real wallets can't vote here.</p>}
+            {!isDemo && wallets.length === 0 && (
               <div className="rounded-xl border border-line bg-surface p-4 text-muted">
                 No browser wallet found. Install MetaMask or Rabby, then reload this page.
               </div>
             )}
-            {wallets.map((w, i) => (
+            {!isDemo && wallets.map((w, i) => (
               <button
                 key={w.id}
                 type="button"

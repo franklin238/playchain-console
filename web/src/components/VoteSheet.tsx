@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { splitLocal } from "../arcade/logic";
-import { refreshArcade, refreshBalance, useArcade, useEntry } from "../arcade/store";
+import { hasVoting, refreshArcade, refreshBalance, useArcade, useEntry } from "../arcade/store";
 import { refreshActivity } from "../arcade/activity";
 import { consoleConfig } from "../config/console.config";
 import { arcadeAbi } from "../config/contracts";
@@ -60,6 +60,7 @@ export function VoteSheet() {
       return;
     }
     setPreview(splitLocal(amount, params.devBps, params.treasuryBps, selfVote));
+    if (!consoleConfig.arcadeAddress) return;
     const voter = (address ?? "0x0000000000000000000000000000000000000001") as `0x${string}`;
     const t = window.setTimeout(() => {
       publicClient()
@@ -112,12 +113,12 @@ export function VoteSheet() {
     : [];
 
   let blocker: React.ReactNode = null;
-  if (mode !== "live" || game.id == null) blocker = <p className="text-muted">Voting opens once this game is listed onchain.</p>;
+  if (!hasVoting(mode) || game.id == null) blocker = <p className="text-muted">Voting opens once this game is listed onchain.</p>;
   else if (params?.paused) blocker = <p className="text-warn">Voting is paused right now.</p>;
   else if (status !== "connected")
     blocker = (
       <Button variant="primary" data-nav-default="" onClick={openWallet}>
-        Connect wallet to vote
+        {mode === "demo" ? "Use the demo wallet to vote" : "Connect wallet to vote"}
       </Button>
     );
   else if (wrong)
@@ -162,7 +163,8 @@ export function VoteSheet() {
                   </div>
                 </div>
               </div>
-              {voteTx && (
+              {voteTx && !txUrl(voteTx) && <span className="text-sm text-muted">Demo vote: it only exists in this browser.</span>}
+              {voteTx && txUrl(voteTx) && (
                 <a href={txUrl(voteTx)} target="_blank" rel="noreferrer" className="text-accent-text underline underline-offset-4">
                   View vote on Blockscout
                 </a>
@@ -283,7 +285,7 @@ function StepRow({ n, label, state, tx }: { n: number; label: string; state: "to
         {label}
         {state === "active" && " (confirm in your wallet)"}
       </span>
-      {tx && (
+      {tx && txUrl(tx) && (
         <a href={txUrl(tx)} target="_blank" rel="noreferrer" className="ml-auto text-accent-text underline underline-offset-4">
           Blockscout
         </a>

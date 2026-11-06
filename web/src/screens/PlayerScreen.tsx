@@ -70,6 +70,13 @@ export default function PlayerScreen() {
   const menuRef = useRef<HTMLDivElement>(null);
   const [score, setScore] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
+  const [slow, setSlow] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    setSlow(false);
+    const t = window.setTimeout(() => setSlow(true), 12_000);
+    return () => window.clearTimeout(t);
+  }, [attempt]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
   const [corner, setCorner] = useState<Corner>(() => {
@@ -270,9 +277,17 @@ export default function PlayerScreen() {
         allow={GAME_ALLOW}
         referrerPolicy="no-referrer"
         className="absolute inset-0 size-full border-0"
+        key={attempt}
         onLoad={() => frame.current?.focus()}
       />
 
+      {slow && !ready && !menuOpen && !leaveTo && (
+        <div className="absolute inset-x-0 top-3 z-10 mx-auto flex w-fit max-w-[calc(100vw-1.5rem)] items-center gap-3 rounded-full border border-line bg-bg-2/90 px-4 py-2 text-sm backdrop-blur" role="status">
+          <span>Still loading?</span>
+          <button type="button" onClick={() => { setReady(false); setAttempt((a) => a + 1); }} className="font-bold text-accent-text">Retry</button>
+          <button type="button" onClick={() => leave(key ? `/game/${key}` : "/")} className="font-bold text-muted hover:text-fg">Back</button>
+        </div>
+      )}
       {(menuOpen || leaveTo) && (
         <div className="absolute inset-0 bg-black/45" aria-hidden="true" onPointerDown={() => (leaveTo ? setLeaveTo(null) : closeMenu())} />
       )}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router";
 import { countdown } from "../arcade/logic";
-import { useArcade } from "../arcade/store";
+import { hasVoting, useArcade } from "../arcade/store";
 import { useSheets } from "../stores/sheets";
 import { useUi } from "../stores/ui";
 import { formatWifShort } from "../web3/tokens";
@@ -14,7 +14,7 @@ export function shortAddress(address: string, chars = 4): string {
 }
 
 /** Time left in the current Spotlight epoch. */
-export function EpochCountdown({ className = "" }: { className?: string }) {
+export function EpochCountdown({ className = "", label = "Race ends " }: { className?: string; label?: string }) {
   const endsAt = useArcade((s) => s.epochEndsAt);
   const mode = useArcade((s) => s.mode);
   const [now, setNow] = useState(() => Date.now() / 1000);
@@ -22,11 +22,11 @@ export function EpochCountdown({ className = "" }: { className?: string }) {
     const id = window.setInterval(() => setNow(Date.now() / 1000), 1000);
     return () => window.clearInterval(id);
   }, []);
-  if (mode !== "live" || !endsAt) return null;
+  if (!hasVoting(mode) || !endsAt) return null;
   const left = endsAt - now;
   return (
     <span className={`whitespace-nowrap tabular-nums ${className}`} title="Time left in today's Spotlight race">
-      <span className="text-muted">Race ends </span>
+      <span className="text-muted">{label}</span>
       <span className="font-bold">{left > 0 ? countdown(left) : "now"}</span>
     </span>
   );

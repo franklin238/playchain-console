@@ -1,4 +1,4 @@
-import { Fragment, useRef, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useAutoFocus } from "../input/hooks";
 
@@ -51,6 +51,9 @@ export function Screen({
 }) {
   const ref = useRef<HTMLElement>(null);
   useAutoFocus(ref);
+  useEffect(() => {
+    if (title) document.title = `${title} · PlayChain Flat`;
+  }, [title]);
   const trail = crumbs ?? (title ? [{ label: "Home", to: "/" }, { label: title }] : []);
   return (
     <main ref={ref} className={`page fade-in pb-24 pt-24 sm:pt-36 ${className}`}>
