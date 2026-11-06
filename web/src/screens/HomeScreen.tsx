@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FocusEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { shelfGames, useArcade, type GameEntry } from "../arcade/store";
 import { Button } from "../components/controls";
@@ -169,6 +169,9 @@ function HowItWorks() {
   );
 }
 
+/** The game last touched on the shelf, kept for the session so coming back home shows it again. */
+let lastPreviewKey: string | null = null;
+
 export default function HomeScreen() {
   const navigate = useNavigate();
   const { games, spotlight, mode, decimals, error, race } = useArcade();
@@ -178,25 +181,16 @@ export default function HomeScreen() {
   const shelf = useMemo(() => shelfGames(games).sort((a, b) => (b.totalVotes > a.totalVotes ? 1 : b.totalVotes < a.totalVotes ? -1 : 0)), [games]);
   const hero = games.find((g) => g.key === spotlight?.key && g.meta) ?? shelf[0];
 
-  // Hovering, focusing or pressing a shelf tile previews that game in the hero.
-  // The real Spotlight stays in `hero`; the preview is only a view on top of it.
-  const [previewKey, setPreviewKey] = useState<string | null>(null);
-  const touchTimer = useRef<number | null>(null);
-  const clearTouchTimer = () => {
-    if (touchTimer.current) window.clearTimeout(touchTimer.current);
-    touchTimer.current = null;
-  };
-  const preview = useCallback((key: string | null) => {
-    clearTouchTimer();
+  // Hovering, focusing or touching a shelf tile puts that game in the hero, and it
+  // stays there until another tile is touched. The real Spotlight stays in `hero`.
+  const [previewKey, setPreviewKey] = useState<string | null>(lastPreviewKey);
+  const preview = useCallback((key: string) => {
+    lastPreviewKey = key;
     setPreviewKey(key);
   }, []);
-  useEffect(() => clearTouchTimer, []);
   const previewGame = previewKey ? shelf.find((g) => g.key === previewKey) : undefined;
   const shown = previewGame ?? hero;
   const previewing = !!previewGame && previewGame.key !== hero?.key;
-  const onShelfBlur = (e: FocusEvent<HTMLDivElement>) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) preview(null);
-  };
 
   const setArt = useWallpaper((s) => s.setArt);
   const heroCover = hero?.meta ? localize(hero.meta.cover) : null;
@@ -234,11 +228,7 @@ export default function HomeScreen() {
           <h2 className="font-display text-xl font-extrabold sm:text-2xl">Game shelf</h2>
           <span className="text-sm text-muted">{shelf.length} games</span>
         </div>
-        <div
-          className="no-scrollbar -mx-2 flex gap-4 overflow-x-auto px-2 pb-6 pt-4 sm:gap-5"
-          onMouseLeave={() => preview(null)}
-          onBlur={onShelfBlur}
-        >
+        <div className="no-scrollbar -mx-2 flex gap-4 overflow-x-auto px-2 pb-6 pt-4 sm:gap-5">
           {shelf.map((g, i) => (
             <GameTile
               key={g.key}
@@ -249,18 +239,12 @@ export default function HomeScreen() {
               active={previewKey === g.key}
               onFocus={() => preview(g.key)}
               onTouchStart={() => preview(g.key)}
-              onTouchEnd={() => {
-                clearTouchTimer();
-                touchTimer.current = window.setTimeout(() => setPreviewKey(null), 2500);
-              }}
               onSelect={() => navigate(`/game/${g.key}`)}
             />
           ))}
           <button
             type="button"
             onClick={() => navigate("/developers")}
-            onMouseEnter={() => preview(null)}
-            onFocus={() => preview(null)}
             className="tile flex w-[15rem] shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line-strong p-6 text-center text-muted sm:w-[17.5rem]"
           >
             <Icon name="plus" className="size-8" />
