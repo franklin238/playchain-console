@@ -1900,12 +1900,13 @@ let report = null;
 /* ---------- bridge + storage ---------- */
 const inFrame = (() => { try { return window.parent !== window; } catch (e) { return true; } })();
 function post(msg) { if (inFrame) { try { window.parent.postMessage(msg, '*'); } catch (e) { } } }
-let memSave = null, loadResolve = null;
+let memSave = null, loadResolve = null, extMuted = false;
 window.addEventListener('message', ev => {
   if (!inFrame || ev.source !== window.parent) return;
   const m = ev.data; if (!m || typeof m !== 'object') return;
   if (m.type === 'playchain:pause') { extPaused = true; Audio.suspend(true); }
-  else if (m.type === 'playchain:resume') { extPaused = false; if (!document.hidden) Audio.suspend(false); }
+  else if (m.type === 'playchain:mute') { extMuted = !!m.muted; Audio.suspend(document.hidden || extPaused || extMuted); }
+  else if (m.type === 'playchain:resume') { extPaused = false; Audio.suspend(document.hidden || extMuted); }
   else if (m.type === 'playchain:loaded' && loadResolve) { loadResolve(m.data); loadResolve = null; }
 });
 function lsGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
@@ -2419,8 +2420,8 @@ window.addEventListener('mousemove', () => { if (padActive) { padActive = false;
 
 /* ---------- audio unlock / visibility ---------- */
 let audioStarted = false;
-function firstInput() { if (audioStarted) { if (Audio.ctx && Audio.ctx.state === 'suspended' && !document.hidden && !extPaused) Audio.suspend(false); return; } audioStarted = true; applySettings(); Audio.start(); applySettings(); if (state === 'play') { Audio.setMode(G.phase); syncLayers(); } else Audio.setMode('title'); }
-document.addEventListener('visibilitychange', () => { Audio.suspend(document.hidden || extPaused); if (document.hidden && state === 'play') save(); });
+function firstInput() { if (audioStarted) { if (Audio.ctx && Audio.ctx.state === 'suspended' && !document.hidden && !extPaused && !extMuted) Audio.suspend(false); return; } audioStarted = true; applySettings(); Audio.start(); applySettings(); if (state === 'play') { Audio.setMode(G.phase); syncLayers(); } else Audio.setMode('title'); }
+document.addEventListener('visibilitychange', () => { Audio.suspend(document.hidden || extPaused || extMuted); if (document.hidden && state === 'play') save(); });
 ['pointerdown', 'touchstart'].forEach(t => window.addEventListener(t, firstInput, { passive: true }));
 
 /* ---------- title + flow ---------- */

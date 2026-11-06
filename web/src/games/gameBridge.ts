@@ -6,6 +6,7 @@
 //                    { type: "playchain:save", data }         kept in this browser, per game
 //   console -> game  { type: "playchain:pause" | "playchain:resume" }
 //                    { type: "playchain:loaded", data }
+//                    { type: "playchain:mute", muted }        platform sound toggle
 
 import { consoleConfig } from "../config/console.config";
 import { readJson, writeJson } from "../lib/storage";

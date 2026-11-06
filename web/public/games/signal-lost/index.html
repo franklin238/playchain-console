@@ -1293,15 +1293,16 @@ function pollPad() {
 }
 
 /* ------------------------------------------------------------------ console bridge */
-var paused = false;
+var paused = false, shellMuted = false;
 window.addEventListener('message', function (e) {
   if (e.source !== window.parent || !e.data || typeof e.data !== 'object') return;
   var m = e.data;
   if (m.type === 'playchain:loaded') { if (!booted) { mergeSave(m.data); boot(); } }
   else if (m.type === 'playchain:pause') { paused = true; Audio.setMute(true); if (screen === 'puzzle' && !modalOpen()) openPause(true); }
-  else if (m.type === 'playchain:resume') { paused = false; if (!document.hidden) Audio.setMute(false); }
+  else if (m.type === 'playchain:resume') { paused = false; Audio.setMute(document.hidden || shellMuted); }
+  else if (m.type === 'playchain:mute') { shellMuted = !!m.muted; Audio.setMute(document.hidden || paused || shellMuted); }
 });
-document.addEventListener('visibilitychange', function () { Audio.setMute(document.hidden || paused); });
+document.addEventListener('visibilitychange', function () { Audio.setMute(document.hidden || paused || shellMuted); });
 
 /* ------------------------------------------------------------------ loop + boot */
 function frame(t) {

@@ -1051,9 +1051,10 @@ body.rm #banner.show{animation:none}
     var d = e.data; if (!d || typeof d !== 'object') return;
     if (d.type === 'playchain:loaded') { if (!savedSinceBoot) applySave(d.data); loaded = true; }
     else if (d.type === 'playchain:pause') { shellPaused = true; if (state === 'play') pauseGame(); audio.setHidden(true); }
-    else if (d.type === 'playchain:resume') { shellPaused = false; if (!document.hidden) audio.setHidden(false); }
+    else if (d.type === 'playchain:resume') { shellPaused = false; audio.setHidden(document.hidden || shellMuted); }
+    else if (d.type === 'playchain:mute') { shellMuted = !!d.muted; audio.setHidden(document.hidden || shellPaused || shellMuted); }
   });
-  var shellPaused = false;
+  var shellPaused = false, shellMuted = false;
   function boot() {
     if (inFrame) {
       post({ type: 'playchain:load' });
@@ -1407,7 +1408,7 @@ body.rm #banner.show{animation:none}
   var wantSong = 'title';
   function song(n) { wantSong = n; audio.play(n); }
   document.addEventListener('visibilitychange', function () {
-    audio.setHidden(document.hidden || shellPaused);
+    audio.setHidden(document.hidden || shellPaused || shellMuted);
     if (document.hidden && state === 'play') pauseGame();
   });
 
