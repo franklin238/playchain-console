@@ -14,6 +14,7 @@ import { approveExact, sendVote } from "../web3/tx";
 import { friendlyError, switchToRobinhood, useWallet, useWrongNetwork } from "../web3/wallet";
 import { Button } from "./controls";
 import { Icon } from "./Icon";
+import { playSfx } from "../audio/engine";
 
 type Phase = "input" | "approving" | "voting" | "done";
 
@@ -95,6 +96,7 @@ export function VoteSheet() {
       setVoteTx(v);
       setPhase("done");
       toast({ title: `Voted ${formatWif(amount, decimals)} WIF for ${m.name}`, tone: "success" });
+      window.setTimeout(() => playSfx("burn"), 450);
       void refreshArcade();
       void refreshBalance();
       void refreshActivity();

@@ -4,6 +4,7 @@ import { resetDemo } from "../arcade/demo";
 import { hasVoting, refreshArcade, shelfGames, useArcade, type GameEntry } from "../arcade/store";
 import { refreshActivity } from "../arcade/activity";
 import { BurnCounter } from "../components/BurnCounter";
+import { playSfx } from "../audio/engine";
 import { Button } from "../components/controls";
 import { Footer } from "../components/Footer";
 import { GameTile } from "../components/GameTile";
@@ -208,6 +209,7 @@ export default function HomeScreen() {
   // stays there until another tile is touched. The real Spotlight stays in `hero`.
   const [previewKey, setPreviewKey] = useState<string | null>(lastPreviewKey);
   const preview = useCallback((key: string) => {
+    if (key !== lastPreviewKey) playSfx("swap");
     lastPreviewKey = key;
     setPreviewKey(key);
   }, []);

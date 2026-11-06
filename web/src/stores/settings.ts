@@ -21,8 +21,8 @@ export interface SettingsState {
 export const useSettings = create<SettingsState>()(
   persist(
     (set) => ({
-      musicVolume: 40,
-      sfxVolume: 60,
+      musicVolume: 70,
+      sfxVolume: 75,
       muted: false,
       reduceMotion: false,
       wallpaper: DEFAULT_WALLPAPER,
@@ -32,7 +32,15 @@ export const useSettings = create<SettingsState>()(
     }),
     {
       name: "pcf.settings",
-      version: 1,
+      version: 2,
+      migrate: (state, from) => {
+        const s = state as Partial<SettingsState>;
+        if (from < 2) {
+          if (s.musicVolume === 40) s.musicVolume = 70;
+          if (s.sfxVolume === 60) s.sfxVolume = 75;
+        }
+        return s as SettingsState;
+      },
       storage: createJSONStorage(() => safeLocalStorage),
       partialize: ({ set: _set, ...rest }) => rest,
     },

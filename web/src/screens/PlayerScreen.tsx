@@ -7,6 +7,7 @@ import { shortAddress } from "../components/TopBar";
 import { GAME_ALLOW, GAME_SANDBOX, loadGameSave, parseGameMessage, storeGameSave } from "../games/gameBridge";
 import { isAllowedPlayUrl, localize } from "../games/meta";
 import { useInputLayer } from "../input/hooks";
+import { playSfx } from "../audio/engine";
 import { readJson, writeJson } from "../lib/storage";
 import { useSettings } from "../stores/settings";
 import { useSheets } from "../stores/sheets";
@@ -71,6 +72,7 @@ export default function PlayerScreen() {
   const [score, setScore] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   const [slow, setSlow] = useState(false);
+  useEffect(() => playSfx("launch"), []);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     setSlow(false);

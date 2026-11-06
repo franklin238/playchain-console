@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { playSfx, unlockAudio } from "../audio/engine";
+import { installUiSounds, playSfx, unlockAudio } from "../audio/engine";
 import { prefersReducedMotion } from "../stores/settings";
 import { useUi } from "../stores/ui";
 import { onAction, setDefaultHandler } from "./dispatcher";
@@ -17,7 +17,7 @@ export function InputProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const removers = [installKeyboard(), installGamepad(), installPointer()];
+    const removers = [installKeyboard(), installGamepad(), installPointer(), installUiSounds()];
 
     // Any user gesture unlocks audio (browsers block it before one).
     const unlock = () => unlockAudio();
@@ -48,7 +48,11 @@ export function InputProvider({ children }: { children: ReactNode }) {
             active.dispatchEvent(new CustomEvent("navadjust", { detail: action }));
             return;
           }
-          if (moveFocus(action, { smooth: !prefersReducedMotion() })) playSfx("move");
+          if (moveFocus(action, { smooth: !prefersReducedMotion() })) {
+            // the note follows where focus landed, so moving along the shelf plays a melody
+            const r = (document.activeElement as HTMLElement | null)?.getBoundingClientRect();
+            playSfx("move", r ? (r.left + r.width / 2) / Math.max(1, window.innerWidth) : 0.5);
+          }
           return;
         }
         case "select": {

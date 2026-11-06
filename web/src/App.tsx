@@ -14,6 +14,7 @@ import { useSheets } from "./stores/sheets";
 import { useWallpaper } from "./stores/wallpaper";
 import { Wallpaper } from "./wallpapers/Wallpaper";
 import { restoreWallet } from "./web3/wallet";
+import { duckMusic, playSfx } from "./audio/engine";
 
 const GameScreen = lazy(() => import("./screens/GameScreen"));
 const PlayerScreen = lazy(() => import("./screens/PlayerScreen"));
@@ -98,6 +99,14 @@ function Shell() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+
+  // Lobby music fades out while a game runs (games have their own); a whoosh on every page change.
+  const firstPage = useState(() => ({ done: false }))[0];
+  useEffect(() => {
+    duckMusic(inPlayer);
+    if (firstPage.done && !inPlayer) playSfx("page");
+    firstPage.done = true;
+  }, [location.pathname, inPlayer, firstPage]);
 
   // V opens the vote sheet for the focused game (shelf tile or game page).
   useEffect(() => {
