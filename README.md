@@ -9,6 +9,30 @@
 
 Built for the [World is Flat hackathon](https://worldisflat.fun/build). Categories: games, social and creators, tools and infra.
 
+## Quick start
+
+You need [Node.js](https://nodejs.org) 20 or newer.
+
+- **Windows:** double-click **`Start PlayChain.bat`**. The first run installs packages (about a minute), then your browser opens at http://localhost:5173. Keep the window open while you play.
+- **Mac or Linux:**
+
+  ```bash
+  cd web
+  npm install
+  npm run dev -- --open
+  ```
+
+No wallet is needed to look around: until a contract address is set, the site runs in preview mode and every game is playable. The three games also open on their own at `/games/neon-tide/`, `/games/hollow-kingdom/` and `/games/signal-lost/`.
+
+### What's in this folder
+
+| Folder | What it is |
+|---|---|
+| `web/` | The PlayChain Flat site (React + Vite) |
+| `web/public/games/` | The three games: Neon Tide, Hollow Kingdom, Signal Lost |
+| `contracts/` | The `PlayChainArcade` Solidity contract and its Foundry tests |
+| `DEMO_SCRIPT.md`, `DEPLOY.md`, `SUBMISSION.md` | Demo walkthrough, deploy steps, hackathon submission notes |
+
 ---
 
 ## 1. The problem
