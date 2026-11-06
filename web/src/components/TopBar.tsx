@@ -94,7 +94,7 @@ const TABS = [
 export function TopBar() {
   const setGuideOpen = useUi((s) => s.setGuideOpen);
   return (
-    <header className="fixed inset-x-0 top-0 z-30 px-2 pt-2 sm:px-[3vw] sm:pt-5">
+    <header className="fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-bg via-bg/90 to-bg/70 px-2 pb-2 pt-2 backdrop-blur-md sm:px-[3vw] sm:pb-3 sm:pt-5">
       <div className="mx-auto flex h-16 max-w-[100rem] items-center gap-3 rounded-2xl border border-line bg-bg-2/95 px-3 shadow-[0_10px_40px_-20px_rgb(0_0_0/0.8)] backdrop-blur-md sm:h-[4.75rem] sm:gap-5 sm:px-6">
         <button
           type="button"
