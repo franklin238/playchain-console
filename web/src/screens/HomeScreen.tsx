@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FocusEvent } from "react";
 import { useNavigate } from "react-router";
 import { shelfGames, useArcade, type GameEntry } from "../arcade/store";
 import { Button } from "../components/controls";
@@ -12,7 +12,21 @@ import { useSheets } from "../stores/sheets";
 import { useWallpaper } from "../stores/wallpaper";
 import { formatWif, formatWifShort } from "../web3/tokens";
 
-function SpotlightHero({ game, epoch, votes }: { game: GameEntry; epoch: bigint | null; votes: bigint }) {
+function SpotlightHero({
+  game,
+  covers,
+  previewing,
+  epoch,
+  votes,
+}: {
+  game: GameEntry;
+  /** Every shelf game, stacked and preloaded so a preview swap is instant. */
+  covers: GameEntry[];
+  /** True while the hero shows a hovered shelf game instead of the real Spotlight. */
+  previewing: boolean;
+  epoch: bigint | null;
+  votes: bigint;
+}) {
   const navigate = useNavigate();
   const openVote = useSheets((s) => s.openVote);
   const decimals = useArcade((s) => s.decimals);
@@ -20,43 +34,57 @@ function SpotlightHero({ game, epoch, votes }: { game: GameEntry; epoch: bigint 
   const m = game.meta!;
   const label =
     mode !== "live" ? "Featured" : epoch == null ? "Newest game" : `Spotlight · winner of day ${(epoch + 1n).toString()}`;
+  const layers = covers.some((g) => g.key === game.key) ? covers : [...covers, game];
 
   return (
     <section
-      aria-label="Spotlight"
-      className="relative mb-8 flex min-h-[clamp(18rem,46vh,31rem)] items-end overflow-hidden rounded-2xl border border-line bg-black"
+      aria-label={previewing ? `Preview: ${m.name}` : "Spotlight"}
+      className="relative mb-8 flex h-[31rem] items-end overflow-hidden rounded-2xl border border-line bg-black sm:h-[clamp(24rem,46vh,31rem)]"
     >
-      <img src={localize(m.cover)} alt="" aria-hidden="true" className="fade-in absolute inset-0 size-full scale-110 object-cover opacity-40 blur-2xl" />
-      <img
-        key={game.key}
-        src={localize(m.cover)}
-        alt=""
-        fetchPriority="high"
-        className="fade-in absolute inset-0 size-full object-cover sm:left-auto sm:aspect-video sm:w-auto sm:max-w-none sm:[mask-image:linear-gradient(to_right,transparent,black_35%)]"
-      />
+      {layers.map((g) => {
+        const on = g.key === game.key;
+        const src = localize(g.meta!.cover);
+        return (
+          <div key={g.key} aria-hidden="true" className={`hero-layer absolute inset-0 ${on ? "opacity-100" : "opacity-0"}`}>
+            <img src={src} alt="" className="absolute inset-0 size-full scale-110 object-cover opacity-40 blur-2xl" />
+            <img
+              src={src}
+              alt=""
+              fetchPriority={on ? "high" : "low"}
+              className="absolute inset-0 size-full object-cover sm:left-auto sm:aspect-video sm:w-auto sm:max-w-none sm:[mask-image:linear-gradient(to_right,transparent,black_35%)]"
+            />
+          </div>
+        );
+      })}
       <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 to-transparent" />
-      <div className="relative flex max-w-2xl flex-col gap-4 p-6 sm:p-10">
+      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent sm:h-1/3 sm:from-black/70" />
+      <div key={game.key} className="hero-text relative flex max-w-2xl flex-col gap-4 p-6 sm:p-10">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-accent px-2.5 py-1 text-sm font-extrabold uppercase tracking-wide text-on-accent">
-            <Icon name="trophy" className="size-[1.1em]" /> {label}
-          </span>
+          {previewing ? (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-accent px-2.5 py-1 text-sm font-extrabold uppercase tracking-wide text-accent-text">
+              <Icon name="play" className="size-[0.9em]" /> Preview
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-accent px-2.5 py-1 text-sm font-extrabold uppercase tracking-wide text-on-accent">
+              <Icon name="trophy" className="size-[1.1em]" /> {label}
+            </span>
+          )}
           <span className="rounded-md bg-white/12 px-2.5 py-1 text-sm font-bold uppercase tracking-wide backdrop-blur">{m.genre}</span>
         </div>
         <h1 className="glow-text font-display text-[clamp(2.2rem,4.2vw,4.2rem)] font-extrabold leading-[1.02] tracking-tight">{m.name}</h1>
-        <p className="text-base text-fg/85 sm:text-lg">{m.tagline}</p>
+        <p className="line-clamp-2 text-base text-fg/85 sm:text-lg">{m.tagline}</p>
         <p className="text-sm text-muted">
           by {m.developer.name}
           {game.id != null && (
             <>
               {" · "}
-              {epoch != null ? `${formatWif(votes, decimals)} WIF that day · ` : ""}
+              {!previewing && epoch != null ? `${formatWif(votes, decimals)} WIF that day · ` : ""}
               {formatWif(game.totalVotes, decimals)} WIF all time
             </>
           )}
         </p>
         <div className="mt-1 flex flex-wrap gap-3">
-          <Button variant="primary" icon="play" data-nav-default="" onClick={() => navigate(`/play/${game.key}`)}>
+          <Button variant="primary" icon="play" data-nav-default={previewing ? undefined : ""} onClick={() => navigate(`/play/${game.key}`)}>
             Play
           </Button>
           <Button icon="trophy" onClick={() => openVote(game.key)}>
@@ -150,6 +178,26 @@ export default function HomeScreen() {
   const shelf = useMemo(() => shelfGames(games).sort((a, b) => (b.totalVotes > a.totalVotes ? 1 : b.totalVotes < a.totalVotes ? -1 : 0)), [games]);
   const hero = games.find((g) => g.key === spotlight?.key && g.meta) ?? shelf[0];
 
+  // Hovering, focusing or pressing a shelf tile previews that game in the hero.
+  // The real Spotlight stays in `hero`; the preview is only a view on top of it.
+  const [previewKey, setPreviewKey] = useState<string | null>(null);
+  const touchTimer = useRef<number | null>(null);
+  const clearTouchTimer = () => {
+    if (touchTimer.current) window.clearTimeout(touchTimer.current);
+    touchTimer.current = null;
+  };
+  const preview = useCallback((key: string | null) => {
+    clearTouchTimer();
+    setPreviewKey(key);
+  }, []);
+  useEffect(() => clearTouchTimer, []);
+  const previewGame = previewKey ? shelf.find((g) => g.key === previewKey) : undefined;
+  const shown = previewGame ?? hero;
+  const previewing = !!previewGame && previewGame.key !== hero?.key;
+  const onShelfBlur = (e: FocusEvent<HTMLDivElement>) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) preview(null);
+  };
+
   const setArt = useWallpaper((s) => s.setArt);
   const heroCover = hero?.meta ? localize(hero.meta.cover) : null;
   useEffect(() => setArt(heroCover), [heroCover, setArt]);
@@ -169,7 +217,15 @@ export default function HomeScreen() {
 
       {/* Nothing focusable until data arrives, so autofocus lands on Play. */}
       {(mode === "loading" || !hero) && <div className="h-[46vh] animate-pulse rounded-2xl border border-line bg-surface" />}
-      {mode !== "loading" && hero && <SpotlightHero game={hero} epoch={spotlight?.key === hero.key ? spotlight.epoch : null} votes={spotlight?.votes ?? 0n} />}
+      {mode !== "loading" && hero && shown && (
+        <SpotlightHero
+          game={shown}
+          covers={shelf}
+          previewing={previewing}
+          epoch={spotlight?.key === hero.key ? spotlight.epoch : null}
+          votes={spotlight?.votes ?? 0n}
+        />
+      )}
 
       {mode !== "loading" && hero && (
       <>
@@ -178,7 +234,11 @@ export default function HomeScreen() {
           <h2 className="font-display text-xl font-extrabold sm:text-2xl">Game shelf</h2>
           <span className="text-sm text-muted">{shelf.length} games</span>
         </div>
-        <div className="no-scrollbar -mx-2 flex gap-4 overflow-x-auto px-2 pb-6 pt-4 sm:gap-5">
+        <div
+          className="no-scrollbar -mx-2 flex gap-4 overflow-x-auto px-2 pb-6 pt-4 sm:gap-5"
+          onMouseLeave={() => preview(null)}
+          onBlur={onShelfBlur}
+        >
           {shelf.map((g, i) => (
             <GameTile
               key={g.key}
@@ -186,12 +246,21 @@ export default function HomeScreen() {
               decimals={decimals}
               eager={i < 5}
               badge={race[0]?.id != null && race[0].id === g.id ? "Leading today" : undefined}
+              active={previewKey === g.key}
+              onFocus={() => preview(g.key)}
+              onTouchStart={() => preview(g.key)}
+              onTouchEnd={() => {
+                clearTouchTimer();
+                touchTimer.current = window.setTimeout(() => setPreviewKey(null), 2500);
+              }}
               onSelect={() => navigate(`/game/${g.key}`)}
             />
           ))}
           <button
             type="button"
             onClick={() => navigate("/developers")}
+            onMouseEnter={() => preview(null)}
+            onFocus={() => preview(null)}
             className="tile flex w-[15rem] shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line-strong p-6 text-center text-muted sm:w-[17.5rem]"
           >
             <Icon name="plus" className="size-8" />
