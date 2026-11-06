@@ -88,7 +88,8 @@ body.rm #combo.pop,body.rm #combo.drop{animation:none}
 #rStars.on{display:block}
 #rGoal{text-align:center;font:600 12px var(--mono);color:rgba(255,255,255,.6);margin-bottom:6px;min-height:1em}
 #howto .panel{max-height:88vh;overflow:auto;width:min(640px,94vw)}
-#howto canvas{width:100%;height:auto;display:block;border-radius:12px;background:#120a16;margin:4px 0 10px}
+#howto canvas{position:static;inset:auto;width:100%;height:auto;display:block;border-radius:12px;background:#120a16;margin:4px 0 6px}
+#howto .cap{font:600 12px var(--mono);color:rgba(255,255,255,.7);text-align:center;margin-bottom:6px}
 #howto h3{font:800 12px var(--ui);letter-spacing:.24em;color:var(--mag);margin:14px 0 6px}
 #howto p,#howto li{font:500 13px/1.55 var(--ui);color:rgba(255,255,255,.82)}
 #howto ul{padding-left:18px}
@@ -226,7 +227,8 @@ body.rm #banner.show{animation:none}
 <div id="howto" class="screen dim">
   <div class="panel">
     <h2>HOW TO PLAY</h2>
-    <canvas id="waveDiagram" width="1200" height="420" aria-label="Diagram: hold to dive down the face of a wave, release at the crest to launch, land on the next downslope"></canvas>
+    <canvas id="waveDiagram" width="1200" height="460" aria-label="Diagram: hold to dive down the face of a wave, release at the crest to launch, land on the downslope behind it"></canvas>
+    <div class="cap">Land matching the slope: PERFECT within 10&deg;, GOOD within 25&deg;</div>
     <h3>RIDING THE WAVES</h3>
     <ul>
       <li><b>Hold</b> SPACE / W / &uarr;, press and hold the screen, or hold (A) to <b>dive</b>. Diving down the face of a wave builds speed.</li>
@@ -1650,34 +1652,35 @@ body.rm #banner.show{animation:none}
   }
   /* The wave diagram for How to Play: one swell, where to hold, where to release, the flight and the landing. */
   function drawWaveDiagram() {
-    var cv = $('waveDiagram'), c = cv.getContext('2d'), W = cv.width, H = cv.height, base = H * 0.62, A = H * 0.22;
-    var y = function (x) { return base - A * Math.sin((x / W) * Math.PI * 2.6 - 0.4); };
+    // Fixed geometry (canvas units): crests at x = 50, 620; trough at x = 335. Dive down the face into the
+    // trough, climb to the crest, release, fly, land on the downslope behind the crest.
+    var cv = $('waveDiagram'), c = cv.getContext('2d'), W = cv.width, H = cv.height;
+    var base = 280, A = 105, LAM = 1140, XC = 620;
+    var y = function (x) { return base - A * Math.cos((x - XC) / LAM * Math.PI * 2); };
+    var TROUGH = XC - LAM / 2, CREST = XC, LAND = XC + 230;
     c.clearRect(0, 0, W, H);
     c.fillStyle = '#120a16'; c.fillRect(0, 0, W, H);
-    // water body
-    c.beginPath(); c.moveTo(0, H); for (var x = 0; x <= W; x += 6) c.lineTo(x, y(x)); c.lineTo(W, H); c.closePath();
-    var gr = c.createLinearGradient(0, base - A, 0, H); gr.addColorStop(0, '#1d2f3a'); gr.addColorStop(1, '#0b1016'); c.fillStyle = gr; c.fill();
-    // find crest and troughs
-    var pts = []; for (x = 0; x <= W; x += 2) pts.push([x, y(x)]);
-    var crest = pts.reduce(function (b, p) { return p[0] > W * 0.25 && p[0] < W * 0.6 && p[1] < b[1] ? p : b; }, [0, 1e9]);
-    var trough = pts.reduce(function (b, p) { return p[0] < crest[0] && p[1] > b[1] ? p : b; }, [0, -1e9]);
-    // dive section (trough-side face going down into the trough): magenta; climb to crest: teal
-    function seg(x0, x1, col, w) { c.beginPath(); for (var xx = x0; xx <= x1; xx += 3) { var yy = y(xx); if (xx === x0) c.moveTo(xx, yy); else c.lineTo(xx, yy); } c.strokeStyle = col; c.lineWidth = w; c.stroke(); }
-    seg(0, W, 'rgba(79,179,179,.35)', 3);
-    seg(Math.max(0, trough[0] - W * 0.17), trough[0], '#E0457B', 9);
-    seg(trough[0], crest[0], '#4FB3B3', 9);
-    // flight arc from crest to the far downslope
-    var landX = crest[0] + W * 0.3, ly = y(landX);
-    c.setLineDash([14, 12]); c.beginPath(); c.moveTo(crest[0], crest[1]);
-    c.quadraticCurveTo((crest[0] + landX) / 2, crest[1] - H * 0.28, landX, ly); c.strokeStyle = '#F2A65A'; c.lineWidth = 5; c.stroke(); c.setLineDash([]);
-    // markers
-    function dot(px, py, col) { c.beginPath(); c.arc(px, py, 13, 0, 7); c.fillStyle = col; c.fill(); c.lineWidth = 3; c.strokeStyle = '#fff'; c.stroke(); }
-    function label(t, px, py, col, al) { c.font = '800 34px system-ui,sans-serif'; c.fillStyle = col; c.textAlign = al || 'center'; c.fillText(t, px, py); }
-    var dx = trough[0] - W * 0.1; dot(dx, y(dx), '#E0457B'); label('HOLD: DIVE', dx, y(dx) + 60, '#E0457B');
-    dot(crest[0], crest[1], '#4FB3B3'); label('RELEASE AT THE CREST', crest[0], crest[1] - 34, '#4FB3B3');
-    dot(landX, ly, '#F2A65A'); label('LAND ON THE DOWNSLOPE', landX, ly + 60, '#F2A65A');
-    c.font = '600 26px system-ui,sans-serif'; c.fillStyle = 'rgba(255,255,255,.75)'; c.textAlign = 'left';
-    c.fillText('Match the slope when you land: PERFECT within 10\u00b0, GOOD within 25\u00b0', 24, H - 24);
+    c.beginPath(); c.moveTo(0, H); for (var x = 0; x <= W; x += 4) c.lineTo(x, y(x)); c.lineTo(W, H); c.closePath();
+    var gr = c.createLinearGradient(0, base - A, 0, H); gr.addColorStop(0, '#1b2b36'); gr.addColorStop(1, '#0a0f15'); c.fillStyle = gr; c.fill();
+    function seg(x0, x1, col, w) { c.beginPath(); for (var xx = x0; xx <= x1; xx += 3) { if (xx === x0) c.moveTo(xx, y(xx)); else c.lineTo(xx, y(xx)); } c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; c.stroke(); }
+    seg(0, W, 'rgba(79,179,179,.3)', 3);
+    seg(60, TROUGH, '#E0457B', 10);          // hold: dive down the face
+    seg(TROUGH, CREST, '#4FB3B3', 10);       // momentum carries you up
+    // flight: from the crest, up and over, down onto the back slope
+    var ly = y(LAND);
+    c.setLineDash([16, 12]); c.beginPath(); c.moveTo(CREST, y(CREST));
+    c.quadraticCurveTo(CREST + 110, y(CREST) - 150, LAND, ly - 4); c.strokeStyle = '#F2A65A'; c.lineWidth = 5; c.stroke(); c.setLineDash([]);
+    // matching-slope tick at the landing point
+    var sl = (y(LAND + 1) - y(LAND - 1)) / 2, ang = Math.atan(sl);
+    c.save(); c.translate(LAND, ly); c.rotate(ang); c.strokeStyle = '#fff'; c.lineWidth = 4; c.beginPath(); c.moveTo(-46, 0); c.lineTo(46, 0); c.stroke(); c.restore();
+    function dot(px, col) { var py = y(px); c.beginPath(); c.arc(px, py, 14, 0, 7); c.fillStyle = col; c.fill(); c.lineWidth = 4; c.strokeStyle = '#fff'; c.stroke(); }
+    function label(t1, t2, px, py, col) {
+      c.textAlign = 'center'; c.fillStyle = col; c.font = '800 36px system-ui,sans-serif'; c.fillText(t1, px, py);
+      if (t2) { c.font = '600 24px system-ui,sans-serif'; c.fillStyle = 'rgba(255,255,255,.75)'; c.fillText(t2, px, py + 32); }
+    }
+    var dx = 200; dot(dx, '#E0457B'); label('1. HOLD', 'dive down the face', dx - 10, y(dx) - 118, '#E0457B');
+    dot(CREST, '#4FB3B3'); label('2. RELEASE', 'at the crest', CREST - 150, y(CREST) - 70, '#4FB3B3');
+    dot(LAND, '#F2A65A'); label('3. LAND', 'on the downslope', LAND + 140, ly - 52, '#F2A65A');
   }
   function activate(act) {
     if (!act) return;
