@@ -7,13 +7,18 @@ function SL_ENGINE_FACTORY() {
   var DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0], DN = ['N', 'E', 'S', 'W'];
   var SHAPES = {
     straight: [1, 0, 1, 0], corner: [1, 1, 0, 0], tee: [0, 1, 1, 1],
-    booster: [1, 0, 1, 0], tuner: [1, 0, 1, 0], bridge: [1, 1, 1, 1], dish: [1, 0, 0, 0]
+    booster: [1, 0, 1, 0], tuner: [1, 0, 1, 0], bridge: [1, 1, 1, 1], dish: [1, 0, 0, 0],
+    // Mixer: two signals in on any two open sides, one combined signal out of the third.
+    mixer: [1, 1, 1, 0]
   };
-  var PERIOD = { straight: 2, corner: 4, tee: 4, booster: 2, tuner: 2, bridge: 1, dish: 4 };
+  var PERIOD = { straight: 2, corner: 4, tee: 4, booster: 2, tuner: 2, bridge: 1, dish: 4, mixer: 4 };
   var FREQS = ['teal', 'amber', 'violet', 'white'];
-  var K_EMPTY = 0, K_STATIC = 1, K_BLOCK = 2, K_TOWER = 3, K_RECV = 4, K_DECOY = 5;
+  // K_SOFT: static that a Static Storm pulse clears for a few seconds (L.softOpen). The solver treats it as open.
+  var K_EMPTY = 0, K_STATIC = 1, K_BLOCK = 2, K_TOWER = 3, K_RECV = 4, K_DECOY = 5, K_SOFT = 6;
 
   function fIndex(name) { var i = FREQS.indexOf(name); return i < 0 ? 0 : i; }
+  /* two frequencies in one mixer: the same colour passes, two different colours make white */
+  function mixOf(a, b) { return a === b ? a : 3; }
   function isOpen(t, r, s) { return SHAPES[t][(s - r + 8) & 3] === 1; }
   function rotCost(t, from, to) {
     var p = PERIOD[t]; var d = (((to - from) % p) + p) % p; return Math.min(d, p - d);
@@ -57,6 +62,7 @@ function SL_ENGINE_FACTORY() {
     });
     (level.static || []).forEach(function (p) { kind[p[1] * W + p[0]] = K_STATIC; });
     (level.blocked || []).forEach(function (p) { kind[p[1] * W + p[0]] = K_BLOCK; });
+    (level.soft || []).forEach(function (p) { kind[p[1] * W + p[0]] = K_SOFT; });
     var tiles0 = new Array(N).fill(null), hasDish = false, boostAny = false;
     var pairs = {};
     (level.fixed || []).forEach(function (f) {
@@ -76,7 +82,8 @@ function SL_ENGINE_FACTORY() {
     });
     return {
       id: level.id, W: W, H: H, N: N, kind: kind, recvIdx: recvIdx, decIdx: decIdx, tower: tower,
-      receivers: receivers, decoys: decoys, tiles0: tiles0, inv0: inv0, hasDish: hasDish, boostAny: boostAny, src: level
+      receivers: receivers, decoys: decoys, tiles0: tiles0, inv0: inv0, hasDish: hasDish, boostAny: boostAny, src: level,
+      softOpen: false
     };
   }
 
@@ -106,6 +113,7 @@ function SL_ENGINE_FACTORY() {
       var x = c % W + DX[d], y = (c / W | 0) + DY[d];
       if (x < 0 || y < 0 || x >= W || y >= H) { leaks.push({ c: c, d: d, v: v, f: f, into: 'wall' }); if (undec) fail = true; return; }
       var n = y * W + x, side = (d + 2) & 3, k = kind[n];
+      if (k === K_SOFT && !L.softOpen) k = K_STATIC;
       if (k === K_STATIC || k === K_BLOCK) { leaks.push({ c: c, d: d, v: v, f: f, into: k === K_STATIC ? 'static' : 'wall' }); if (undec) fail = true; return; }
       if (k === K_TOWER) {
         if (L.tower.edges.indexOf(side) < 0) { leaks.push({ c: c, d: d, v: v, f: f, into: 'tile' }); if (undec) fail = true; }
@@ -149,6 +157,18 @@ function SL_ENGINE_FACTORY() {
       }
       if (undec && undec[c]) return needRet(c, side, v, f);
       var t = tiles[c];
+      if (t.t === 'mixer') {
+        // First arrival waits on channel 0. A second arrival on another side fills channel 1
+        // and the mixed signal leaves through the remaining open side(s).
+        var m0 = c * 2, m1 = m0 + 1;
+        if (pw[m0] === 0) { relays++; pw[m0] = v; pf[m0] = f; pin[m0] = side; pord[m0] = order.length; order.push([c, 0, v, f, side]); continue; }
+        if (pw[m1] > 0 || pin[m0] === side) continue;
+        pw[m1] = v; pf[m1] = f; pin[m1] = side; pord[m1] = order.length; order.push([c, 1, v, f, side]);
+        var mv = Math.min(v, pw[m0]) - 1, mf = mixOf(pf[m0], f);
+        for (var ms = 0; ms < 4; ms++) if (ms !== side && ms !== pin[m0] && isOpen('mixer', t.r, ms)) emit(c, ms, mv, mf);
+        if (fail) return { fail: true };
+        continue;
+      }
       var ch = t.t === 'bridge' ? (side & 1) : 0;
       var idx = c * 2 + ch;
       if (pw[idx] > 0) continue;
@@ -190,8 +210,9 @@ function SL_ENGINE_FACTORY() {
     var startTiles = opts.tiles ? cloneTiles(opts.tiles) : cloneTiles(L.tiles0);
     var tiles = cloneTiles(startTiles);
     var undec = new Uint8Array(N);
+    var softWas = L.softOpen; L.softOpen = true;
     for (var c = 0; c < N; c++) {
-      if (L.kind[c] !== K_EMPTY) continue;
+      if (L.kind[c] !== K_EMPTY && L.kind[c] !== K_SOFT) continue;
       var t = tiles[c];
       if (!t) undec[c] = 1;
       else if (t.fx && t.rot && PERIOD[t.t] > 1) undec[c] = 1;
@@ -208,7 +229,7 @@ function SL_ENGINE_FACTORY() {
         var rc = L.receivers[i].c, rx_ = rc % W, ry = rc / W | 0, md = 1e9, okS = false;
         for (var j = 0; j < pend.length; j++) {
           var q = pend[j][0];
-          if (q !== rc && (res.pw[q * 2] > 0 || res.pw[q * 2 + 1] > 0) && tiles[q] && tiles[q].t !== 'bridge') continue;
+          if (q !== rc && (res.pw[q * 2] > 0 || res.pw[q * 2 + 1] > 0) && tiles[q] && tiles[q].t !== 'bridge' && tiles[q].t !== 'mixer') continue;
           var d = Math.abs(q % W - rx_) + Math.abs((q / W | 0) - ry);
           if (d < md) md = d;
           if (pend[j][2] - d >= 1) okS = true;
@@ -272,7 +293,8 @@ function SL_ENGINE_FACTORY() {
         dfs(0);
         if (best) break;
       }
-    } catch (e) { if (e !== TIMEOUT) throw e; status = 'timeout'; }
+    } catch (e) { if (e !== TIMEOUT) { L.softOpen = softWas; throw e; } status = 'timeout'; }
+    L.softOpen = softWas;
     if (!best) return { ok: false, status: status === 'ok' ? 'unsolvable' : status, nodes: nodes };
     return { ok: true, status: status, relays: best.relays, moves: best.moves, solution: best.solution, nodes: nodes };
   }
@@ -290,10 +312,62 @@ function SL_ENGINE_FACTORY() {
         moves += 1 + rotCost(s.type, 0, s.rot);
       } else { moves += rotCost(tiles[c].t, tiles[c].r, s.rot); tiles[c].r = s.rot; }
     });
+    var softWas = L.softOpen; L.softOpen = true;
     var res = walk(L, tiles);
+    L.softOpen = softWas;
     return { solved: res.solved, leaks: res.leaks.length, relays: res.relays, moves: moves };
   }
 
+  /* Turn a solved layout into a puzzle: inventory, scrambles, static, decoys and distractors,
+     then solve it to set par. Shared by every generator. `used(c)` marks route, tower and
+     receiver cells; `isRoute(c)` marks route tiles only. Returns null if the result is no good. */
+  function finish(level, solTiles, used, isRoute, rng, o) {
+    function ri(a, b) { return a + Math.floor(rng() * (b - a + 1)); }
+    function pick(a) { return a[Math.floor(rng() * a.length)]; }
+    function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rng() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+    var W = level.size[0], H = level.size[1];
+    function inB(x, y) { return x >= 0 && y >= 0 && x < W && y < H; }
+    var invMandatory = o.invTypes || [];
+    solTiles.forEach(function (s) {
+      var toInv = rng() < (o.invRatio || 0) || invMandatory.indexOf(s.type) >= 0;
+      if (s.type === 'bridge' && !o.bridgeInv) toInv = false;
+      if (s.type === 'dish') toInv = false;
+      if (toInv) { var key = keyOf(s.type, s.freq); level.inventory[key] = (level.inventory[key] || 0) + 1; }
+      else {
+        var per = PERIOD[s.type];
+        var locked = rng() < (o.lockRatio || 0) && s.type !== 'tee';
+        var r0 = s.rot;
+        if (!locked && per > 1) { r0 = (s.rot + ri(1, per - 1)) & 3; if (PERIOD[s.type] === 2) r0 = (s.rot + 1) & 3; }
+        var fx = { x: s.x, y: s.y, type: s.type, rot: r0 };
+        if (s.pair) fx.pair = s.pair;
+        if (s.freq) fx.freq = s.freq;
+        if (locked) fx.rotatable = false;
+        level.fixed.push(fx);
+      }
+    });
+    var empties = [];
+    for (var c4 = 0; c4 < W * H; c4++) if (!used(c4)) empties.push(c4);
+    shuffle(empties);
+    var adj = function (c) { var x = c % W, y = c / W | 0; for (var d = 0; d < 4; d++) { var nx = x + DX[d], ny = y + DY[d]; if (inB(nx, ny) && isRoute(ny * W + nx)) return true; } return false; };
+    var nStatic = o.static || 0, nDis = o.distract || 0, nDec = o.decoys || 0;
+    var ei = 0;
+    empties.sort(function (a, b) { return (adj(b) ? 1 : 0) - (adj(a) ? 1 : 0) + (rng() - 0.5) * 1.2; });
+    for (; ei < empties.length && nDec > 0; ei++, nDec--) level.decoys.push({ x: empties[ei] % W, y: empties[ei] / W | 0 });
+    for (; ei < empties.length && nStatic > 0; ei++, nStatic--) level.static.push([empties[ei] % W, empties[ei] / W | 0]);
+    for (; ei < empties.length && nDis > 0; ei++, nDis--) {
+      var dt = pick(o.distractTypes || ['straight', 'corner']);
+      level.fixed.push({ x: empties[ei] % W, y: empties[ei] / W | 0, type: dt, rot: ri(0, 3) & (PERIOD[dt] - 1 || 3) });
+    }
+    // starting state must not already be solved
+    var Ls = compile(level);
+    if (walk(Ls, Ls.tiles0).solved) return null;
+    var sol = solve(Ls, { maxNodes: o.maxNodes || 120000 });
+    if (!sol.ok) return null;
+    if (sol.moves < (o.minMoves || 1)) return null;
+    if (o.maxMoves && sol.moves > o.maxMoves) return null;
+    level.par = { relays: sol.relays, moves: sol.moves };
+    return { level: level, sol: sol };
+  }
   /* ---------- generator ---------- */
   function generate(seed, o) {
     var rng = mulberry32(seed >>> 0);
@@ -440,44 +514,209 @@ function SL_ENGINE_FACTORY() {
       if (!res.solved || res.leaks.length) continue;
       if (o.needBooster && !solTiles.some(function (s) { return s.type === 'booster'; })) continue;
       // puzzle-ify
-      var invMandatory = o.invTypes || [];
-      solTiles.forEach(function (s) {
-        var toInv = rng() < (o.invRatio || 0) || invMandatory.indexOf(s.type) >= 0;
-        if (s.type === 'bridge' && !o.bridgeInv) toInv = false;
-        if (toInv) { var key = keyOf(s.type, s.freq); level.inventory[key] = (level.inventory[key] || 0) + 1; }
-        else {
-          var per = PERIOD[s.type];
-          var locked = rng() < (o.lockRatio || 0) && s.type !== 'tee';
-          var r0 = s.rot;
-          if (!locked && per > 1) { r0 = (s.rot + ri(1, per - 1)) & 3; if (PERIOD[s.type] === 2) r0 = (s.rot + 1) & 3; }
-          var fx = { x: s.x, y: s.y, type: s.type, rot: r0 };
-          if (s.freq) fx.freq = s.freq;
-          if (locked) fx.rotatable = false;
-          level.fixed.push(fx);
-        }
-      });
-      var empties = [];
-      for (var c4 = 0; c4 < W * H; c4++) if (!cells[c4]) empties.push(c4);
-      shuffle(empties);
-      var adj = function (c) { var x = c % W, y = c / W | 0; for (var d = 0; d < 4; d++) { var nx = x + DX[d], ny = y + DY[d]; if (inB(nx, ny) && cells[ny * W + nx] && cells[ny * W + nx].kind === 'route') return true; } return false; };
-      var nStatic = o.static || 0, nDis = o.distract || 0, nDec = o.decoys || 0;
-      var ei = 0;
-      empties.sort(function (a, b) { return (adj(b) ? 1 : 0) - (adj(a) ? 1 : 0) + (rng() - 0.5) * 1.2; });
-      for (; ei < empties.length && nDec > 0; ei++, nDec--) level.decoys.push({ x: empties[ei] % W, y: empties[ei] / W | 0 });
-      for (; ei < empties.length && nStatic > 0; ei++, nStatic--) level.static.push([empties[ei] % W, empties[ei] / W | 0]);
-      for (; ei < empties.length && nDis > 0; ei++, nDis--) {
-        var dt = pick(o.distractTypes || ['straight', 'corner']);
-        level.fixed.push({ x: empties[ei] % W, y: empties[ei] / W | 0, type: dt, rot: ri(0, 3) & (PERIOD[dt] - 1 || 3) });
+      var fin = finish(level, solTiles, function (c) { return !!cells[c]; }, function (c) { return !!cells[c] && cells[c].kind === 'route'; }, rng, o);
+      if (!fin) continue;
+      return { level: fin.level, sol: fin.sol, attempts: attempt + 1 };
+    }
+    return null;
+  }
+
+  /* ---------- helpers for the targeted generators (mixers, satellite pairs) ---------- */
+  function shuffled(rng, a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rng() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function dirOf(W, a, b) { var ax = a % W, ay = a / W | 0, bx = b % W, by = b / W | 0; return bx > ax ? 1 : bx < ax ? 3 : by > ay ? 2 : 0; }
+  function stepCell(W, H, c, d) { var x = c % W + DX[d], y = (c / W | 0) + DY[d]; return x < 0 || y < 0 || x >= W || y >= H ? -1 : y * W + x; }
+
+  /* Random self-avoiding path from s to t (both included) through cells where ok(c), length in [minLen, maxLen]. */
+  function pathTo(W, H, s, t, ok, rng, minLen, maxLen) {
+    var seen = new Uint8Array(W * H), path = [s], best = null, nodes = 0;
+    seen[s] = 1;
+    function md(c) { return Math.abs(c % W - t % W) + Math.abs((c / W | 0) - (t / W | 0)); }
+    function go(c) {
+      if (++nodes > 6000) return true;
+      if (c === t) { if (path.length >= minLen) { best = path.slice(); return true; } return false; }
+      if (path.length + md(c) > maxLen) return false;
+      var dirs = shuffled(rng, [0, 1, 2, 3]);
+      for (var i = 0; i < 4; i++) {
+        var n = stepCell(W, H, c, dirs[i]);
+        if (n < 0 || seen[n] || (n !== t && !ok(n))) continue;
+        seen[n] = 1; path.push(n);
+        if (go(n)) return true;
+        path.pop(); seen[n] = 0;
       }
-      // starting state must not already be solved
-      var Ls = compile(level);
-      if (walk(Ls, Ls.tiles0).solved) continue;
-      var sol = solve(Ls, { maxNodes: o.maxNodes || 120000 });
-      if (!sol.ok) continue;
-      if (sol.moves < (o.minMoves || 1)) continue;
-      if (o.maxMoves && sol.moves > o.maxMoves) continue;
-      level.par = { relays: sol.relays, moves: sol.moves };
-      return { level: level, sol: sol, attempts: attempt + 1 };
+      return false;
+    }
+    go(s);
+    return best;
+  }
+
+  /* Random self-avoiding walk of exactly `len` cells starting at s, through cells where ok(c). */
+  function walkCells(W, H, s, len, ok, rng) {
+    for (var tries = 0; tries < 40; tries++) {
+      var path = [s], seen = {}; seen[s] = 1;
+      while (path.length < len) {
+        var c = path[path.length - 1], dirs = shuffled(rng, [0, 1, 2, 3]), moved = false;
+        for (var i = 0; i < 4; i++) {
+          var n = stepCell(W, H, c, dirs[i]);
+          if (n < 0 || seen[n] || !ok(n)) continue;
+          seen[n] = 1; path.push(n); moved = true; break;
+        }
+        if (!moved) break;
+      }
+      if (path.length === len) return path;
+    }
+    return null;
+  }
+
+  /* Solved tiles from a map of open sides per cell. */
+  function tilesFromSides(W, sideMap, special) {
+    var out = [];
+    Object.keys(sideMap).forEach(function (k) {
+      var c = +k, sd = sideMap[k];
+      if (special[c] === 'skip') return;
+      var type = special[c] || null, n = sd.filter(Boolean).length;
+      if (!type) type = n === 3 ? 'tee' : (sd[0] && sd[2]) || (sd[1] && sd[3]) ? 'straight' : 'corner';
+      var rot = 0, per = PERIOD[type];
+      for (rot = 0; rot < 4; rot++) if (sides(type, rot).every(function (s) { return sd[s]; }) && sides(type, rot).length === n) break;
+      if (rot === 4) return;
+      out.push({ c: c, x: c % W, y: c / W | 0, type: type, rot: rot });
+    });
+    return out;
+  }
+
+  /* Lowest tower strength that lights everything with the solved layout, plus `slack`. */
+  function fitStrength(level, solTiles, slack) {
+    var fixed = solTiles.map(function (s) { var f = { x: s.x, y: s.y, type: s.type, rot: s.rot }; if (s.freq) f.freq = s.freq; if (s.pair) f.pair = s.pair; return f; });
+    for (var S = 2; S <= 14; S++) {
+      level.tower.strength = S;
+      var L = compile(Object.assign({}, level, { fixed: fixed }));
+      var r = walk(L, L.tiles0);
+      if (r.solved && !r.leaks.length) { level.tower.strength = Math.min(15, S + (slack || 0)); return true; }
+    }
+    return false;
+  }
+
+  /* Mixer puzzles: the tower splits, one branch is retuned, both meet at a mixer, the mix feeds a receiver. */
+  function generateMixer(seed, o) {
+    var rng = mulberry32(seed >>> 0);
+    function ri(a, b) { return a + Math.floor(rng() * (b - a + 1)); }
+    var W = o.w, H = o.h;
+    for (var attempt = 0; attempt < 300; attempt++) {
+      var ty = ri(2, H - 3), tx = ri(1, 2), mx = ri(tx + 2, W - 3);
+      var used = new Uint8Array(W * H), sideMap = {}, special = {};
+      var at = function (x, y) { return y * W + x; };
+      var link = function (a, b) { var d = dirOf(W, a, b); (sideMap[a] = sideMap[a] || [0, 0, 0, 0])[d] = 1; (sideMap[b] = sideMap[b] || [0, 0, 0, 0])[(d + 2) & 3] = 1; };
+      var tower = at(0, ty), prev = tower;
+      used[tower] = 1;
+      for (var x = 1; x <= tx; x++) { var c = at(x, ty); used[c] = 1; link(prev, c); prev = c; }
+      var T = prev, M = at(mx, ty);
+      used[M] = 1;
+      var span = mx - tx + 1, wig = o.wiggle == null ? 4 : o.wiggle;
+      var up = pathTo(W, H, at(tx, ty - 1), at(mx, ty - 1), function (c) { return !used[c] && (c / W | 0) < ty; }, rng, span, span + wig);
+      if (!up) continue;
+      up.forEach(function (c) { used[c] = 1; });
+      var down = pathTo(W, H, at(tx, ty + 1), at(mx, ty + 1), function (c) { return !used[c] && (c / W | 0) > ty; }, rng, span, span + wig);
+      if (!down) continue;
+      down.forEach(function (c) { used[c] = 1; });
+      var out = walkCells(W, H, at(mx + 1, ty), ri(o.outMin || 2, o.outMax || 3), function (c) { return !used[c]; }, rng);
+      if (!out) continue;
+      out.forEach(function (c) { used[c] = 1; });
+      link(T, up[0]); for (var i = 0; i + 1 < up.length; i++) link(up[i], up[i + 1]); link(up[up.length - 1], M);
+      link(T, down[0]); for (i = 0; i + 1 < down.length; i++) link(down[i], down[i + 1]); link(down[down.length - 1], M);
+      link(M, out[0]); for (i = 0; i + 1 < out.length; i++) link(out[i], out[i + 1]);
+      var R = out[out.length - 1];
+      delete sideMap[tower]; special[R] = 'skip'; special[M] = 'mixer';
+      var solTiles = tilesFromSides(W, sideMap, special);
+      if (solTiles.length !== Object.keys(sideMap).length - 1) continue;
+      // retune one branch (or both) on a straight
+      var upSet = {}, downSet = {}; up.forEach(function (c) { upSet[c] = 1; }); down.forEach(function (c) { downSet[c] = 1; });
+      var upStr = solTiles.filter(function (s) { return upSet[s.c] && s.type === 'straight'; });
+      var downStr = solTiles.filter(function (s) { return downSet[s.c] && s.type === 'straight'; });
+      if (!upStr.length || (o.both && !downStr.length)) continue;
+      var t1 = upStr[ri(0, upStr.length - 1)]; t1.type = 'tuner'; t1.freq = 'amber';
+      if (o.both) { var t2 = downStr[ri(0, downStr.length - 1)]; t2.type = 'tuner'; t2.freq = 'violet'; }
+      var level = { id: o.id || 'gen', size: [W, H], tower: { x: 0, y: ty, edges: ['E'], freq: 'teal', strength: 6 }, receivers: [{ x: R % W, y: R / W | 0, freq: 'white' }], decoys: [], static: [], fixed: [], inventory: {}, par: null, seed: seed };
+      if (!fitStrength(level, solTiles, o.slack)) continue;
+      var fin = finish(level, solTiles, function (c) { return !!used[c]; }, function (c) { return !!sideMap[c] && special[c] !== 'skip'; }, rng, o);
+      if (!fin) continue;
+      return { level: fin.level, sol: fin.sol, attempts: attempt + 1 };
+    }
+    return null;
+  }
+
+  /* Satellite puzzles: a static wall splits the board; route to one dish, out of its partner, on to the receiver. */
+  function generateOrbit(seed, o) {
+    var rng = mulberry32(seed >>> 0);
+    function ri(a, b) { return a + Math.floor(rng() * (b - a + 1)); }
+    var W = o.w, H = o.h;
+    for (var attempt = 0; attempt < 300; attempt++) {
+      var wy = ri(2, H - 3), ty = ri(0, wy - 1);
+      var used = new Uint8Array(W * H), sideMap = {}, special = {};
+      var at = function (x, y) { return y * W + x; };
+      var link = function (a, b) { var d = dirOf(W, a, b); (sideMap[a] = sideMap[a] || [0, 0, 0, 0])[d] = 1; (sideMap[b] = sideMap[b] || [0, 0, 0, 0])[(d + 2) & 3] = 1; };
+      for (var x = 0; x < W; x++) used[at(x, wy)] = 1;
+      var tower = at(0, ty); used[tower] = 1;
+      var top = walkCells(W, H, at(1, ty), ri(o.minLen || 3, o.maxLen || 5), function (c) { return !used[c] && (c / W | 0) < wy; }, rng);
+      if (!top) continue;
+      top.forEach(function (c) { used[c] = 1; });
+      link(tower, top[0]); for (var i = 0; i + 1 < top.length; i++) link(top[i], top[i + 1]);
+      var A = top[top.length - 1];
+      // partner dish somewhere below the wall, facing a free neighbour
+      var cands = [];
+      for (var c = (wy + 1) * W; c < W * H; c++) for (var d = 0; d < 4; d++) { var n = stepCell(W, H, c, d); if (n >= 0 && (n / W | 0) > wy) cands.push([c, d, n]); }
+      var pick = cands[ri(0, cands.length - 1)], B = pick[0];
+      used[B] = 1;
+      var bot = walkCells(W, H, pick[2], ri(o.minLen2 || 3, o.maxLen2 || 5), function (c) { return !used[c] && (c / W | 0) > wy; }, rng);
+      if (!bot) continue;
+      bot.forEach(function (c) { used[c] = 1; });
+      link(B, bot[0]); for (i = 0; i + 1 < bot.length; i++) link(bot[i], bot[i + 1]);
+      var R = bot[bot.length - 1];
+      delete sideMap[tower]; special[R] = 'skip'; special[A] = 'skip'; special[B] = 'skip';
+      var solTiles = tilesFromSides(W, sideMap, special);
+      var aIn = dirOf(W, A, top[top.length - 2] != null ? top[top.length - 2] : tower);
+      solTiles.push({ c: A, x: A % W, y: A / W | 0, type: 'dish', rot: aIn, pair: 'a' });
+      solTiles.push({ c: B, x: B % W, y: B / W | 0, type: 'dish', rot: pick[1], pair: 'a' });
+      var recv = { x: R % W, y: R / W | 0, freq: 'any' };
+      if (o.tuner) {
+        var strs = solTiles.filter(function (s) { return s.type === 'straight' && (s.c / W | 0) > wy; });
+        if (!strs.length) continue;
+        var tn = strs[ri(0, strs.length - 1)]; tn.type = 'tuner'; tn.freq = o.tuner; recv.freq = o.tuner;
+      }
+      var level = { id: o.id || 'gen', size: [W, H], tower: { x: 0, y: ty, edges: ['E'], freq: 'teal', strength: 6 }, receivers: [recv], decoys: [], static: [], fixed: [], inventory: {}, par: null, seed: seed };
+      for (x = 0; x < W; x++) level.static.push([x, wy]);
+      if (!fitStrength(level, solTiles, o.slack)) continue;
+      var fin = finish(level, solTiles, function (c) { return !!used[c]; }, function (c) { return !!sideMap[c] && special[c] !== 'skip'; }, rng, o);
+      if (!fin) continue;
+      return { level: fin.level, sol: fin.sol, attempts: attempt + 1 };
+    }
+    return null;
+  }
+
+  /* Static Storm: turn up to n empty cells on the solver's route into soft static. */
+  function addSoftStatic(level, sol, rng, n) {
+    var spots = sol.solution.filter(function (s) { return s.place; });
+    shuffled(rng, spots);
+    level.soft = spots.slice(0, n).map(function (s) { return [s.x, s.y]; });
+    return level;
+  }
+
+  /* Static Storm: puzzle n of a run (0-based). Small boards that grow every three solves;
+     from the second puzzle on, one or two cells on the solver's route start as soft static. */
+  var STORM = [
+    { w: 5, h: 5, strength: 7, receivers: 1, minLen: 4, maxLen: 6, invRatio: 0.35, distract: 1, minMoves: 3, maxMoves: 8 },
+    { w: 6, h: 5, strength: 7, receivers: 2, minLen: 4, maxLen: 6, minLen2: 2, maxLen2: 3, invRatio: 0.35, static: 2, distract: 1, minMoves: 4, maxMoves: 10 },
+    { w: 6, h: 6, strength: 7, receivers: 2, minLen: 4, maxLen: 6, minLen2: 2, maxLen2: 3, invRatio: 0.35, tuners: ['amber'], static: 2, distract: 2, minMoves: 5, maxMoves: 12 },
+    { w: 6, h: 6, strength: 6, receivers: 2, minLen: 5, maxLen: 7, minLen2: 2, maxLen2: 3, invRatio: 0.35, boosters: 1, static: 3, decoys: 1, distract: 2, minMoves: 5, maxMoves: 13 },
+    { w: 7, h: 6, strength: 8, receivers: 2, minLen: 5, maxLen: 7, minLen2: 2, maxLen2: 4, invRatio: 0.4, tuners: ['violet'], static: 3, decoys: 1, distract: 2, minMoves: 6, maxMoves: 14 }
+  ];
+  function stormLevel(n, seed) {
+    var o = Object.assign({ id: 'storm-' + (n + 1), maxNodes: 60000 }, STORM[Math.min(STORM.length - 1, Math.floor(n / 3))]);
+    var rng = mulberry32((seed ^ 0x5f3759df) >>> 0);
+    for (var k = 0; k < 8; k++) {
+      var g = generate((seed + k * 7919) >>> 0, o);
+      if (!g) continue;
+      addSoftStatic(g.level, g.sol, rng, n < 1 ? 0 : n < 6 ? 1 : 2);
+      g.level.storm = n + 1;
+      return g;
     }
     return null;
   }
@@ -503,8 +742,8 @@ function SL_ENGINE_FACTORY() {
 
   return {
     DX: DX, DY: DY, DN: DN, SHAPES: SHAPES, PERIOD: PERIOD, FREQS: FREQS,
-    K_EMPTY: K_EMPTY, K_STATIC: K_STATIC, K_BLOCK: K_BLOCK, K_TOWER: K_TOWER, K_RECV: K_RECV, K_DECOY: K_DECOY,
-    fIndex: fIndex, isOpen: isOpen, rotCost: rotCost, sides: sides, parseKey: parseKey, keyOf: keyOf,
+    K_EMPTY: K_EMPTY, K_STATIC: K_STATIC, K_BLOCK: K_BLOCK, K_TOWER: K_TOWER, K_RECV: K_RECV, K_DECOY: K_DECOY, K_SOFT: K_SOFT,
+    fIndex: fIndex, mixOf: mixOf, generateMixer: generateMixer, generateOrbit: generateOrbit, addSoftStatic: addSoftStatic, stormLevel: stormLevel, isOpen: isOpen, rotCost: rotCost, sides: sides, parseKey: parseKey, keyOf: keyOf,
     mulberry32: mulberry32, hashStr: hashStr, compile: compile, cloneTiles: cloneTiles,
     walk: walk, solve: solve, checkSolution: checkSolution, generate: generate, dailyLevel: dailyLevel
   };

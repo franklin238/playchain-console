@@ -22,6 +22,15 @@ for (const lv of LEVELS) {
   if (msg) { fail++; console.log('FAIL', lv.id, msg); }
   else console.log('ok  ', lv.id.padEnd(5), `${lv.size[0]}x${lv.size[1]}`, `par relays ${s.relays} moves ${s.moves}`, `(${s.nodes} nodes)`);
 }
+// Campaign shape: 9 regions, at least 100 levels, mixers taught in region 6, one final level.
+const regionsSeen = new Set(LEVELS.map(l => l.id.split('-')[0]));
+if (regionsSeen.size !== 9) { fail++; console.log('FAIL expected 9 regions, found', regionsSeen.size); }
+if (LEVELS.length < 100) { fail++; console.log('FAIL expected at least 100 levels, found', LEVELS.length); }
+if (LEVELS.filter(l => l.final).length !== 1 || !LEVELS[LEVELS.length - 1].final) { fail++; console.log('FAIL the last level must be the one final level'); }
+for (const lv of LEVELS.filter(l => l.id.startsWith('6-'))) {
+  const hasMixer = (lv.fixed || []).some(f => f.type === 'mixer') || (lv.inventory || {}).mixer > 0;
+  if (!hasMixer) { fail++; console.log('FAIL', lv.id, 'Spectrum Labs level without a mixer'); }
+}
 // Daily Signal: next 30 UTC days must all generate a verified puzzle
 const base = Date.UTC(2026, 10, 1);
 for (let d = 0; d < 30; d++) {

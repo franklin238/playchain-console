@@ -17,8 +17,10 @@ const G = {
   'A': ['tuner', 0, 'amber'], 'a': ['tuner', 1, 'amber'], 'V': ['tuner', 0, 'violet'], 'v': ['tuner', 1, 'violet'],
   'E': ['tuner', 0, 'teal'], 'e': ['tuner', 1, 'teal'],
   '┼': ['bridge', 0],
+  // mixers: K = open N,E,S; k = E,S,W; J = S,W,N; j = W,N,E
+  'K': ['mixer', 0], 'k': ['mixer', 1], 'J': ['mixer', 2], 'j': ['mixer', 3],
 };
-const RECV = { R: 'any', Q: 'amber', P: 'violet', O: 'teal' };
+const RECV = { R: 'any', Q: 'amber', P: 'violet', O: 'teal', W: 'white' };
 
 function fromAscii(id, rows, o = {}) {
   const H = rows.length, W = [...rows[0]].length;
@@ -243,7 +245,18 @@ function crop(lv) {
   lv.static = lv.static.filter(p => inb(p[0], p[1])).map(p => [p[0], p[1] - y0]);
   lv.size = [x1 + 1, y1 - y0 + 1];
 }
-const out = [];
+// Solve with the full budget so par is proven, and refuse levels that start solved.
+function proven(lv) {
+  const s = SL.solve(lv, { maxNodes: 2e6 });
+  if (!s.ok || s.status !== 'ok') throw new Error('unsolvable or unproven ' + lv.id + ' ' + s.status);
+  const L = SL.compile(lv);
+  if (SL.walk(L, L.tiles0).solved) throw new Error('starts solved ' + lv.id);
+  lv.par = { relays: s.relays, moves: s.moves };
+  return lv;
+}
+
+// ---------------- v1 campaign (51 levels): rebuilt exactly as shipped ----------------
+const legacy = {};
 for (let reg = 1; reg <= 6; reg++) {
   const list = [];
   for (const lv of handmade[reg]) {
@@ -271,23 +284,114 @@ for (let reg = 1; reg <= 6; reg++) {
       if (++tries > 300) throw new Error('generator stuck ' + reg + ' ' + JSON.stringify(rec));
       g = SL.generate(seed++, rec);
       if (g) { const sig = JSON.stringify(g.level.fixed.slice(0, 3)); if (seen.has(sig)) g = null; else seen.add(sig); }
-      if (!g) n = n; // keep trying
     }
     g.level.id = `${reg}-${list.length + 1}`;
     crop(g.level);
     console.error('gen', g.level.id, 'tries', tries, 'seed', seed - 1);
     list.push(g.level);
   }
-  out.push(...list);
+  legacy[reg] = list;
 }
-for (const lv of R7) {
-  const s = SL.solve(lv, { maxNodes: 2e6 });
-  if (!s.ok) throw new Error('unsolvable ' + lv.id + ' ' + s.status);
-  const L = SL.compile(lv);
-  if (SL.walk(L, L.tiles0).solved) throw new Error('starts solved ' + lv.id);
-  lv.par = { relays: s.relays, moves: s.moves };
-  out.push(lv);
+for (const lv of R7) proven(lv);
+
+// v2 inserts Spectrum Labs (mixers) as region 6, so Ghost Lines moves to 7 and Orbit to 8 (spec 4.1).
+const renumber = (list, reg) => list.map((lv, i) => ({ ...lv, id: `${reg}-${i + 1}` }));
+const regions = { 1: legacy[1], 2: legacy[2], 3: legacy[3], 4: legacy[4], 5: legacy[5], 6: [], 7: renumber(legacy[6], 7), 8: renumber(R7, 8), 9: [] };
+
+// ---------------- Region 6: Spectrum Labs (mixers), first three handmade ----------------
+const keepAll61 = [[1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [1, 2], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3]];
+regions[6].push(
+  // 6-1: everything is set except the mixer, which faces the wrong way
+  fromAscii('6-1', [
+    '.......',
+    '.┌─a─┐.',
+    'T┤...KW',
+    '.└───┘.',
+    '.......'], { strength: 9, keep: keepAll61, rot: { '5,2': 2 } }),
+  // 6-2: the same network, but the mixer comes from the inventory
+  fromAscii('6-2', [
+    '.......',
+    '.┌─a─┐.',
+    'T┤...KW',
+    '.└───┘.',
+    '.......'], { strength: 9, inv: [[5, 2]] }),
+  // 6-3: amber and violet make white; the straight shortcut runs into a decoy
+  fromAscii('6-3', [
+    '.........',
+    '.┌──a─┐..',
+    'T┤..X.K─W',
+    '.└─v──┘..',
+    '.........'], { strength: 10 }),
+);
+regions[6].forEach(proven);
+
+// ---------------- generated additions ----------------
+function addGenerated(reg, target, seedBase, make) {
+  const list = regions[reg], seen = new Set(list.map(l => JSON.stringify(l.fixed.slice(0, 3))));
+  let seed = seedBase;
+  const first = list.length;
+  while (list.length < target) {
+    const ramp = (list.length - first) / Math.max(1, target - first - 1);
+    const { fn, rec } = make(ramp, list.length - first);
+    rec.id = `${reg}-${list.length + 1}`;
+    rec.maxNodes = 200000;
+    let g = null, tries = 0;
+    while (!g) {
+      if (++tries > 400) throw new Error('generator stuck ' + reg + ' ' + JSON.stringify(rec));
+      g = fn(seed++, rec);
+      if (!g) continue;
+      const sig = JSON.stringify(g.level.fixed.slice(0, 3));
+      if (seen.has(sig)) { g = null; continue; }
+      crop(g.level);
+      g.level.id = rec.id;
+      try { proven(g.level); } catch (e) { g = null; continue; }
+      if (g.level.par.moves < rec.minMoves || g.level.par.moves > rec.maxMoves) { g = null; continue; }
+      seen.add(sig);
+    }
+    console.error('gen', g.level.id, 'tries', tries, 'seed', seed - 1, 'par', g.level.par.relays, g.level.par.moves);
+    list.push(g.level);
+  }
 }
+const lerp = (a, b, u) => Math.round(a + (b - a) * u);
+const tree = (rec) => ({ fn: SL.generate, rec });
+addGenerated(1, 12, 51000, (u) => tree({ w: 7, h: 7, strength: 9, receivers: 1, minLen: 7, maxLen: 10, invRatio: 0.25, lockRatio: 0.1, distract: 3, minMoves: 8, maxMoves: 22 }));
+addGenerated(2, 11, 52000, (u) => tree({ w: 7, h: 7, strength: 8, receivers: 3, minLen: 4, maxLen: 6, minLen2: 2, maxLen2: 4, invRatio: 0.25, distract: 3, minMoves: lerp(8, 10, u), maxMoves: 26 }));
+addGenerated(3, 11, 53000, (u) => tree({ w: 8, h: 7, strength: 5, receivers: 2, minLen: 7, maxLen: 10, minLen2: 2, maxLen2: 4, invRatio: 0.25, boosters: 2, needBooster: true, static: 7, distract: 2, minMoves: lerp(8, 10, u), maxMoves: 26 }));
+addGenerated(4, 11, 54000, (u) => tree({ w: 8, h: 7, strength: 8, receivers: 3, minLen: 5, maxLen: 7, minLen2: 2, maxLen2: 4, invRatio: 0.25, tuners: ['amber', 'violet'], static: 3, distract: 2, minMoves: lerp(8, 10, u), maxMoves: 26 }));
+addGenerated(5, 11, 55000, (u) => tree({ w: 8, h: 8, strength: 11, receivers: 2, minLen: 6, maxLen: 9, minLen2: 4, maxLen2: 6, invRatio: 0.25, bridges: true, bridgeInv: true, static: 3, distract: 2, minMoves: lerp(8, 10, u), maxMoves: 28 }));
+addGenerated(6, 11, 56000, (u) => ({
+  fn: SL.generateMixer,
+  rec: { w: lerp(7, 8, u), h: 7, wiggle: lerp(1, 3, u), outMin: 1, outMax: 3, both: u > 0.3, invRatio: 0.15 + 0.15 * u, static: lerp(0, 3, u), decoys: u > 0.6 ? 1 : 0, distract: lerp(1, 3, u), slack: 1, minMoves: lerp(6, 10, u), maxMoves: 30 },
+}));
+addGenerated(7, 11, 57000, (u) => tree({ w: 8, h: 7, strength: 8, receivers: 2, minLen: 5, maxLen: 8, minLen2: 3, maxLen2: 4, invRatio: 0.3, decoys: 4, static: 2, distract: 2, minMoves: lerp(8, 10, u), maxMoves: 26 }));
+addGenerated(8, 11, 58000, (u) => ({
+  fn: SL.generateOrbit,
+  rec: { w: 7, h: lerp(7, 8, u), minLen: lerp(3, 4, u), maxLen: lerp(5, 7, u), minLen2: 3, maxLen2: lerp(4, 6, u), tuner: u > 0.4 ? (u > 0.7 ? 'violet' : 'amber') : null, invRatio: 0.2 + 0.1 * u, static: lerp(1, 3, u), decoys: u > 0.5 ? 1 : 0, distract: lerp(1, 3, u), slack: 1, minMoves: lerp(6, 9, u), maxMoves: 26 },
+}));
+// Region 9 mixes every rule; the kinds rotate so no two neighbours feel the same.
+addGenerated(9, 11, 59000, (u, i) => {
+  const kind = i % 3;
+  if (kind === 0) return tree({ w: 8, h: 8, strength: 10, receivers: 2, minLen: 6, maxLen: 9, minLen2: 3, maxLen2: 5, invRatio: 0.3, tuners: ['amber'], bridges: true, bridgeInv: true, decoys: 2, static: 3, distract: 2, minMoves: 10, maxMoves: 30 });
+  if (kind === 1) return { fn: SL.generateMixer, rec: { w: 8, h: 7, wiggle: 3, outMin: 2, outMax: 4, both: true, invRatio: 0.3, static: 3, decoys: 2, distract: 3, slack: 1, minMoves: 10, maxMoves: 32 } };
+  return { fn: SL.generateOrbit, rec: { w: 8, h: 8, minLen: 4, maxLen: 7, minLen2: 4, maxLen2: 6, tuner: 'violet', invRatio: 0.3, static: 3, decoys: 2, distract: 3, slack: 1, minMoves: 9, maxMoves: 30 } };
+});
+
+// ---------------- 9-12: The Last Tower. Every rule at once; solving it plays the last transmission ----------------
+const finale = fromAscii('9-12', [
+  '...X.....',
+  '.┌─ab─┐..',
+  '.│....│..',
+  'T┤..X.KS.',
+  '.│....│..',
+  '.└─v─b┘..',
+  '#########',
+  '.S───WX..',
+  '.........'], { strength: 9, inv: [[6, 3], [3, 5]], rot: { '7,3': 0, '1,7': 2 } });
+finale.final = true;
+regions[9].push(proven(finale));
+
+const out = [];
+for (let reg = 1; reg <= 9; reg++) out.push(...regions[reg]);
 for (const lv of out) console.log(lv.id.padEnd(5), lv.size.join('x'), 'par', lv.par.relays, lv.par.moves, 'inv', JSON.stringify(lv.inventory));
 const js = '/* generated by tools/build-levels.mjs, curated; par set by the solver */\nglobalThis.SL_LEVELS = ' + JSON.stringify(out) + ';\n';
 writeFileSync(join(here, '..', 'levels.js'), js);
