@@ -78,6 +78,22 @@ body.rm #combo.pop,body.rm #combo.drop{animation:none}
 #pop.show.rm,#pop2.show.rm{animation:fadeonly .9s forwards}
 @keyframes popin{0%{opacity:0;transform:scale(1.6)}12%{opacity:1;transform:scale(1)}70%{opacity:1;transform:translateY(-6px)}100%{opacity:0;transform:translateY(-18px)}}
 @keyframes fadeonly{0%,70%{opacity:1}100%{opacity:0}}
+.lvgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:min(560px,86vw);margin-bottom:10px}
+.lvgrid .item{flex-direction:column;align-items:flex-start;gap:4px;padding:11px 12px;font-size:13px}
+.lvgrid .item .st{font-size:15px;letter-spacing:.12em;color:var(--sun)}
+.lvgrid .item .st i{font-style:normal;color:rgba(255,255,255,.18)}
+.lvgrid .item.locked{opacity:.38}
+#rStars{text-align:center;font-size:34px;letter-spacing:.2em;color:var(--sun);margin:4px 0 2px;display:none}
+#rStars i{font-style:normal;color:rgba(255,255,255,.15)}
+#rStars.on{display:block}
+#rGoal{text-align:center;font:600 12px var(--mono);color:rgba(255,255,255,.6);margin-bottom:6px;min-height:1em}
+#howto .panel{max-height:88vh;overflow:auto;width:min(640px,94vw)}
+#howto canvas{width:100%;height:auto;display:block;border-radius:12px;background:#120a16;margin:4px 0 10px}
+#howto h3{font:800 12px var(--ui);letter-spacing:.24em;color:var(--mag);margin:14px 0 6px}
+#howto p,#howto li{font:500 13px/1.55 var(--ui);color:rgba(255,255,255,.82)}
+#howto ul{padding-left:18px}
+#howto b{color:#fff}
+#fuelS{font:700 11px var(--mono);margin-left:6px;color:var(--teal)}
 #banner{position:absolute;top:21%;left:0;right:0;text-align:center;font:800 clamp(16px,2.4vw,24px) var(--ui);letter-spacing:.4em;opacity:0;transition:opacity .3s}
 #banner.show{opacity:1;animation:blink .5s steps(2) 4}
 body.rm #banner.show{animation:none}
@@ -129,14 +145,16 @@ body.rm #banner.show{animation:none}
   <div id="pop"></div><div id="pop2"></div>
   <div id="tip"></div>
   <div id="stats">SPEED<b><span id="speed">0</span> <span class="u">KM/H</span></b></div>
-  <div id="right"><span id="dist">0 m</span>BOOST<div id="boost"><div id="boostfill"></div></div></div>
+  <div id="right"><span id="dist">0 m</span>BOOST<span id="fuelS"></span><div id="boost"><div id="boostfill"></div></div></div>
 </div>
 
 <div id="title" class="screen">
   <div id="logo"><h1>NEON <span>TIDE</span></h1><p>Ride the tide. Don't let it pull you under.</p></div>
   <div class="menu">
-    <button class="item" data-act="endless" data-default="1">ENDLESS TIDE <span class="sub">BEST <span id="bestEndless">-</span></span></button>
+    <button class="item" data-act="levels" data-default="1">LEVELS <span class="sub"><span id="lvStars">0</span> / 36 ★</span></button>
+    <button class="item" data-act="endless">ENDLESS TIDE <span class="sub">BEST <span id="bestEndless">-</span></span></button>
     <button class="item" data-act="daily">DAILY TIDE <span class="sub"><span id="dailyDate"></span> · <span id="bestDaily">-</span></span></button>
+    <button class="item" data-act="howto">HOW TO PLAY</button>
     <button class="item" data-act="settings">SETTINGS</button>
     <button class="item" data-act="quit">QUIT TO PLAYCHAIN</button>
   </div>
@@ -149,6 +167,7 @@ body.rm #banner.show{animation:none}
     <div class="menu">
       <button class="item" data-act="resume" data-default="1">RESUME</button>
       <button class="item" data-act="restart">RESTART <span class="sub">R / (Y)</span></button>
+      <button class="item" data-act="howto">HOW TO PLAY</button>
       <button class="item" data-act="settings">SETTINGS</button>
       <button class="item" data-act="menu">MAIN MENU</button>
       <button class="item" data-act="quit">QUIT TO PLAYCHAIN</button>
@@ -159,7 +178,9 @@ body.rm #banner.show{animation:none}
 <div id="results" class="screen dim">
   <div class="panel">
     <h2 id="rMode">ENDLESS TIDE</h2>
+    <div id="rStars"></div>
     <div id="rScore">0</div>
+    <div id="rGoal"></div>
     <div id="rNew">NEW BEST</div>
     <div id="rBest"></div>
     <div class="grid">
@@ -169,7 +190,9 @@ body.rm #banner.show{animation:none}
     </div>
     <div id="rMore"></div>
     <div class="menu">
-      <button class="item" data-act="again" data-default="1">PLAY AGAIN</button>
+      <button class="item" data-act="next" id="rNext">NEXT LEVEL</button>
+      <button class="item" data-act="again" data-default="1" id="rAgain">PLAY AGAIN</button>
+      <button class="item" data-act="levels" id="rLevels">LEVELS</button>
       <button class="item" data-act="menu">MAIN MENU</button>
     </div>
     <div class="hint">R / (Y) TO RESTART INSTANTLY</div>
@@ -192,6 +215,50 @@ body.rm #banner.show{animation:none}
     <div class="credit">NEON TIDE v1.0 · BY STEEVE (@gamersteeve) · ALL AUDIO AND ART MADE IN CODE</div>
   </div>
 </div>
+<div id="levels" class="screen dim">
+  <div class="panel">
+    <h2>LEVELS</h2>
+    <div class="lvgrid" id="lvgrid"></div>
+    <div class="menu"><button class="item" data-act="close">BACK</button></div>
+  </div>
+</div>
+
+<div id="howto" class="screen dim">
+  <div class="panel">
+    <h2>HOW TO PLAY</h2>
+    <canvas id="waveDiagram" width="1200" height="420" aria-label="Diagram: hold to dive down the face of a wave, release at the crest to launch, land on the next downslope"></canvas>
+    <h3>RIDING THE WAVES</h3>
+    <ul>
+      <li><b>Hold</b> SPACE / W / &uarr;, press and hold the screen, or hold (A) to <b>dive</b>. Diving down the face of a wave builds speed.</li>
+      <li><b>Release</b> as you reach the crest to <b>launch</b>. Holding in the air pulls you down faster; letting go lets you glide.</li>
+      <li><b>Steer</b> with A / D / &larr; &rarr;, by dragging, or with the left stick.</li>
+    </ul>
+    <h3>LANDINGS AND COMBO</h3>
+    <ul>
+      <li><b>PERFECT</b>: land within 10&deg; of the slope. +500 &times; combo and the combo grows (up to x10).</li>
+      <li><b>GOOD</b>: within 25&deg;. +200 &times; combo.</li>
+      <li><b>SPLASH</b>: a steeper landing, or hitting a buoy, rock or lightning. You lose speed and your combo resets.</li>
+      <li>Every metre also scores &times; your combo, so keeping it alive matters most.</li>
+    </ul>
+    <h3>PICKUPS</h3>
+    <ul>
+      <li><b>Blue orbs</b> (+50): each one adds half a second of boost fuel, up to 8 seconds.</li>
+      <li><b>Boost</b>: press SHIFT, (B) or tap with a second finger. It burns fuel until it runs out; press again to stop. The bar under BOOST shows your fuel.</li>
+      <li><b>Magenta gates</b> (+300): fly through them.</li>
+      <li><b>White pearls</b> (+2,500): they float high, so you need a strong launch.</li>
+    </ul>
+    <h3>HAZARDS</h3>
+    <ul>
+      <li><b>Orange buoys</b> and bigger <b>grey rocks</b>: steer around them. Passing close scores a near miss (+150).</li>
+      <li><b>Whirlpools</b> (choppy water) drag you sideways and slow you down. Jump over them.</li>
+      <li><b>Lightning</b> (surge): a marked spot flashes before it strikes. Be somewhere else.</li>
+      <li><b>The storm</b> follows you. The bar at the top shows how close it is. If it catches you, the run ends.</li>
+    </ul>
+    <h3>LEVELS AND STARS</h3>
+    <p>12 levels, each adding one new thing. Reach the finish for &#9733;, beat the score target for &#9733;&#9733;, and the higher target for &#9733;&#9733;&#9733;. Finishing a level unlocks the next. Endless Tide and the Daily Tide have no finish line: ride until the storm catches you.</p>
+    <div class="menu" style="margin-top:14px"><button class="item" data-act="close" data-default="1">GOT IT</button></div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script src="three.vendor.min.js"></script>
@@ -202,6 +269,30 @@ body.rm #banner.show{animation:none}
   var GLIDE = Math.tan(8 * Math.PI / 180);
   var DT = 1 / 60, G = 24, VMAX = 75, VMIN = 6, TAU = Math.PI * 2, D2R = Math.PI / 180;
   var ORB = 1, GATE = 2, BUOY = 3, ROCK = 4, PEARL = 5, WHIRL = 6;
+  // Boost fuel: every blue orb adds FUEL_PER_ORB seconds, up to FUEL_MAX. Press boost to burn it.
+  var FUEL_PER_ORB = 0.5, FUEL_MAX = 8;
+
+  /* Levels: each one adds a single new thing and asks for more. phases = tide phases allowed
+     (0 calm, 1 choppy, 2 surge), objs = what can spawn, storm = null or its speed curve,
+     dist = finish line in metres, stars = score for 2 and 3 stars (1 star = finish). */
+  // Star scores [2 stars, 3 stars] per level, written by tools/levels.cjs --write from bot runs.
+  var LEVEL_STARS = [[15600,22100],[22000,31200],[28000,39600],[20800,33200],[35900,68000],[7600,46100],[25200,35800],[42500,67100],[60200,85300],[37300,67800],[22400,48600],[55900,79200]];
+  var ALL = { orb: 1, gate: 1, buoy: 1, rock: 1, pearl: 1, whirl: 1 };
+  var LEVELS = [
+    { name: 'First Swell', intro: 'Hold to dive down a wave, release at the crest to fly', phases: [0], objs: { orb: 1 }, storm: null, dist: 1800 },
+    { name: 'Clean Landings', intro: 'Land matching the slope for a PERFECT and grow your combo', phases: [0], objs: { orb: 1 }, storm: null, dist: 2200 },
+    { name: 'Gates', intro: 'Fly through the magenta gates for 300 points', phases: [0], objs: { orb: 1, gate: 1 }, storm: null, dist: 2500 },
+    { name: 'Buoys', intro: 'Steer around the orange buoys. Brush past for a near miss', phases: [0], objs: { orb: 1, gate: 1, buoy: 1 }, storm: null, dist: 2800 },
+    { name: 'Boost', intro: 'Blue orbs fill your fuel. Press SHIFT / (B) / two fingers to boost', phases: [0], objs: { orb: 1, gate: 1, buoy: 1 }, storm: null, dist: 3200, orbBias: 1 },
+    { name: 'Choppy Water', intro: 'Short, steep waves. Dive late, release early', phases: [0, 1], first: 8, objs: { orb: 1, gate: 1, buoy: 1 }, storm: null, dist: 3000 },
+    { name: 'Rocks', intro: 'Grey rocks are bigger than buoys. Give them room', phases: [0, 1], objs: { orb: 1, gate: 1, buoy: 1, rock: 1 }, storm: null, dist: 3400 },
+    { name: 'The Storm', intro: 'The storm is behind you. Keep your speed up or it catches you', phases: [0, 1], objs: { orb: 1, gate: 1, buoy: 1, rock: 1 }, storm: { v0: 14, rate: 0.12, max: 42 }, dist: 3800 },
+    { name: 'Whirlpools', intro: 'Whirlpools drag you sideways and slow you. Jump over them', phases: [1, 0], first: 6, objs: { orb: 1, gate: 1, buoy: 1, rock: 1, whirl: 1 }, storm: { v0: 15, rate: 0.13, max: 44 }, dist: 4000 },
+    { name: 'Pearls', intro: 'White pearls float high: launch hard to grab 2,500 points', phases: [0, 1], objs: ALL, storm: { v0: 16, rate: 0.14, max: 48 }, dist: 4400 },
+    { name: 'Surge', intro: 'Huge swells and lightning. Leave the marked spot before it strikes', phases: [0, 2], first: 8, objs: ALL, storm: { v0: 16, rate: 0.15, max: 52 }, dist: 4800 },
+    { name: 'Full Tide', intro: 'Everything at once, and a fast storm. Ride it home', phases: [0, 1, 2], first: 10, objs: ALL, storm: { v0: 18, rate: 0.18, max: 58 }, dist: 6000 }
+  ];
+  LEVELS.forEach(function (L, i) { L.n = i + 1; L.stars = LEVEL_STARS[i] || [1e9, 1e9]; });
 
   function mulberry32(a) {
     return function () {
@@ -254,6 +345,7 @@ body.rm #banner.show{animation:none}
       this.tele = true; this.teleTick = tick;
       var r = this.rng(), cur = this.phase, n;
       if (cur === 0) n = r < 0.7 ? 1 : 2; else if (cur === 1) n = r < 0.65 ? 2 : 0; else n = r < 0.6 ? 0 : 1;
+      if (this.allowed) { var cand = this.allowed.filter(function (q) { return q !== cur; }); n = cand.length ? cand[Math.floor(this.rng() * cand.length)] : cur; }
       this.next = n; ev.push({ t: 'telegraph', phase: n });
     }
     if (tick >= this.phaseEnd) {
@@ -295,12 +387,18 @@ body.rm #banner.show{animation:none}
     this.tide = new Tide(mulberry32((this.seed ^ 0x9E3779B9) >>> 0));
     this.rng = mulberry32((this.seed ^ 0x85EBCA6B) >>> 0);
     this.noStorm = !!opts.noStorm;
+    this.L = opts.level || null;
+    if (this.L) {
+      this.tide.allowed = this.L.phases;
+      if (this.L.first) this.tide.phaseEnd = Math.round(this.L.first * 60);
+      if (!this.L.storm) this.noStorm = true;
+    }
     this.tick = 0; this.s = 0; this.lx = 0; this.sm = 0; this.v = 30; this.vy = 0; this.ground = true; this.air = 0;
     this.o = {};
     this.y = this.tide.height(0, this.roadX(0), 0);
     this.mult = 1; this.bestMult = 1; this.score = 0;
     this.perfects = 0; this.goods = 0; this.splashes = 0; this.nears = 0; this.orbs = 0; this.gates = 0; this.pearls = 0;
-    this.boost = 0; this.boostT = 0;
+    this.boost = 0; this.boostT = 0; this.fuel = 0; this.boostOn = false; this.wasBoost = false; this.finished = false;
     this.stormS = -140; this.stormV = 18;
     this.hitstop = 0; this.over = false; this.ev = []; this.objs = []; this.nextChunk = 110; this.oid = 1;
     this.bolts = []; this.nextBolt = 0; this.diving = false; this.wasDive = false; this.maxV = 30; this.orbChain = 0;
@@ -342,7 +440,14 @@ body.rm #banner.show{animation:none}
     this.objs.push({ id: this.oid++, type: type, s: s, lx: lx, yo: yo || 0, r: r || 0, dead: false, inside: false });
   };
   Game.prototype.spawnChunk = function (cs) {
-    var r = this.rng, ph = this.tide.phase, d = Math.min(1, cs / 6000), roll = r(), i, n;
+    var r = this.rng, ph = this.tide.phase, d = Math.min(1, cs / 6000), roll = r(), i, n, ok = this.L ? this.L.objs : ALL;
+    if (this.L) {
+      // categories the level does not use become orb lines (or nothing), so early levels stay readable
+      if (this.L.orbBias && roll >= 0.40 && roll < 0.58) roll = 0.2;
+      if (roll >= 0.40 && roll < 0.58 && !ok.gate) roll = ok.orb && r() < 0.5 ? 0.2 : 0.95;
+      else if (roll >= 0.58 && roll < 0.86 && !ok.buoy && !ok.rock) roll = ok.orb && r() < 0.5 ? 0.2 : 0.95;
+      else if (roll >= 0.86 && roll < 0.895 && !ok.pearl) roll = 0.95;
+    }
     if (roll < 0.40) {
       n = 5 + ((r() * 3) | 0);
       var lane = (r() * 2 - 1) * 10, arc = r() < 0.45, bend = (r() * 2 - 1) * 4;
@@ -351,11 +456,11 @@ body.rm #banner.show{animation:none}
       this.add(GATE, cs, (r() * 2 - 1) * 8);
     } else if (roll < 0.86) {
       n = 1 + (r() < 0.25 + 0.35 * d ? 1 : 0) + (r() < 0.15 * d ? 1 : 0);
-      for (i = 0; i < n; i++) this.add(r() < 0.55 ? BUOY : ROCK, cs + i * (4 + r() * 10), (r() * 2 - 1) * 12, 0, r() < 0.55 ? 1.0 : 1.5);
+      for (i = 0; i < n; i++) { var hz = r() < 0.55 ? BUOY : ROCK; if (!ok.rock) hz = BUOY; else if (!ok.buoy) hz = ROCK; this.add(hz, cs + i * (4 + r() * 10), (r() * 2 - 1) * 12, 0, hz === ROCK ? 1.5 : 1.0); }
     } else if (roll < 0.895) {
       this.add(PEARL, cs, (r() * 2 - 1) * 8, 4.5);
     }
-    if (ph === 1 && r() < 0.22) this.add(WHIRL, cs + 20, (r() * 2 - 1) * 9, 0, 11);
+    if (ph === 1 && ok.whirl && r() < 0.22) this.add(WHIRL, cs + 20, (r() * 2 - 1) * 9, 0, 11);
   };
   Game.prototype.step = function (inp) {
     if (this.over) return;
@@ -373,9 +478,15 @@ body.rm #banner.show{animation:none}
     if (!dive && this.wasDive) ev.push({ t: 'release' });
     this.wasDive = dive; this.diving = dive;
 
-    if (inp.boost && this.boost >= 1 && this.boostT <= 0) { this.boostT = 3; this.boost = 0; ev.push({ t: 'boost' }); }
-    if (this.boostT > 0) this.boostT -= DT;
-    var boosting = this.boostT > 0;
+    var bPress = !!inp.boost && !this.wasBoost; this.wasBoost = !!inp.boost;
+    if (bPress) {
+      if (this.boostOn) { this.boostOn = false; ev.push({ t: 'boostEnd' }); }
+      else if (this.fuel > 0.05) { this.boostOn = true; ev.push({ t: 'boost' }); }
+      else ev.push({ t: 'noFuel' });
+    }
+    if (this.boostOn) { this.fuel -= DT; if (this.fuel <= 0) { this.fuel = 0; this.boostOn = false; ev.push({ t: 'boostEnd' }); } }
+    var boosting = this.boostOn;
+    this.boost = this.fuel / FUEL_MAX; this.boostT = boosting ? Math.max(0.001, this.fuel) : 0;
 
     var st = inp.steer || 0; st = st < -1 ? -1 : st > 1 ? 1 : st;
     this.sm += (st - this.sm) * 0.18;
@@ -437,8 +548,8 @@ body.rm #banner.show{animation:none}
       var hy = td.height(ob.s, this.roadX(ob.s) + ob.lx, t), rel = this.y - hy, dl = Math.abs(lx - ob.lx);
       if (ob.type === ORB) {
         if (dl < 2.6 && Math.abs(rel - ob.yo) < 3.2) {
-          ob.dead = true; this.score += 50; this.orbs++; this.boost = Math.min(1, this.boost + 0.08);
-          ev.push({ t: 'orb', chain: this.orbChain++, id: ob.id, full: this.boost >= 1 });
+          ob.dead = true; this.score += 50; this.orbs++; this.fuel = Math.min(FUEL_MAX, this.fuel + FUEL_PER_ORB); this.boost = this.fuel / FUEL_MAX;
+          ev.push({ t: 'orb', chain: this.orbChain++, id: ob.id, full: this.fuel >= FUEL_MAX });
         }
       } else if (ob.type === PEARL) {
         if (dl < 3 && Math.abs(rel - ob.yo) < 3.5) { ob.dead = true; this.score += 2500; this.pearls++; ev.push({ t: 'pearl', id: ob.id }); }
@@ -480,11 +591,13 @@ body.rm #banner.show{animation:none}
 
     // storm
     if (!this.noStorm) {
-      this.stormV = Math.min(62, 18 + 0.17 * t);
+      var sc = this.L && this.L.storm ? this.L.storm : { v0: 18, rate: 0.17, max: 62 };
+      this.stormV = Math.min(sc.max, sc.v0 + sc.rate * t);
       this.stormS += this.stormV * DT;
       if (this.s - this.stormS > 260) this.stormS = this.s - 260;
       if (this.s - this.stormS <= 0) { this.over = true; ev.push({ t: 'caught' }); }
     }
+    if (this.L && !this.over && this.s >= this.L.dist) { this.over = true; this.finished = true; ev.push({ t: 'finish' }); }
   };
 
   // Simple autopilot, used for the title-screen demo ride and for headless tuning.
@@ -517,10 +630,10 @@ body.rm #banner.show{animation:none}
       if ((ob.type === BUOY || ob.type === ROCK) && ds > 0 && ds < 45 && Math.abs(target - ob.lx) < 4) target = ob.lx + (g.lx > ob.lx ? 6 : -6);
     }
     var steer = Math.max(-1, Math.min(1, (target - g.lx) * 0.25));
-    return { dive: skill >= 1 ? dive : (dive && ((g.tick / 7) | 0) % 5 !== 0), steer: steer, boost: g.boost >= 1 };
+    return { dive: skill >= 1 ? dive : (dive && ((g.tick / 7) | 0) % 5 !== 0), steer: steer, boost: !g.boostOn && g.fuel >= 3 };
   }
 
-  root.NT = { DT: DT, VMAX: VMAX, Game: Game, Tide: Tide, mulberry32: mulberry32, hashStr: hashStr, botInput: botInput,
+  root.NT = { DT: DT, VMAX: VMAX, Game: Game, LEVELS: LEVELS, FUEL_MAX: FUEL_MAX, Tide: Tide, mulberry32: mulberry32, hashStr: hashStr, botInput: botInput,
     T: { ORB: ORB, GATE: GATE, BUOY: BUOY, ROCK: ROCK, PEARL: PEARL, WHIRL: WHIRL }, PHASES: ['calm', 'choppy', 'surge'] };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -1036,6 +1149,8 @@ body.rm #banner.show{animation:none}
   T3.ColorManagement.enabled = false;
 
   // ---------------- palette (spec 4.1) ----------------
+  // Object colours: blue = pickups that fuel you, magenta = gates, warm orange = buoys, grey = rocks.
+  var OBJ = { orb: 0x3D8BFF, orbEdge: 0xBFD8FF, gate: 0xE0457B, buoy: 0xFF8A2A, buoyBand: 0xF4F0EA, rock: 0x4A464F, rockEdge: 0x8C8794, pearl: 0xFFF6EC, gold: 0xE8C26A };
   var C = { night: 0x1A0F1E, maroon: 0x2A1420, sunTop: 0xF2A65A, mag: 0xE0457B, teal: 0x4FB3B3, violet: 0x8A5A9E, white: 0xFFFFFF };
   function col(hex, k) { var c = new T3.Color(hex); if (k) c.multiplyScalar(k); return c; }
   var PHASE_LOOK = [
@@ -1050,7 +1165,7 @@ body.rm #banner.show{animation:none}
   var reducePref = false; try { reducePref = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
   var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
   var DEFAULTS = { master: 0.8, music: 0.7, sfx: 0.8, ui: 0.6, quality: isTouch ? 'low' : 'high', reduceMotion: reducePref, scanlines: false };
-  var save = { v: 1, settings: JSON.parse(JSON.stringify(DEFAULTS)), endless: { score: 0, dist: 0, combo: 1 }, daily: { date: '', score: 0, dist: 0 }, tipsDone: false, runs: 0 };
+  var save = { v: 1, settings: JSON.parse(JSON.stringify(DEFAULTS)), endless: { score: 0, dist: 0, combo: 1 }, daily: { date: '', score: 0, dist: 0 }, tipsDone: false, runs: 0, levels: {} };
   var S = save.settings;
   var loaded = false, savedSinceBoot = false, saveTimer = 0;
   function applySave(d) {
@@ -1060,6 +1175,7 @@ body.rm #banner.show{animation:none}
       if (d.endless && typeof d.endless.score === 'number') save.endless = { score: d.endless.score | 0, dist: +d.endless.dist || 0, combo: d.endless.combo | 0 || 1 };
       if (d.daily && typeof d.daily.date === 'string') save.daily = { date: d.daily.date, score: d.daily.score | 0, dist: +d.daily.dist || 0 };
       save.tipsDone = !!d.tipsDone; save.runs = d.runs | 0;
+      if (d.levels && typeof d.levels === 'object') for (var lk in d.levels) { var lv = d.levels[lk]; if (lv && typeof lv.stars === 'number') save.levels[lk] = { stars: Math.max(0, Math.min(3, lv.stars | 0)), best: lv.best | 0 }; }
     } catch (e) {}
     applySettings(); refreshTitle();
   }
@@ -1174,7 +1290,7 @@ body.rm #banner.show{animation:none}
   var waterU = {
     uBaseS: U(0), uBaseMod: U(0), uT: U(0), uK: U(fa(9)), uA: U(fa(9)), uW: U(fa(9)), uP: U(fa(9)), uRp1: U(0), uRp2: U(0),
     uTeal: U(col(C.teal)), uMag: U(col(C.mag)), uViolet: U(col(C.violet)),
-    uBase0: U(col(0x0E0712)), uBase1: U(col(C.maroon, 1.25)), uHorizon: skyU.uHorizon, uSunCol: U(col(C.mag)),
+    uBase0: U(col(0x05030A)), uBase1: U(col(C.maroon, 0.75)), uHorizon: skyU.uHorizon, uSunCol: U(col(C.mag)),
     uAmp: U(3), uTime: U(0), uCamX: U(0), uCam: U(new T3.Vector3()), uGhost: U(-1e5), uCraft: U(new T3.Vector3(0, 0, 10)),
     uFx: U([0, 0, 0, 0, 0, 0].map(function () { return new T3.Vector4(); })),
     uFxC: U([0, 0, 0, 0, 0, 0].map(function () { return new T3.Vector3(); })),
@@ -1201,15 +1317,15 @@ body.rm #banner.show{animation:none}
     ' float hn=clamp(vH/uAmp*0.5+0.5,0.0,1.0);float crest=0.22+0.95*hn*hn;',
     ' vec3 c=mix(uBase0,uBase1,hn*hn);',
     ' c+=uSunCol*0.10*clamp(-vHs*2.5,0.0,1.0);',
-    ' float across=ln(vSm/6.0,0.55*uLine);',
-    ' float along=ln(vU/7.0,0.35)*0.30*(1.0-smoothstep(25.0,80.0,abs(vU)))+ln(vU/21.0,0.35)*0.30*smoothstep(25.0,80.0,abs(vU));',
-    ' float cont=ln(vH/1.25+0.5,0.45);',
-    ' c+=uTeal*across*crest*1.35;',
-    ' c+=uMag*cont*(0.1+0.9*hn*hn);',
-    ' c+=uViolet*along*(0.5+hn)*1.1;',
+    ' float across=ln(vSm/6.0,0.32*uLine);',
+    ' float along=ln(vU/7.0,0.22)*0.30*(1.0-smoothstep(25.0,80.0,abs(vU)))+ln(vU/21.0,0.22)*0.30*smoothstep(25.0,80.0,abs(vU));',
+    ' float cont=ln(vH/1.25+0.5,0.28);',
+    ' c+=uTeal*across*crest*0.8;',
+    ' c+=uMag*cont*(0.06+0.5*hn*hn);',
+    ' c+=uViolet*along*(0.4+hn)*0.55;',
     ' float refl=exp(-abs(vX-uCamX)/(14.0+vDist*0.06))*smoothstep(30.0,380.0,vDist)*(0.25+hn*0.9);',
-    ' c+=uSunCol*refl*0.30;',
-    ' vec2 cd=vec2(vU-uCraft.x,vV-uCraft.y);float cr=dot(cd,cd);c+=uTrailCol*exp(-cr/5.0)*0.55/(1.0+uCraft.z*0.35);',
+    ' c+=uSunCol*refl*0.16;',
+    ' vec2 cd=vec2(vU-uCraft.x,vV-uCraft.y);float cr=dot(cd,cd);c+=uTrailCol*exp(-cr/5.0)*0.3/(1.0+uCraft.z*0.35);',
     ' for(int i=0;i<3;i++){vec4 w=uWh[i];if(w.w>0.0){vec2 d=vec2(vU-w.y,vV-w.x);float r=length(d);if(r<w.z){',
     '   float a=atan(d.y,d.x);float sp=sin(a*3.0+r*0.85-uTime*5.0);float m=smoothstep(w.z,w.z*0.15,r);',
     '   c=mix(c,vec3(0.02,0.0,0.04),m*0.6);c+=uViolet*smoothstep(0.7,1.0,sp)*m*1.6*w.w+uTeal*smoothstep(0.93,1.0,sp)*m*0.9*w.w;}}}',
@@ -1265,12 +1381,12 @@ body.rm #banner.show{animation:none}
     var idx = [0, 1, 5, 0, 5, 4, 1, 2, 5, 3, 4, 5, 2, 3, 5, 0, 6, 1, 0, 4, 6, 1, 6, 2, 3, 6, 4, 2, 6, 3];
     var g = new T3.BufferGeometry(); g.setAttribute('position', new T3.BufferAttribute(new Float32Array(v), 3)); g.setIndex(idx);
     var hull = new T3.Mesh(g, basic(0x241028, 1, { side: T3.DoubleSide }));
-    var edges = new T3.LineSegments(new T3.EdgesGeometry(g, 1), new T3.LineBasicMaterial({ color: col(C.teal, 2.6) }));
-    var cockpit = new T3.Mesh(new T3.OctahedronGeometry(0.22, 0), basic(C.white, 1.6)); cockpit.position.set(0, 0.36, -0.15); cockpit.scale.set(1, 0.6, 2.2);
-    var eng = glowSprite(C.mag, 1.6, 2.2); eng.position.set(0, 0.15, 0.75);
-    var under = glowSprite(C.teal, 3.6, 0.7); under.position.set(0, -0.3, 0);
-    var tipL = glowSprite(C.teal, 0.7, 2.5); tipL.position.set(-1.25, 0, 0.9);
-    var tipR = glowSprite(C.teal, 0.7, 2.5); tipR.position.set(1.25, 0, 0.9);
+    var edges = new T3.LineSegments(new T3.EdgesGeometry(g, 1), new T3.LineBasicMaterial({ color: col(C.white, 1.1) }));
+    var cockpit = new T3.Mesh(new T3.OctahedronGeometry(0.22, 0), basic(C.teal, 1.2)); cockpit.position.set(0, 0.36, -0.15); cockpit.scale.set(1, 0.6, 2.2);
+    var eng = glowSprite(C.teal, 1.1, 1.1); eng.position.set(0, 0.15, 0.75);
+    var under = glowSprite(C.teal, 2.2, 0.28); under.position.set(0, -0.3, 0);
+    var tipL = glowSprite(C.white, 0.45, 1.2); tipL.position.set(-1.25, 0, 0.9);
+    var tipR = glowSprite(C.white, 0.45, 1.2); tipR.position.set(1.25, 0, 0.9);
     craft.add(hull, edges, cockpit, eng, under, tipL, tipR);
     craft.userData = { eng: eng, under: under, edges: edges };
   })();
@@ -1283,7 +1399,7 @@ body.rm #banner.show{animation:none}
   trailGeo.setAttribute('position', new T3.BufferAttribute(trailPos, 3));
   trailGeo.setAttribute('alpha', new T3.BufferAttribute(trailA, 1));
   (function () { var idx = []; for (var i = 0; i < TRAIL_N - 1; i++) { var a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } trailGeo.setIndex(idx); })();
-  var trailU = { uCol: U(col(C.teal, 1.25)), uCol2: U(col(C.violet, 1.0)) };
+  var trailU = { uCol: U(col(C.teal, 0.8)), uCol2: U(col(C.violet, 0.6)) };
   var trail = new T3.Mesh(trailGeo, new T3.ShaderMaterial({
     uniforms: trailU, transparent: true, depthWrite: false, blending: T3.AdditiveBlending, side: T3.DoubleSide,
     vertexShader: 'attribute float alpha;varying float vA;void main(){vA=alpha;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
@@ -1324,42 +1440,48 @@ body.rm #banner.show{animation:none}
 
   // ---- objects (pooled) ----
   function mkOrb() {
+    // blue faceted sphere: the only round blue thing on the water
     var g = new T3.Group();
-    var core = new T3.Mesh(new T3.IcosahedronGeometry(0.5, 0), basic(C.teal, 2.4));
-    var e = new T3.LineSegments(new T3.EdgesGeometry(core.geometry), new T3.LineBasicMaterial({ color: col(C.white, 1.5) }));
-    g.add(core, e, glowSprite(C.teal, 3.2, 1.1)); g.userData.spin = core; g.userData.e = e; return g;
+    var core = new T3.Mesh(new T3.IcosahedronGeometry(0.55, 1), basic(OBJ.orb, 1.15));
+    var e = new T3.LineSegments(new T3.EdgesGeometry(new T3.IcosahedronGeometry(0.56, 0)), new T3.LineBasicMaterial({ color: col(OBJ.orbEdge, 1) }));
+    g.add(core, e, glowSprite(OBJ.orb, 1.8, 0.45)); g.userData.spin = core; g.userData.e = e; return g;
   }
   function mkGate() {
+    // magenta arch with a thin white inner line: clearly a doorway, not a hazard
     var g = new T3.Group();
-    var arch = new T3.Mesh(new T3.TorusGeometry(4.4, 0.16, 6, 40, Math.PI), basic(C.mag, 2.6));
-    var arch2 = new T3.Mesh(new T3.TorusGeometry(4.95, 0.06, 4, 40, Math.PI), basic(C.teal, 2.2));
-    var postG = new T3.CylinderGeometry(0.16, 0.16, 9, 6), m = basic(C.mag, 2.2);
+    var arch = new T3.Mesh(new T3.TorusGeometry(4.4, 0.13, 6, 40, Math.PI), basic(OBJ.gate, 1.4));
+    var arch2 = new T3.Mesh(new T3.TorusGeometry(4.0, 0.035, 4, 40, Math.PI), basic(C.white, 0.9));
+    var postG = new T3.CylinderGeometry(0.13, 0.13, 9, 6), m = basic(OBJ.gate, 1.1);
     var p1 = new T3.Mesh(postG, m), p2 = new T3.Mesh(postG, m); p1.position.set(-4.4, -4.5, 0); p2.position.set(4.4, -4.5, 0);
-    var s1 = glowSprite(C.mag, 3, 1), s2 = glowSprite(C.mag, 3, 1), s3 = glowSprite(C.mag, 4, 0.8);
+    var s1 = glowSprite(OBJ.gate, 1.4, 0.5), s2 = glowSprite(OBJ.gate, 1.4, 0.5), s3 = glowSprite(OBJ.gate, 1.8, 0.4);
     s1.position.set(-4.4, 0, 0); s2.position.set(4.4, 0, 0); s3.position.set(0, 4.4, 0);
     g.add(arch, arch2, p1, p2, s1, s2, s3); g.userData.arch = arch; return g;
   }
   function mkBuoy() {
+    // orange cone with a white band and a small amber light: warm colours mean "steer around"
     var g = new T3.Group();
-    var body = new T3.Mesh(new T3.CylinderGeometry(0.45, 0.85, 2.6, 8), basic(0x1E0C22));
-    var e = new T3.LineSegments(new T3.EdgesGeometry(body.geometry), new T3.LineBasicMaterial({ color: col(C.mag, 2.0) }));
-    var top = new T3.Mesh(new T3.ConeGeometry(0.45, 0.9, 8), basic(C.mag, 1.4)); top.position.y = 1.75;
-    var light = glowSprite(0xFF3060, 2.8, 1.8); light.position.y = 2.4;
-    body.position.y = 0.6; e.position.y = 0.6;
-    g.add(body, e, top, light); g.userData.light = light; return g;
+    var body = new T3.Mesh(new T3.CylinderGeometry(0.45, 0.85, 2.6, 8), basic(OBJ.buoy, 0.9));
+    var band = new T3.Mesh(new T3.CylinderGeometry(0.68, 0.74, 0.45, 8), basic(OBJ.buoyBand, 0.95));
+    var e = new T3.LineSegments(new T3.EdgesGeometry(body.geometry), new T3.LineBasicMaterial({ color: col(0x3A1A08, 1) }));
+    var top = new T3.Mesh(new T3.ConeGeometry(0.45, 0.9, 8), basic(OBJ.buoy, 0.75)); top.position.y = 1.75;
+    var light = glowSprite(0xFFB040, 1.3, 1.0); light.position.y = 2.35;
+    body.position.y = 0.6; e.position.y = 0.6; band.position.y = 0.9;
+    g.add(body, band, e, top, light); g.userData.light = light; return g;
   }
   function mkRock() {
+    // matte grey, jagged, no glow at all
     var g = new T3.Group();
-    var r = new T3.Mesh(new T3.DodecahedronGeometry(1.7, 0), basic(0x140A18));
-    var e = new T3.LineSegments(new T3.EdgesGeometry(r.geometry), new T3.LineBasicMaterial({ color: col(C.violet, 2.4) }));
+    var r = new T3.Mesh(new T3.DodecahedronGeometry(1.7, 0), basic(OBJ.rock, 1));
+    var e = new T3.LineSegments(new T3.EdgesGeometry(r.geometry), new T3.LineBasicMaterial({ color: col(OBJ.rockEdge, 1) }));
     r.scale.set(1.15, 1.0, 1.1); e.scale.copy(r.scale); g.add(r, e); return g;
   }
   function mkPearl() {
+    // pearl-white sphere with a gold ring
     var g = new T3.Group();
-    var p = new T3.Mesh(new T3.SphereGeometry(0.75, 16, 12), basic(0xFFF0FA, 2.2));
-    var ring = new T3.Mesh(new T3.TorusGeometry(1.4, 0.05, 4, 32), basic(C.teal, 2.5));
-    var ring2 = new T3.Mesh(new T3.TorusGeometry(1.7, 0.04, 4, 32), basic(C.mag, 2.5));
-    g.add(p, ring, ring2, glowSprite(0xFFFFFF, 6, 1.1)); g.userData.r1 = ring; g.userData.r2 = ring2; return g;
+    var p = new T3.Mesh(new T3.SphereGeometry(0.75, 16, 12), basic(OBJ.pearl, 1.05));
+    var ring = new T3.Mesh(new T3.TorusGeometry(1.4, 0.05, 4, 32), basic(OBJ.gold, 1.1));
+    var ring2 = new T3.Mesh(new T3.TorusGeometry(1.7, 0.035, 4, 32), basic(OBJ.gold, 0.8));
+    g.add(p, ring, ring2, glowSprite(0xFFFFFF, 3, 0.45)); g.userData.r1 = ring; g.userData.r2 = ring2; return g;
   }
   var makers = {}; makers[OT.ORB] = mkOrb; makers[OT.GATE] = mkGate; makers[OT.BUOY] = mkBuoy; makers[OT.ROCK] = mkRock; makers[OT.PEARL] = mkPearl;
   var pools = {}, live = {};
@@ -1381,7 +1503,7 @@ body.rm #banner.show{animation:none}
   // ---------------- post processing ----------------
   var composer = new T3.EffectComposer(renderer);
   composer.addPass(new T3.RenderPass(scene, camera));
-  var bloom = new T3.UnrealBloomPass(new T3.Vector2(640, 360), 0.62, 0.4, 0.62);
+  var bloom = new T3.UnrealBloomPass(new T3.Vector2(640, 360), 0.28, 0.25, 0.82);   // less glare: weaker, tighter, only the brightest bits
   composer.addPass(bloom);
   var post2 = new T3.ShaderPass({
     uniforms: { tDiffuse: U(null), uTime: U(0), uCA: U(0), uGrain: U(0.04), uScan: U(0), uStorm: U(0), uBoost: U(0), uFlash: U(0), uFlashCol: U(new T3.Color(1, 1, 1)), uLines: U(0), uRes: U(new T3.Vector2(1280, 720)), uTeal: U(col(C.teal)) },
@@ -1391,8 +1513,8 @@ body.rm #banner.show{animation:none}
       'vec3 c=vec3(texture2D(tDiffuse,uv+o).r,texture2D(tDiffuse,uv).g,texture2D(tDiffuse,uv-o).b);\n' +
       'float r=length(d*vec2(uRes.x/uRes.y,1.0));float ang=atan(d.y,d.x);\n' +
       'float li=floor(ang*70.0);float lh=hash12(vec2(li,3.0));float dash=step(0.55,fract(r*2.2-uTime*(3.0+lh*3.0)+lh*7.0));\n' +
-      'c+=vec3(0.75,0.95,1.0)*step(0.86,lh)*dash*smoothstep(0.38,0.9,r)*uLines*0.35;\n' +
-      'c+=uTeal*smoothstep(0.45,0.95,r)*uBoost*0.9;\n' +
+      'c+=vec3(0.75,0.95,1.0)*step(0.86,lh)*dash*smoothstep(0.38,0.9,r)*uLines*0.2;\n' +
+      'c+=uTeal*smoothstep(0.45,0.95,r)*uBoost*0.45;\n' +
       'float st=hash12(floor(gl_FragCoord.xy/2.0)+floor(uTime*30.0)*13.1);float edge=smoothstep(0.95-uStorm*0.75,1.15-uStorm*0.6,r+st*0.08);\n' +
       'c=mix(c,vec3(0.05,0.02,0.07)+vec3(0.35,0.3,0.45)*st*st*0.6,edge*min(1.0,uStorm*1.3)*0.92);\n' +
       'c*=1.0-0.28*smoothstep(0.35,1.0,r);\n' +
@@ -1439,10 +1561,11 @@ body.rm #banner.show{animation:none}
 
   // ---------------- DOM ----------------
   var $ = function (id) { return document.getElementById(id); };
-  var hud = $('hud'), elScore = $('score'), elDist = $('dist'), elCombo = $('combo'), elSpeed = $('speed'), elBoost = $('boostfill'), elBoostW = $('boost'),
+  var hud = $('hud'), elScore = $('score'), elDist = $('dist'), elCombo = $('combo'), elSpeed = $('speed'), elBoost = $('boostfill'), elBoostW = $('boost'), elFuelS = $('fuelS'), elGaplbl = $('gaplbl'),
     elGap = $('gapfill'), elGapW = $('gap'), elPop = $('pop'), elPop2 = $('pop2'), elBanner = $('banner'), elTip = $('tip'), elToast = $('toast');
   var fxCanvas = $('fx'), fxCtx = fxCanvas.getContext('2d');
-  var screens = { title: $('title'), pause: $('pause'), results: $('results'), settings: $('settings') };
+  var screens = { title: $('title'), pause: $('pause'), results: $('results'), settings: $('settings'), levels: $('levels'), howto: $('howto') };
+  var OVERLAYS = ['settings', 'levels', 'howto'];
 
   function fmt(n) { n = Math.floor(n); return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
   function utcDate() { var d = new Date(); return d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + d.getUTCDate()).slice(-2); }
@@ -1460,7 +1583,7 @@ body.rm #banner.show{animation:none}
     if (def) setFocus(curItems().indexOf(def));
   }
   function curScreen() {
-    if (screens.settings.classList.contains('on')) return screens.settings;
+    for (var oi = OVERLAYS.length - 1; oi >= 0; oi--) if (screens[OVERLAYS[oi]].classList.contains('on')) return screens[OVERLAYS[oi]];
     for (var k in screens) if (screens[k].classList.contains('on')) return screens[k];
     return null;
   }
@@ -1488,24 +1611,94 @@ body.rm #banner.show{animation:none}
     activate(it.getAttribute('data-act'));
   }
   function navBack() {
-    if (screens.settings.classList.contains('on')) { audio.sfx('back'); closeSettings(); }
+    if (screens.levels.classList.contains('on') || screens.howto.classList.contains('on')) { audio.sfx('back'); closeOverlay(); }
+    else if (screens.settings.classList.contains('on')) { audio.sfx('back'); closeSettings(); }
     else if (state === 'pause') { audio.sfx('back'); resumeGame(); }
     else if (state === 'results') { activate('menu'); }
   }
   var settingsFrom = null;
   function openSettings() { settingsFrom = curScreen(); if (settingsFrom) settingsFrom.classList.remove('on'); screens.settings.classList.add('on'); renderSettings(); focusIdx = 0; setFocus(0); }
   function closeSettings() { screens.settings.classList.remove('on'); if (settingsFrom) settingsFrom.classList.add('on'); var items = curItems(); var idx = 0; items.forEach(function (e, j) { if (e.getAttribute('data-act') === 'settings') idx = j; }); setFocus(idx); }
+  /* Levels and How to Play open over the current screen and return to it, like Settings. */
+  var overlayFrom = null, overlayName = null;
+  function openOverlay(name) {
+    overlayFrom = curScreen(); overlayName = name;
+    if (overlayFrom) overlayFrom.classList.remove('on');
+    screens[name].classList.add('on');
+    if (name === 'levels') renderLevels();
+    if (name === 'howto') { drawWaveDiagram(); screens.howto.querySelector('.panel').scrollTop = 0; }
+    var items = curItems(), def = screens[name].querySelector('[data-default]'), idx = def ? items.indexOf(def) : 0;
+    if (name === 'levels') { idx = 0; items.forEach(function (e, j) { if (e.getAttribute('data-act') === 'lvl:' + nextOpenLevel()) idx = j; }); }
+    focusIdx = 0; setFocus(Math.max(0, idx));
+  }
+  function closeOverlay() {
+    if (!overlayName) return;
+    screens[overlayName].classList.remove('on'); overlayName = null;
+    if (overlayFrom) overlayFrom.classList.add('on');
+    setFocus(0);
+  }
+  function levelStars(n) { var r = save.levels[n]; return r ? r.stars : 0; }
+  function levelOpen(n) { return n === 1 || levelStars(n - 1) > 0; }
+  function nextOpenLevel() { for (var n = 1; n <= NT.LEVELS.length; n++) if (levelOpen(n) && !levelStars(n)) return n; return 1; }
+  function totalStars() { var t = 0; for (var k in save.levels) t += save.levels[k].stars || 0; return t; }
+  function starStr(n) { var o = ''; for (var i = 0; i < 3; i++) o += i < n ? '\u2605' : '<i>\u2605</i>'; return o; }
+  function renderLevels() {
+    $('lvgrid').innerHTML = NT.LEVELS.map(function (L) {
+      var open = levelOpen(L.n), st = levelStars(L.n);
+      return '<button class="item' + (open ? '' : ' locked') + '" data-act="lvl:' + L.n + '"' + (open ? '' : ' aria-disabled="true"') + '><span>' + L.n + '. ' + L.name.toUpperCase() + '</span><span class="st">' + (open ? starStr(st) : 'LOCKED') + '</span></button>';
+    }).join('');
+  }
+  /* The wave diagram for How to Play: one swell, where to hold, where to release, the flight and the landing. */
+  function drawWaveDiagram() {
+    var cv = $('waveDiagram'), c = cv.getContext('2d'), W = cv.width, H = cv.height, base = H * 0.62, A = H * 0.22;
+    var y = function (x) { return base - A * Math.sin((x / W) * Math.PI * 2.6 - 0.4); };
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#120a16'; c.fillRect(0, 0, W, H);
+    // water body
+    c.beginPath(); c.moveTo(0, H); for (var x = 0; x <= W; x += 6) c.lineTo(x, y(x)); c.lineTo(W, H); c.closePath();
+    var gr = c.createLinearGradient(0, base - A, 0, H); gr.addColorStop(0, '#1d2f3a'); gr.addColorStop(1, '#0b1016'); c.fillStyle = gr; c.fill();
+    // find crest and troughs
+    var pts = []; for (x = 0; x <= W; x += 2) pts.push([x, y(x)]);
+    var crest = pts.reduce(function (b, p) { return p[0] > W * 0.25 && p[0] < W * 0.6 && p[1] < b[1] ? p : b; }, [0, 1e9]);
+    var trough = pts.reduce(function (b, p) { return p[0] < crest[0] && p[1] > b[1] ? p : b; }, [0, -1e9]);
+    // dive section (trough-side face going down into the trough): magenta; climb to crest: teal
+    function seg(x0, x1, col, w) { c.beginPath(); for (var xx = x0; xx <= x1; xx += 3) { var yy = y(xx); if (xx === x0) c.moveTo(xx, yy); else c.lineTo(xx, yy); } c.strokeStyle = col; c.lineWidth = w; c.stroke(); }
+    seg(0, W, 'rgba(79,179,179,.35)', 3);
+    seg(Math.max(0, trough[0] - W * 0.17), trough[0], '#E0457B', 9);
+    seg(trough[0], crest[0], '#4FB3B3', 9);
+    // flight arc from crest to the far downslope
+    var landX = crest[0] + W * 0.3, ly = y(landX);
+    c.setLineDash([14, 12]); c.beginPath(); c.moveTo(crest[0], crest[1]);
+    c.quadraticCurveTo((crest[0] + landX) / 2, crest[1] - H * 0.28, landX, ly); c.strokeStyle = '#F2A65A'; c.lineWidth = 5; c.stroke(); c.setLineDash([]);
+    // markers
+    function dot(px, py, col) { c.beginPath(); c.arc(px, py, 13, 0, 7); c.fillStyle = col; c.fill(); c.lineWidth = 3; c.strokeStyle = '#fff'; c.stroke(); }
+    function label(t, px, py, col, al) { c.font = '800 34px system-ui,sans-serif'; c.fillStyle = col; c.textAlign = al || 'center'; c.fillText(t, px, py); }
+    var dx = trough[0] - W * 0.1; dot(dx, y(dx), '#E0457B'); label('HOLD: DIVE', dx, y(dx) + 60, '#E0457B');
+    dot(crest[0], crest[1], '#4FB3B3'); label('RELEASE AT THE CREST', crest[0], crest[1] - 34, '#4FB3B3');
+    dot(landX, ly, '#F2A65A'); label('LAND ON THE DOWNSLOPE', landX, ly + 60, '#F2A65A');
+    c.font = '600 26px system-ui,sans-serif'; c.fillStyle = 'rgba(255,255,255,.75)'; c.textAlign = 'left';
+    c.fillText('Match the slope when you land: PERFECT within 10\u00b0, GOOD within 25\u00b0', 24, H - 24);
+  }
   function activate(act) {
     if (!act) return;
+    if (act.indexOf('lvl:') === 0) {
+      var ln = +act.slice(4);
+      if (!levelOpen(ln)) { audio.sfx('back'); toast('Finish level ' + (ln - 1) + ' to unlock'); return; }
+      audio.sfx('select'); if (overlayName) { screens[overlayName].classList.remove('on'); overlayName = null; } startRun('level', ln); return;
+    }
     audio.sfx(act === 'menu' || act === 'back' ? 'back' : 'select');
     switch (act) {
       case 'endless': startRun('endless'); break;
       case 'daily': startRun('daily'); break;
       case 'settings': openSettings(); break;
+      case 'levels': if (state === 'results') { show(null); state = 'title'; screens.title.classList.add('on'); song('title'); refreshTitle(); } openOverlay('levels'); break;
+      case 'howto': openOverlay('howto'); break;
+      case 'close': closeOverlay(); break;
+      case 'next': startRun('level', Math.min(NT.LEVELS.length, levelNo + 1)); break;
       case 'back': closeSettings(); break;
       case 'resume': resumeGame(); break;
-      case 'restart': startRun(mode); break;
-      case 'again': startRun(mode); break;
+      case 'restart': startRun(mode, levelNo); break;
+      case 'again': startRun(mode, levelNo); break;
       case 'menu': goTitle(); break;
       case 'quit': post({ type: 'playchain:exit' }); if (state === 'pause') goTitle(); break;
     }
@@ -1548,6 +1741,7 @@ body.rm #banner.show{animation:none}
     $('bestEndless').textContent = save.endless.score ? fmt(save.endless.score) : '-';
     $('dailyDate').textContent = d;
     $('bestDaily').textContent = save.daily.date === d && save.daily.score ? fmt(save.daily.score) : '-';
+    $('lvStars').textContent = totalStars();
     var q = document.querySelectorAll('[data-act="quit"]'); for (var i = 0; i < q.length; i++) q[i].style.display = inFrame ? '' : 'none';
   }
 
@@ -1653,20 +1847,24 @@ body.rm #banner.show{animation:none}
   var game = null, mode = 'endless', demo = null, acc = 0;
   var prev = { s: 0, lx: 0, y: 0, tick: 0 };
   var run = null; // per-run visual state
-  var dyingT = 0, resultsT = 0, rollScore = 0, comboShown = 1, tip = null;
+  var finishWin = false, dyingT = 0, resultsT = 0, rollScore = 0, comboShown = 1, tip = null;
   function newSeed() { try { var a = new Uint32Array(1); crypto.getRandomValues(a); return a[0]; } catch (e) { return (Date.now() * 2654435761) >>> 0; } }
-  function startRun(m) {
+  var levelNo = 0;
+  function startRun(m, ln) {
     audioStart();
-    mode = m;
-    var seed = m === 'daily' ? NT.hashStr('neon-tide:' + utcDate()) : newSeed();
-    game = new NT.Game(seed);
+    mode = m; levelNo = m === 'level' ? (ln || 1) : 0;
+    var L = m === 'level' ? NT.LEVELS[levelNo - 1] : null;
+    var seed = m === 'daily' ? NT.hashStr('neon-tide:' + utcDate()) : L ? NT.hashStr('neon-tide-level-' + levelNo) : newSeed();
+    game = new NT.Game(seed, L ? { level: L } : undefined);
     snap(game);
     acc = 0; state = 'play'; dyingT = 0; rollScore = 0; comboShown = 1;
     run = { flash: 0, shake: 0, popT: 0, banner: 0, fov: 64, camY: game.y + 4, camLookY: game.y, camX: game.roadX(0), camLx: 0, fx: [], boltLife: 0, lookTele: -1, telePhase: 0, teleT: 0, best: m === 'daily' ? (save.daily.date === utcDate() ? save.daily.dist : 0) : save.endless.dist };
     trailHist.length = 0; releaseAll(); for (var i = 0; i < PN; i++) pLife[i] = 0;
     show(null); hud.classList.add('on');
     elBanner.className = ''; elPop.className = ''; elPop2.className = '';
-    $('modeTag').textContent = m === 'daily' ? 'DAILY TIDE ' + utcDate() : 'ENDLESS TIDE';
+    $('modeTag').textContent = L ? 'LEVEL ' + L.n + ' \u00b7 ' + L.name.toUpperCase() : m === 'daily' ? 'DAILY TIDE ' + utcDate() : 'ENDLESS TIDE';
+    elGapW.style.visibility = elGaplbl.style.visibility = game.noStorm ? 'hidden' : '';
+    if (L) setTimeout(function () { if (state === 'play' && game && game.L === L) { popText(elPop2, 'LEVEL ' + L.n + ': ' + L.name.toUpperCase(), 'teal'); toast(L.intro); } }, 400);
     song('ride');
     tip = save.tipsDone ? null : { step: 0, t: 0 };
     updateTip();
@@ -1693,15 +1891,29 @@ body.rm #banner.show{animation:none}
     run = { flash: 0, shake: 0, fov: 60, camY: demo.y + 4, camLookY: demo.y, camX: demo.roadX(0), camLx: 0, fx: [], best: -1e9, telePhase: 0, teleT: 0 };
   }
   function snap(g) { prev.s = g.s; prev.lx = g.lx; prev.y = g.y; prev.tick = g.tick; }
-  function endRun() {
-    state = 'dying'; dyingT = 0;
-    audio.sfx('caught');
+  function endRun(won) {
+    state = 'dying'; dyingT = 0; finishWin = !!won;
+    if (won) { audio.sfx('newBest'); popText(elPop, 'FINISH', 'teal'); } else audio.sfx('caught');
     hud.classList.add('on');
   }
   function showResults() {
     var g = game, score = Math.floor(g.score), dist = Math.floor(g.s), isNew = false, prevBest;
     save.runs++;
-    if (mode === 'daily') {
+    var L = mode === 'level' ? NT.LEVELS[levelNo - 1] : null, stars = 0;
+    $('rStars').classList.toggle('on', !!L);
+    $('rNext').style.display = L && g.finished && levelNo < NT.LEVELS.length ? '' : 'none';
+    $('rLevels').style.display = L ? '' : 'none';
+    $('rAgain').firstChild.textContent = L && !g.finished ? 'TRY AGAIN' : L ? 'REPLAY' : 'PLAY AGAIN';
+    $('rGoal').textContent = '';
+    if (L) {
+      stars = g.finished ? 1 + (score >= L.stars[0] ? 1 : 0) + (score >= L.stars[1] ? 1 : 0) : 0;
+      var rec = save.levels[levelNo] || { stars: 0, best: 0 };
+      prevBest = rec.best; isNew = score > rec.best && g.finished;
+      save.levels[levelNo] = { stars: Math.max(rec.stars, stars), best: g.finished ? Math.max(rec.best, score) : rec.best };
+      $('rStars').innerHTML = starStr(stars);
+      $('rGoal').textContent = g.finished ? '\u2605\u2605 ' + fmt(L.stars[0]) + '   \u2605\u2605\u2605 ' + fmt(L.stars[1]) : 'CAUGHT AT ' + fmt(dist) + ' OF ' + fmt(L.dist) + ' M';
+      if (g.finished && levelNo < NT.LEVELS.length && rec.stars === 0) toast('Level ' + (levelNo + 1) + ' unlocked: ' + NT.LEVELS[levelNo].name);
+    } else if (mode === 'daily') {
       var d = utcDate(); if (save.daily.date !== d) save.daily = { date: d, score: 0, dist: 0 };
       prevBest = save.daily.score;
       if (score > save.daily.score) { save.daily.score = score; save.daily.dist = dist; isNew = true; }
@@ -1713,13 +1925,14 @@ body.rm #banner.show{animation:none}
     post({ type: 'playchain:score', score: score });
     state = 'results';
     resultsData = { score: score, shown: 0, isNew: isNew, t: 0, ticked: 0 };
-    $('rMode').textContent = mode === 'daily' ? "TODAY'S TIDE  " + utcDate() : 'ENDLESS TIDE';
+    $('rMode').textContent = L ? 'LEVEL ' + L.n + ' \u00b7 ' + L.name.toUpperCase() + (g.finished ? ' \u00b7 CLEAR' : '') : mode === 'daily' ? "TODAY'S TIDE  " + utcDate() : 'ENDLESS TIDE';
     $('rScore').textContent = '0';
     $('rDist').textContent = fmt(dist) + ' m';
     $('rCombo').textContent = 'x' + g.bestMult;
     $('rPerf').textContent = g.perfects;
     $('rMore').textContent = g.orbs + ' orbs  ·  ' + g.gates + ' gates  ·  ' + g.nears + ' near misses' + (g.pearls ? '  ·  ' + g.pearls + ' pearl' + (g.pearls > 1 ? 's' : '') : '');
-    $('rBest').textContent = 'BEST ' + fmt(mode === 'daily' ? save.daily.score : save.endless.score);
+    $('rBest').textContent = 'BEST ' + fmt(L ? save.levels[levelNo].best : mode === 'daily' ? save.daily.score : save.endless.score);
+    if (L) setTimeout(function () { var nx = $('rNext'); if (state === 'results' && nx.style.display !== 'none') setFocus(curItems().indexOf(nx)); }, 0);
     $('rNew').classList.remove('on');
     show('results'); hud.classList.remove('on');
     song('results');
@@ -1795,7 +2008,10 @@ body.rm #banner.show{animation:none}
           burst(g.s, x, g.y + 3, 40, 0xFFFFFF, 9, 1.0, 0.6, 6, g.v * 0.6);
           if (!isDemo) { audio.sfx('pearl'); popText(elPop, 'TIDE PEARL', 'perf'); popText(elPop2, '+2,500', 'small'); flash(0.15, 0xffffff); }
           break;
-        case 'caught': if (!isDemo) endRun(); break;
+        case 'caught': if (!isDemo) endRun(false); break;
+        case 'finish': if (!isDemo) endRun(true); break;
+        case 'noFuel': if (!isDemo) popText(elPop2, 'NO FUEL: GRAB BLUE ORBS', 'small'); break;
+        case 'boostEnd': break;
       }
     }
     ev.length = 0;
@@ -1908,7 +2124,7 @@ body.rm #banner.show{animation:none}
         m.rotation.y = -Math.atan(g.roadDX(ob.s));
         var fl = m.userData.flash; if (fl > 0) { m.userData.flash = Math.max(0, fl - dt * 2); }
         m.scale.setScalar(1 + fl * 0.25);
-        m.userData.arch.material.color.setHex(C.mag).multiplyScalar(2.6 + fl * 4);
+        m.userData.arch.material.color.setHex(OBJ.gate).multiplyScalar(1.4 + fl * 2);
       } else if (ob.type === OT.BUOY) {
         var sl2 = td.sample(ob.s, ox, tT, tmpO);
         m.rotation.x = Math.atan(sl2.hs) * 0.8; m.rotation.z = Math.sin(timeAcc * 1.7 + ob.id) * 0.12;
@@ -2008,7 +2224,7 @@ body.rm #banner.show{animation:none}
     PU.uBoost.value += ((boosting ? 1 : 0) - PU.uBoost.value) * (1 - Math.exp(-dt * 6));
     var storm = 0;
     if (playing) { var gap = g.gap(); storm = Math.max(0, Math.min(1, 1 - gap / 140)); }
-    if (state === 'dying') storm = Math.min(1.25, 1 + dyingT);
+    if (state === 'dying' && !finishWin) storm = Math.min(1.25, 1 + dyingT);
     PU.uStorm.value = storm;
     PU.uScan.value = S.scanlines ? 1 : 0;
     PU.uGrain.value = window.__noGrain ? 0 : S.reduceMotion ? 0.02 : 0.045;
@@ -2023,17 +2239,17 @@ body.rm #banner.show{animation:none}
     var target = Math.floor(g.score);
     if (rollScore < target) rollScore = Math.min(target, rollScore + Math.max(1, (target - rollScore) * Math.min(1, dt * 9)));
     elScore.textContent = fmt(rollScore);
-    elDist.textContent = fmt(g.s) + ' m';
+    elDist.textContent = g.L ? fmt(Math.min(g.s, g.L.dist)) + ' / ' + fmt(g.L.dist) + ' m' : fmt(g.s) + ' m';
     elSpeed.textContent = Math.round(g.v * 3.6);
     if (g.mult !== comboShown) {
       var up = g.mult > comboShown; comboShown = g.mult;
       elCombo.textContent = 'x' + g.mult;
       elCombo.className = ''; void elCombo.offsetWidth; elCombo.className = (up ? 'pop' : 'drop') + (g.mult >= 6 ? ' hot' : g.mult >= 3 ? ' warm' : '');
     }
-    var bf = g.boostT > 0 ? g.boostT / 3 : g.boost;
-    elBoost.style.width = (bf * 100) + '%';
-    elBoostW.classList.toggle('full', g.boost >= 1 && g.boostT <= 0);
-    elBoostW.classList.toggle('active', g.boostT > 0);
+    elBoost.style.width = (g.fuel / NT.FUEL_MAX * 100) + '%';
+    elFuelS.textContent = g.fuel > 0 ? g.fuel.toFixed(1) + 's' : '';
+    elBoostW.classList.toggle('full', g.fuel >= 1 && !g.boostOn);
+    elBoostW.classList.toggle('active', g.boostOn);
     var gp = Math.max(0, Math.min(1, g.gap() / 260));
     elGap.style.width = (gp * 100) + '%';
     elGapW.classList.toggle('danger', gp < 0.35);
