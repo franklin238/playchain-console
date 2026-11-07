@@ -377,7 +377,26 @@ addGenerated(9, 11, 59000, (u, i) => {
 });
 
 // ---------------- 9-12: The Last Tower. Every rule at once; solving it plays the last transmission ----------------
-const finale = fromAscii('9-12', [
+// ---------------- Deep sectors: 100 more levels, harder takes on each region's own rule ----------------
+// Appended after the v2 levels (which stay byte-for-byte the same), before the finale.
+const deep = { w: 8, h: 8, invRatio: 0.35, distract: 3, maxMoves: 40 };
+addGenerated(1, 23, 61000, (u) => tree({ ...deep, strength: 11, receivers: 1, minLen: 9, maxLen: 13, lockRatio: 0.1, static: 4, minMoves: lerp(11, 14, u) }));
+addGenerated(2, 22, 62000, (u) => tree({ ...deep, strength: 9, receivers: 3, minLen: 5, maxLen: 7, minLen2: 3, maxLen2: 5, static: 3, minMoves: lerp(11, 14, u) }));
+addGenerated(3, 22, 63000, (u) => tree({ ...deep, w: 9, strength: 5, receivers: 2, minLen: 8, maxLen: 12, minLen2: 3, maxLen2: 5, boosters: 3, needBooster: true, static: 9, minMoves: lerp(10, 13, u) }));
+addGenerated(4, 22, 64000, (u) => tree({ ...deep, strength: 9, receivers: 3, minLen: 5, maxLen: 8, minLen2: 3, maxLen2: 4, tuners: ['amber', 'violet'], static: 4, decoys: u > 0.5 ? 1 : 0, minMoves: lerp(10, 13, u) }));
+addGenerated(5, 22, 65000, (u) => tree({ ...deep, w: 9, strength: 12, receivers: 2, minLen: 7, maxLen: 10, minLen2: 4, maxLen2: 6, bridges: true, bridgeInv: true, static: 4, minMoves: lerp(10, 13, u) }));
+addGenerated(6, 22, 66000, (u) => ({ fn: SL.generateMixer, rec: { w: lerp(8, 9, u), h: 8, wiggle: lerp(3, 5, u), outMin: 2, outMax: 4, both: true, invRatio: 0.35, static: lerp(3, 5, u), decoys: lerp(1, 2, u), distract: 3, slack: 1, minMoves: lerp(10, 13, u), maxMoves: 40 } }));
+addGenerated(7, 22, 67000, (u) => tree({ ...deep, w: 9, strength: 9, receivers: 3, minLen: 5, maxLen: 8, minLen2: 3, maxLen2: 4, decoys: lerp(5, 7, u), static: 3, minMoves: lerp(10, 13, u) }));
+addGenerated(8, 22, 68000, (u) => ({ fn: SL.generateOrbit, rec: { w: 8, h: 9, minLen: 5, maxLen: 8, minLen2: 4, maxLen2: 7, tuner: u > 0.5 ? 'violet' : 'amber', invRatio: 0.35, static: lerp(3, 5, u), decoys: lerp(1, 3, u), distract: 3, slack: 1, minMoves: lerp(10, 13, u), maxMoves: 40 } }));
+addGenerated(9, 23, 69000, (u, i) => {
+  const kind = i % 3;
+  if (kind === 0) return tree({ ...deep, w: 9, strength: 11, receivers: 3, minLen: 6, maxLen: 9, minLen2: 3, maxLen2: 5, tuners: ['amber', 'violet'], bridges: true, bridgeInv: true, decoys: 3, static: 4, minMoves: 12 });
+  if (kind === 1) return { fn: SL.generateMixer, rec: { w: 9, h: 8, wiggle: 5, outMin: 3, outMax: 5, both: true, invRatio: 0.38, static: 5, decoys: 3, distract: 4, slack: 1, minMoves: 12, maxMoves: 44 } };
+  return { fn: SL.generateOrbit, rec: { w: 9, h: 9, minLen: 6, maxLen: 9, minLen2: 5, maxLen2: 8, tuner: 'violet', invRatio: 0.38, static: 5, decoys: 3, distract: 4, slack: 1, minMoves: 12, maxMoves: 44 } };
+});
+
+// ---------------- The Last Tower finale, always the very last sector ----------------
+const finale = fromAscii('9-12', [   // the original id keeps the original scramble; renamed below
   '...X.....',
   '.┌─ab─┐..',
   '.│....│..',
@@ -388,6 +407,7 @@ const finale = fromAscii('9-12', [
   '.S───WX..',
   '.........'], { strength: 9, inv: [[6, 3], [3, 5]], rot: { '7,3': 0, '1,7': 2 } });
 finale.final = true;
+finale.id = `9-${regions[9].length + 1}`;
 regions[9].push(proven(finale));
 
 const out = [];

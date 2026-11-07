@@ -67,6 +67,21 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 #mapPanel h3{margin:.2em 0 .1em;font-size:22px;color:#fff}
 #mapPanel .rule{margin:0 0 .8em;color:var(--muted);font-size:13px}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+#mapPanel{overflow-y:auto}
+.awards{display:grid;gap:8px;margin:8px 0 12px}
+.award{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;border:1px solid var(--dead);border-radius:12px;padding:8px 10px}
+.award.on{border-color:var(--dimteal);background:rgba(62,127,132,.12)}
+.award svg{width:64px;height:64px}
+.award b{display:block;color:#fff;font-size:15px}
+.award .req{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.award .bar{height:5px;border-radius:3px;background:var(--dead);margin-top:5px;overflow:hidden}
+.award .bar i{display:block;height:100%;background:var(--teal)}
+.award:not(.on) svg{filter:grayscale(1);opacity:.45}
+.newaward{display:flex;gap:12px;align-items:center;border:1px solid var(--amber);border-radius:12px;padding:8px 12px;margin:8px 0;background:rgba(227,168,87,.08)}
+.newaward svg{width:56px;height:56px;flex:none}
+.newaward small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--amber)}
+.ceremony{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.ceremony svg{width:44px;height:44px}
 .lvb{border:1px solid var(--dead);border-radius:10px;background:rgba(26,32,36,.8);padding:8px 4px 6px;text-align:center;font-family:var(--mono);font-size:13px}
 .lvb .s{display:block;font-size:11px;letter-spacing:.1em;color:var(--dead);margin-top:2px}
 .lvb .s .on{color:var(--teal)}
@@ -221,7 +236,7 @@ var inFrame = window.parent !== window;
 function post(msg) { if (inFrame) try { window.parent.postMessage(msg, '*'); } catch (e) {} }
 var prefersRM = false; try { prefersRM = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
 var save = {
-  v: 2, stars: {}, best: {}, hintsUsed: 0, hinted: {}, unlocked: [1], decoded: [], daily: {}, lastRegion: 1,
+  v: 3, stars: {}, best: {}, hintsUsed: 0, hinted: {}, unlocked: [1], decoded: [], daily: {}, lastRegion: 1,
   partial: [], ach: {}, storm: { best: 0, runs: 0 }, finalHeard: false,
   settings: { music: 0.8, amb: 0.55, sfx: 0.8, ui: 0.6, scan: true, reduce: prefersRM, patterns: true, text: 1 }
 };
@@ -241,6 +256,12 @@ function migrateV1(d) {
 function mergeSave(d) {
   if (!d || typeof d !== 'object') return;
   if (!(d.v >= 2)) d = migrateV1(d);
+  if (!(d.v >= 3)) {
+    // v3 added 100 sectors; the old final sector 9-12 is now the last sector of region 9
+    var fin = LEVELS[LEVELS.length - 1].id;
+    ['stars', 'best', 'hinted'].forEach(function (k) { if (d[k] && d[k]['9-12'] != null) { d[k][fin] = d[k]['9-12']; delete d[k]['9-12']; } });
+    d.v = 3;
+  }
   ['stars', 'best', 'hinted', 'daily'].forEach(function (k) { if (d[k] && typeof d[k] === 'object') save[k] = d[k]; });
   if (Array.isArray(d.decoded)) save.decoded = d.decoded;
   if (typeof d.hintsUsed === 'number') save.hintsUsed = d.hintsUsed;
@@ -711,8 +732,9 @@ function win() {
     if (!b || res.relays < b.r || (res.relays === b.r && G.moves < b.m)) save.daily[G.level.daily] = { r: res.relays, m: G.moves, s: stars };
   } else {
     var region = +id.split('-')[0];
-    var wasUnlocked = regionUnlocked(region + 1);
+    var wasUnlocked = regionUnlocked(region + 1), starsBefore = totalStars();
     if (stars > prevStars) save.stars[id] = stars;
+    G.newAwards = AWARDS.filter(function (a) { return starsBefore < a.need && totalStars() >= a.need; });
     var bb = save.best[id]; if (!bb || res.relays < bb.r || (res.relays === bb.r && G.moves < bb.m)) save.best[id] = { r: res.relays, m: G.moves };
     if (region < REGIONS.length && !wasUnlocked && regionUnlocked(region + 1)) newRegion = region + 1;
     if (regionSolved(region) === byRegion[region].length && save.decoded.indexOf(region) < 0) { save.decoded.push(region); decoded = region; }
@@ -1117,6 +1139,7 @@ function renderTitle() {
   addBtn(m, 'Daily Signal', startDaily, '', utcDate().slice(5));
   addBtn(m, 'Static Storm', startStorm, '', stormUnlocked() ? (save.storm.best ? 'best ' + save.storm.best : 'timed') : 'locked');
   addBtn(m, 'How to Play', function () { openHowTo(); });
+  addBtn(m, 'Awards', function () { openAwards(); }, '', awardsEarned(totalStars()).length + '/' + AWARDS.length);
   addBtn(m, 'Achievements', function () { openAch(); }, '', achCount() + '/' + ACH.length);
   addBtn(m, 'Settings', function () { openSettings(); });
   if (inFrame) addBtn(m, 'Quit to PlayChain', function () { post({ type: 'playchain:exit' }); });
@@ -1154,6 +1177,7 @@ function renderMapPanel() {
   addBtn(r2, 'Daily Signal', startDaily, '', utcDate());
   addBtn(r2, 'Radio Log', openLog, '', logCount() + '/' + LOG_TOTAL);
   addBtn(r2, 'Static Storm', startStorm, '', stormUnlocked() ? (save.storm.best ? 'best ' + save.storm.best : 'new') : 'locked');
+  addBtn(r2, 'Awards', function () { openAwards(); }, '', awardsEarned(totalStars()).length + '/' + AWARDS.length);
   addBtn(r2, 'Achievements', function () { openAch(); }, '', achCount() + '/' + ACH.length);
   addBtn(r2, 'How to Play', function () { openHowTo(); });
   addBtn(r2, 'Settings', openSettings);
@@ -1245,12 +1269,20 @@ function showComplete(stars, res, decoded, partial) {
     '<span>Leaks</span><b class="' + (res.leaks.length ? 'over' : 'ok') + '">' + res.leaks.length + '</b><span>' + (G.hintUsed ? 'hint used' : '') + '</span>' +
     (best ? '<span>Local best</span><b>' + best.r + '/' + best.m + '</b><span>relays/moves</span>' : '') + '</div>' +
     (txShow ? '<div class="tx" id="dtx"><small>' + txShow.label + ' · RX ' + txShow.f + ' MHZ</small><span></span></div>' : '') +
+    (G.newAwards || []).map(function (a) { return '<div class="newaward">' + awardSvg(a) + '<div><small>AWARD UNLOCKED</small><b>' + a.name + '</b><br><span style="color:var(--muted);font-size:12px">' + a.d + '</span></div></div>'; }).join('') +
+    (G.level.final && !isDaily ? (function () {
+      var tot = totalStars(), got = awardsEarned(tot), nextA = AWARDS.filter(function (a) { return tot < a.need; })[0];
+      return '<h3 style="margin-top:12px">Your awards</h3><div class="ceremony">' + (got.length ? got.map(awardSvg).join('') : '<span style="color:var(--muted)">None yet.</span>') + '</div>' +
+        '<p style="font-size:13px">' + tot + ' of ' + MAX_STARS + ' ★' + (nextA ? ' · next: <b>' + nextA.name + '</b> at ' + nextA.need + ' ★' : ' · every award earned') + '</p>';
+    })() : '') +
     '<div id="cm"></div>';
   openModal('complete', html);
   var m = $('cm'), nxt = isDaily ? null : nextLevel();
   if (nxt) addBtn(m, 'Next', function () { closeModal(); startLevel(nxt); }, 'primary', nxt.id);
   addBtn(m, 'Replay', function () { closeModal(); if (isDaily) startLevel(G.level, { daily: true }); else startLevel(G.level); }, nxt ? '' : 'primary');
   addBtn(m, 'World Map', function () { closeModal(); if (!isDaily) mapSel = +G.level.id.split('-')[0]; setScreen('map'); });
+  if (G.newAwards && G.newAwards.length || G.level.final) addBtn(m, 'All awards', function () { openAwards(function () { showComplete(stars, res, decoded, partial); }); });
+  if (G.newAwards && G.newAwards.length) setTimeout(function () { Audio.play('unlock'); }, 900);
   focusFirst(m);
   [0, 1, 2].forEach(function (i) { setTimeout(function () { var el = $('st' + i); if (!el) return; el.classList.add('drop'); if (i < stars) Audio.play('star', i); }, 250 + i * 330); });
   if (txShow) setTimeout(function () { var el = document.querySelector('#dtx span'); if (el) typeLine(el, txShow.t); }, 1300);
@@ -1264,6 +1296,43 @@ function utcDate() { return new Date().toISOString().slice(0, 10); }
 function startDaily() {
   var d = utcDate(); toast('Tuning to today’s frequency…');
   Solver.daily(d).then(function (g) { if (!g || !g.level) { toast('No signal today. Try again'); return; } startLevel(g.level, { daily: true }); G.sol = g.sol; });
+}
+
+/* ------------------------------------------------------------------ awards: star milestones across the whole campaign */
+var AWARDS = [
+  { id: 'listener', name: 'Static Listener', need: 25, tier: 0, d: 'You tuned in. The network hears you.' },
+  { id: 'rookie', name: 'Relay Rookie', need: 75, tier: 1, d: 'Routes hold. Towers answer back.' },
+  { id: 'keeper', name: 'Signal Keeper', need: 150, tier: 2, d: 'Whole towns run on your signal.' },
+  { id: 'engineer', name: 'Network Engineer', need: 250, tier: 3, d: 'Mixers, bridges and dishes bend to you.' },
+  { id: 'master', name: 'Frequency Master', need: 350, tier: 4, d: 'Every colour, every crossing, clean.' },
+  { id: 'sage', name: 'Spectrum Sage', need: 450, tier: 5, d: 'Few listeners ever hear this far.' },
+  { id: 'legend', name: 'Legend of the Last Tower', need: 540, tier: 6, d: 'Spoken about on every frequency.' },
+  { id: 'perfect', name: 'Perfect Signal', need: MAX_STARS, tier: 7, d: 'Every sector, every star. Nothing left in the static.' }
+];
+var AWARD_COL = [['#c98a52', '#7a4a22'], ['#cfd6da', '#6f7c84'], ['#f0c45a', '#9a6a12'], ['#4fd1a0', '#1b6b52'], ['#5fa6ff', '#1f4f9a'], ['#b392f0', '#5a3a96'], ['#ff6f7d', '#8a2333'], ['#ffffff', '#5fc9c9']];
+/* Medal picture: round medals, then star badges, then crests, then a prismatic crown; a radio tower in the middle. */
+function awardSvg(a) {
+  var c = AWARD_COL[a.tier], t = a.tier, id = 'aw' + a.id, shape;
+  if (t <= 2) shape = '<circle cx="32" cy="36" r="20" fill="url(#' + id + ')" stroke="' + c[1] + '" stroke-width="2.5"/>';
+  else if (t <= 4) shape = '<path d="M32 12l5.6 11.5 12.6 1.8-9.1 8.9 2.1 12.6L32 40.9l-11.3 5.9 2.1-12.6-9.1-8.9 12.6-1.8z" transform="translate(0 4) scale(1 1.05)" fill="url(#' + id + ')" stroke="' + c[1] + '" stroke-width="2"/>';
+  else if (t <= 6) shape = '<path d="M32 14l18 6v12c0 11-8 18-18 22-10-4-18-11-18-22V20z" fill="url(#' + id + ')" stroke="' + c[1] + '" stroke-width="2.5"/>';
+  else shape = '<path d="M12 46l-2-24 11 9 11-15 11 15 11-9-2 24z" fill="url(#' + id + ')" stroke="#fff" stroke-width="2"/><circle cx="21" cy="29" r="2" fill="#e3a857"/><circle cx="32" cy="22" r="2.4" fill="#9b7fd1"/><circle cx="43" cy="29" r="2" fill="#5fc9c9"/>';
+  var grad = t === 7
+    ? '<linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5fc9c9"/><stop offset=".5" stop-color="#e3a857"/><stop offset="1" stop-color="#9b7fd1"/></linearGradient>'
+    : '<radialGradient id="' + id + '" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".25" stop-color="' + c[0] + '"/><stop offset="1" stop-color="' + c[1] + '"/></radialGradient>';
+  var ribbon = t < 7 ? '<path d="M20 4h10l4 14h-10z" fill="' + c[1] + '"/><path d="M44 4H34l-4 14h10z" fill="' + c[0] + '" opacity=".85"/>' : '';
+  var tower = '<g stroke="#0b1214" stroke-width="2" stroke-linecap="round" fill="none" opacity=".85"><path d="M32 30v14M28 44l4-14 4 14"/><path d="M27 29a7 7 0 0 1 10 0M24 26a11 11 0 0 1 16 0"/></g>';
+  return '<svg viewBox="0 0 64 64" aria-hidden="true"><defs>' + grad + '</defs>' + ribbon + shape + tower + '</svg>';
+}
+function awardsEarned(total) { return AWARDS.filter(function (a) { return total >= a.need; }); }
+function openAwards(back) {
+  var tot = totalStars(), got = awardsEarned(tot).length;
+  openModal('awards', '<h2>AWARDS</h2><h3>' + got + ' of ' + AWARDS.length + '</h3><p>Earn stars across all ' + LEVELS.length + ' sectors. You have <b>' + tot + '</b> of ' + MAX_STARS + ' ★.</p><div class="awards">' +
+    AWARDS.map(function (a) {
+      var on = tot >= a.need, pct = Math.min(100, Math.round(tot / a.need * 100));
+      return '<div class="award' + (on ? ' on' : '') + '">' + awardSvg(a) + '<div><b>' + a.name + '</b><span class="req">' + (on ? 'Earned · ' : '') + 'Collect ' + a.need + ' ★' + (on ? '' : ' (' + tot + '/' + a.need + ')') + '</span><div class="bar"><i style="width:' + pct + '%"></i></div><span class="req">' + a.d + '</span></div></div>';
+    }).join('') + '</div><div id="awm"></div>', typeof back === 'function' ? back : null);
+  addBtn($('awm'), 'Close', closeModal, 'primary'); focusFirst($('awm'));
 }
 
 /* ------------------------------------------------------------------ radio log + achievements */
