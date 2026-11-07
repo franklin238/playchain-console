@@ -8,7 +8,7 @@ const sim = html.slice(a, b);
 const bot = `
 function plan(G) {
   const K = KINGDOM[G.kingdom], km = K.mod;
-  const both = !km.oneSide && G.day > CONTENT.night.oneSideUntil;
+  const both = true;
   // everyone idle, then assign
   G.vill.forEach(v => { if (!v.sell && !v.wounded) v.job = 'idle'; });
   const people = G.vill.filter(v => !v.sell && !v.wounded).length;
@@ -17,13 +17,18 @@ function plan(G) {
   if (guardsR + guardsL > people - 2) { guardsR = Math.max(1, Math.floor((people - 2) / (both ? 2 : 1))); guardsL = both ? guardsR : 0; }
   for (let i = 0; i < guardsR; i++) assign(G, 'wall', 1, 1);
   for (let i = 0; i < guardsL; i++) assign(G, 'wall', 1, -1);
+  // soldiers outside each gate once the keep has people to spare
+  const sold = G.day >= 3 && people >= 9 ? Math.min(3, Math.floor((people - 7) / 3)) : 0;
+  for (let i = 0; i < sold; i++) { assign(G, 'field', 1, 1); assign(G, 'field', 1, -1); }
   const upkeep = Math.ceil(G.vill.length * (km.upkeep || 1) / (lit(G, 'kitchen') ? 2 : 1));
   const farmers = G.res.grain < upkeep * 2.5 ? 2 : G.res.grain < upkeep * 4 ? 1 : 0;
   for (let i = 0; i < farmers; i++) assign(G, 'fields', 1);
   const h = nextGoal(G);
   if (G.building) { assign(G, 'build', 1); assign(G, 'build', 1); }
   let need = { stone: 0, timber: 0 };
-  if (h) { const c = hallCost(G, h); need.stone = Math.max(0, (c.st || 0) - G.res.stone); need.timber = Math.max(0, (c.tb || 0) - G.res.timber); }
+  if (h) { const c = hallCost(G, h); need.stone = Math.max(0, (c.st || 0) - G.res.stone); need.timber = Math.max(0, (c.tb || 0) - G.res.timber);
+    const ir = Math.max(0, (c.ir || 0) - G.res.iron); if (ir > 0) { assign(G, 'mine', 1); if (ir > 8) assign(G, 'mine', 1); } }
+  if (G.day >= 4 && G.res.iron < 14) assign(G, 'mine', 1);
   while (idleCount(G) > 0) {
     const job = need.stone >= need.timber ? 'quarry' : 'wood';
     assign(G, job, 1);
@@ -33,6 +38,7 @@ function plan(G) {
 function tryBuild(G) {
   const h = nextGoal(G);
   if (h && !G.building && startRestore(G, h.id)) { assign(G, 'quarry', -1) || assign(G, 'wood', -1); assign(G, 'build', 1); assign(G, 'quarry', -1) || assign(G, 'wood', -1); assign(G, 'build', 1); }
+  for (const w of CONTENT.weapons) if (G.day >= 4) buyWeapon(G, w.id);
   if (G.building === null) G.vill.forEach(v => { if (v.job === 'build') v.job = G.res.stone < G.res.timber ? 'quarry' : 'wood'; });
   // ember/coin halls: trade if market lit and short of coin
   if (h && lit(G, 'market')) { const c = hallCost(G, h); if ((c.co || 0) > G.res.coin && G.res.stone > 40) trade(G, 3); }

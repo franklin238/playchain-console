@@ -157,6 +157,16 @@ button.danger{border-color:rgba(160,60,75,.6)}
 .kitem small{display:block;opacity:.75;font-size:.8rem;margin-top:.15rem;line-height:1.4}
 .crowns{font-size:2rem;letter-spacing:.3rem;color:var(--gold);margin:.3rem 0}
 .crowns .off{opacity:.25}
+.quest{font-size:.74rem;margin-top:.45rem;padding-top:.35rem;border-top:1px solid rgba(214,169,74,.2);line-height:1.3}
+.quest b{color:var(--gold);text-transform:uppercase;letter-spacing:.08em;font-size:.66rem;margin-right:.25rem}
+.quest small{opacity:.7}
+.quest.ok{color:#a8d890}
+.arm{display:grid;gap:.5rem;margin:.6rem 0}
+.arm .wp{display:grid;grid-template-columns:1fr auto;gap:.2rem .6rem;align-items:center;border:1px solid var(--line);border-radius:.6rem;padding:.5rem .7rem}
+.arm .wp.own{border-color:rgba(214,169,74,.6);background:rgba(214,169,74,.08)}
+.arm .wp small{grid-column:1/-1;opacity:.75}
+.arm .wp .cost{display:flex;gap:.5rem;font-size:.8rem;align-items:center}
+.arm .wp .cost svg{width:.9rem;height:.9rem;vertical-align:-.15rem}
 .kobj{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;opacity:.8;margin:-.1rem 0 .4rem;padding-bottom:.35rem;border-bottom:1px solid rgba(214,169,74,.2)}
 .howto h4{margin:1.1rem 0 .4rem;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
 .howto table td{font-weight:400;text-align:left;vertical-align:top;padding-right:.6rem;font-size:.85rem}
@@ -199,7 +209,7 @@ button.danger{border-color:rgba(160,60,75,.6)}
       <div id="clockText"><b id="dayLabel">Day 1</b><span id="timeLeft">2:30</span></div>
       <div id="speed"><button data-s="0" title="Pause (Space)">II</button><button data-s="1">1x</button><button data-s="2">2x</button><button data-s="3">3x</button></div>
     </div>
-    <div id="tr"><button id="btnHalls" title="Halls (H)">Halls</button><button id="btnMenu" title="Menu (Esc)">&#9776;</button></div>
+    <div id="tr"><button id="btnArmory" title="Armory (A)">Armory</button><button id="btnHalls" title="Halls (H)">Halls</button><button id="btnMenu" title="Menu (Esc)">&#9776;</button></div>
   </div>
   <div id="goal"></div>
   <div id="preview"></div>
@@ -233,10 +243,10 @@ button.danger{border-color:rgba(160,60,75,.6)}
    ===================================================================== */
 const CONTENT = {
   version: 1,
-  timing: { dayLen: 150, nightLen: 90, bellAt: 30, duskWalkHome: 9, nightFade: 3 },
-  start: { villagers: 5, res: { stone: 6, timber: 4, grain: 14, ember: 5, coin: 4 }, wallHp: 160 },
+  timing: { dayLen: 150, nightLen: 100, bellAt: 30, duskWalkHome: 9, nightFade: 3 },
+  start: { villagers: 5, res: { stone: 6, timber: 4, grain: 14, ember: 5, coin: 4, iron: 2 }, wallHp: 160 },
   economy: {
-    gatherPerSec: { quarry: 0.34, wood: 0.34, fields: 0.16 },
+    gatherPerSec: { quarry: 0.29, wood: 0.3, fields: 0.14, mine: 0.11 },   // mining is slow work
     loadSize: 3,                     // units carried per floating number
     upkeepPerVillager: 1,            // grain per villager per day
     hungryWorkMult: 0.6,
@@ -259,16 +269,16 @@ const CONTENT = {
     { id: 'granary', name: 'Granary', slot: [-520, -130, 160, 130], cost: { st: 30, tb: 30 }, work: 15, deps: ['kitchen'], villagers: 1, layer: 'lute',
       unlock: 'Fields yield 50% more grain.',
       lore: 'The grain was sold to pay for the walls. The walls did not need it.' },
-    { id: 'forge', name: 'Forge', slot: [120, -130, 240, 130], cost: { st: 45, tb: 25, em: 3 }, work: 18, deps: ['kitchen'], villagers: 1, layer: 'anvil',
+    { id: 'forge', name: 'Forge', slot: [120, -130, 240, 130], cost: { st: 45, tb: 25, em: 3, ir: 4 }, work: 18, deps: ['kitchen'], villagers: 1, layer: 'anvil',
       unlock: 'Guards hit 50% harder. Unlocks Mend (repair a wall at night).',
       lore: "The smith refused to forge the king's last sword. He said steel cannot fix what silence broke." },
-    { id: 'barracks', name: 'Barracks', slot: [360, -130, 160, 130], cost: { st: 45, tb: 40, gr: 10 }, work: 18, deps: ['kitchen'], villagers: 2, layer: 'brass',
+    { id: 'barracks', name: 'Barracks', slot: [360, -130, 160, 130], cost: { st: 45, tb: 40, gr: 10, ir: 4 }, work: 18, deps: ['kitchen'], villagers: 2, layer: 'brass',
       unlock: 'Guards train as archers and shoot from range. Unlocks Rally and sellswords.',
       lore: 'The guards were sent home one by one, until the gate had only a lock.' },
     { id: 'chapel', name: 'Chapel', slot: [-520, -390, 160, 130], cost: { st: 55, tb: 35, em: 6 }, work: 20, deps: ['granary'], villagers: 1, layer: 'choir',
       unlock: '+3 Ember every dawn. Unlocks Light (big area damage).',
       lore: 'The candles kept burning a week after the last prayer. Light outlasts the hands that lit it.' },
-    { id: 'watchtower', name: 'Watchtower', slot: [360, -390, 160, 130], cost: { st: 65, tb: 50, co: 10 }, work: 22, deps: ['barracks'], villagers: 1, layer: 'stringsLow',
+    { id: 'watchtower', name: 'Watchtower', slot: [360, -390, 160, 130], cost: { st: 65, tb: 50, co: 10, ir: 6 }, work: 22, deps: ['barracks'], villagers: 1, layer: 'stringsLow',
       unlock: "See the next night's Hollow in advance. Archer towers on both walls.",
       lore: 'From here they watched the Hollow gather for a year, and rang no bell.' },
     { id: 'market', name: 'Market', slot: [-360, -260, 360, 130], cost: { st: 50, tb: 60, gr: 20 }, work: 20, deps: ['granary'], villagers: 2, layer: 'flute',
@@ -280,10 +290,10 @@ const CONTENT = {
     { id: 'infirmary', name: 'Infirmary', slot: [-520, -260, 160, 130], cost: { st: 60, tb: 50, gr: 30, em: 5 }, work: 22, deps: ['chapel'], villagers: 1, layer: 'stringsHigh',
       unlock: 'Fallen guards return the next day instead of dying.',
       lore: 'The Hollow were never invaders. They were the ones nobody came back for.' },
-    { id: 'vault', name: 'Vault', slot: [360, -260, 160, 130], cost: { st: 90, tb: 60, co: 30 }, work: 24, deps: ['market'], villagers: 1, layer: 'bells',
+    { id: 'vault', name: 'Vault', slot: [360, -260, 160, 130], cost: { st: 90, tb: 60, co: 30, ir: 6 }, work: 24, deps: ['market'], villagers: 1, layer: 'bells',
       unlock: 'Thieves and breaches steal half as much.',
       lore: 'The treasure was always here. The king guarded it from his own people.' },
-    { id: 'throne', name: 'Throne Room', slot: [-110, -400, 220, 140], cost: { st: 140, tb: 110, em: 12, co: 50 }, work: 30, deps: ['kitchen', 'granary', 'forge', 'barracks', 'chapel', 'watchtower', 'market', 'library', 'infirmary', 'vault'], villagers: 3, layer: 'throne',
+    { id: 'throne', name: 'Throne Room', slot: [-110, -400, 220, 140], cost: { st: 140, tb: 110, em: 12, co: 50, ir: 12 }, work: 30, deps: ['kitchen', 'granary', 'forge', 'barracks', 'chapel', 'watchtower', 'market', 'library', 'infirmary', 'vault'], villagers: 3, layer: 'throne',
       unlock: 'Crowns the kingdom. Unlocks Endless Nights and a New Reign bonus.',
       lore: 'A crown is only a ring of promises. Keep them, and the halls never go hollow again.' }
   ],
@@ -295,9 +305,23 @@ const CONTENT = {
     thief:   { name: 'Thief',   hp: 9,   speed: 58, dmg: 0,  rate: 1.0, ember: 0.35, cost: 2, from: 2, size: 14, pick: 2.2, steal: 6 },
     climber: { name: 'Climber', hp: 14,  speed: 40, dmg: 3,  rate: 1.0, ember: 0.35, cost: 3, from: 3, size: 16, climb: 2.5 },
     wailer:  { name: 'Wailer',  hp: 22,  speed: 26, dmg: 0,  rate: 1.0, ember: 0.6,  cost: 4, from: 5, size: 18, range: 240 },
-    knight:  { name: 'Hollow Knight', hp: 320, speed: 15, dmg: 14, rate: 1.6, ember: 1, cost: 0, from: 7, size: 44, emberBonus: 8 }
+    knight:  { name: 'Hollow Knight', hp: 320, speed: 15, dmg: 14, rate: 1.6, ember: 1, cost: 0, from: 7, size: 44, emberBonus: 8 },
+    brute:   { name: 'Brute',   hp: 100, speed: 17, dmg: 10, rate: 2.0, ember: 0.8,  cost: 8, from: 3, size: 34 },
+    bat:     { name: 'Bat',     hp: 8,   speed: 85, dmg: 2,  rate: 0.9, ember: 0.25, cost: 2, from: 2, size: 12, fly: true },
+    burster: { name: 'Burster', hp: 18,  speed: 50, dmg: 0,  rate: 1.0, ember: 0.4,  cost: 3, from: 4, size: 16, boom: 32 },
+    shaman:  { name: 'Shaman',  hp: 32,  speed: 22, dmg: 0,  rate: 1.0, ember: 0.7,  cost: 6, from: 5, size: 18, range: 260, heal: 3 }
   },
-  night: { baseBudget: 6, perNight: 4, perHall: 3.2, bloodMult: 1.6, bloodEvery: 7, waves: [4, 20, 38, 56], waveShare: [0.16, 0.24, 0.3, 0.3], spawnX: 1450, oneSideUntil: 2, knightHpPerBlood: 80 },
+  // Hordes: six waves, bigger budgets, both walls from the first night.
+  night: { baseBudget: 7, perNight: 4.2, perHall: 3.2, bloodMult: 1.6, bloodEvery: 7, waves: [4, 18, 32, 46, 60, 74], waveShare: [0.1, 0.14, 0.16, 0.18, 0.2, 0.22], spawnX: 1450, oneSideUntil: 0, knightHpPerBlood: 80 },
+  soldiers: { hp: 60, dmg: 4.5, rate: 0.85, range: 46 },   // ground troops outside the gates
+  // Armory: bought once per kingdom with iron and coin or timber.
+  weapons: [
+    { id: 'pikes', name: 'Steel Pikes', cost: { ir: 8, co: 10 }, hall: 'forge', desc: 'Soldiers and spear guards hit 50% harder.' },
+    { id: 'shields', name: 'Tower Shields', cost: { ir: 10, tb: 20 }, hall: 'forge', desc: 'Soldiers have 80% more health.' },
+    { id: 'crossbows', name: 'Crossbows', cost: { ir: 12, tb: 20 }, hall: 'barracks', desc: 'Archers on the walls hit 60% harder.' },
+    { id: 'oil', name: 'Boiling Oil', cost: { ir: 10, co: 20 }, hall: 'kitchen', desc: 'Each wall pours oil on the gate every 10 s while it is under attack.' },
+    { id: 'ballista', name: 'Ballista Towers', cost: { ir: 20, tb: 40 }, hall: 'watchtower', desc: 'Towers deal triple damage to Brutes and Knights.' }
+  ],
   guards: { hp: 34, melee: 3, meleeRate: 0.8, meleeRange: 60, bow: 1.6, bowRate: 1.2, bowRange: 270, forgeMult: 1.5, rallyMult: 2, wailMult: 0.5 },
   tower: { dmg: 3, rate: 1.5, range: 360, hp: 60 },
   powers: [
@@ -315,11 +339,11 @@ const HALL = {}; CONTENT.halls.forEach(h => HALL[h.id] = h);
    mod: multipliers the simulation reads through KM(G). look: palette and weather only. */
 const KINGDOMS = [
   { id: 'greywatch', name: 'Greywatch', place: 'The valley keep', goal: { halls: 5, nights: 6 },
-    twist: 'A quiet valley, the Hollow come from the east at first. Learn the rhythm of day and night.',
+    twist: 'A quiet valley keep. Learn the rhythm of day and night before the hordes grow.',
     mod: {}, look: { stone: ['#121214', '#19191c', '#202024'], tint: null, weather: null } },
   { id: 'cliffhold', name: 'Cliffhold', place: 'A keep on the sea cliffs', goal: { halls: 6, nights: 7 },
-    twist: 'The west wall stands over a sheer drop, so the Hollow only come from the east. Stone is rich, timber is scarce, and Climbers love cliffs.',
-    mod: { budget: 1.1, gather: { quarry: 1.4, wood: 0.7 }, oneSide: true, weights: { climber: 1.7 }, from: { climber: 2 } },
+    twist: 'A tall keep on the sea cliffs. Stone is rich, timber is scarce, and bats pour off the cliffs onto your walls.',
+    mod: { budget: 1.1, gather: { quarry: 1.4, wood: 0.7 }, weights: { bat: 2.5, climber: 1.5 }, from: { climber: 2, bat: 1 } },
     look: { stone: ['#131518', '#1a1d22', '#22262c'], tint: [40, 60, 90, 0.16], weather: 'wind' } },
   { id: 'mirewood', name: 'Mirewood', place: 'A fort in the drowned marsh', goal: { halls: 7, nights: 8 },
     twist: 'Wet fields grow less grain but timber is plentiful. Mud slows everyone, and Wisps rise thick from the bog.',
@@ -327,11 +351,11 @@ const KINGDOMS = [
     look: { stone: ['#111512', '#181d19', '#1f2520'], tint: [40, 70, 50, 0.2], weather: 'fog' } },
   { id: 'frostmere', name: 'Frostmere', place: 'A frozen hold in the north', goal: { halls: 8, nights: 9 },
     twist: 'Winter doubles what villagers eat. Ice makes the walls stronger and slows the Hollow, but far more of them come.',
-    mod: { budget: 1.55, upkeep: 2, wallHp: 1.4, enemySpeed: 0.85, hp: 1.15 },
+    mod: { budget: 1.35, upkeep: 2, wallHp: 1.4, enemySpeed: 0.85, hp: 1.15 },
     look: { stone: ['#14181d', '#1b2026', '#232a31'], tint: [150, 185, 220, 0.12], weather: 'snow' } },
   { id: 'ashfall', name: 'Ashfall', place: 'A citadel under the volcano', goal: { halls: 11, nights: 12 },
     twist: 'Ember falls with the ash, but walls barely mend at dawn, Wailers come early and the Blood Moon rises every fifth night. Crown the Throne Room to win.',
-    mod: { budget: 1.45, bloodEvery: 5, emberDawn: 2, wallRegen: 0.12, hp: 1.15, from: { wailer: 3, climber: 2 } },
+    mod: { budget: 1.3, bloodEvery: 5, emberDawn: 2, wallRegen: 0.12, hp: 1.15, from: { wailer: 3, climber: 2 } },
     look: { stone: ['#161211', '#1e1816', '#27201d'], tint: [140, 60, 30, 0.16], weather: 'ash' } }
 ];
 const KINGDOM = {}; KINGDOMS.forEach((k, i) => { k.n = i + 1; KINGDOM[k.id] = k; });
@@ -370,11 +394,11 @@ const EVENTS = [
    ===================================================================== */
 const STEP = 1 / 30;
 const SAVE_VERSION = 1;
-const RES = ['stone', 'timber', 'grain', 'ember', 'coin'];
-const CKEY = { st: 'stone', tb: 'timber', gr: 'grain', em: 'ember', co: 'coin' };
+const RES = ['stone', 'timber', 'iron', 'grain', 'ember', 'coin'];
+const CKEY = { st: 'stone', tb: 'timber', ir: 'iron', gr: 'grain', em: 'ember', co: 'coin' };
 const WALL_X = 780, WALL_FACE = 812, KEEP_X = 530, WALL_TOP = -138;
-const JOB_SITE = { quarry: 1110, wood: -1120, fields: -655 };
-const JOBS = ['quarry', 'wood', 'fields', 'build', 'wall'];
+const JOB_SITE = { quarry: 1110, wood: -1120, fields: -655, mine: 1300 };
+const JOBS = ['quarry', 'wood', 'mine', 'fields', 'build', 'wall', 'field'];
 
 function rngNext(G) { // mulberry32 with state kept in save
   let t = (G.rng = (G.rng + 0x6D2B79F5) >>> 0);
@@ -403,13 +427,14 @@ function newGame(reign, seed, kingdom) {
     tut: 0, crowned: false, bloodSeen: 0,
     stats: { killed: 0, totalEmber: 0 },
     kingdom: (KINGDOM[kingdom] || KINGDOMS[0]).id, kst: { breach: 0, lost: 0 }, done: false, endless: false,
-    event: null, today: {}, lastEvent: null
+    event: null, today: {}, lastEvent: null, weapons: {}, quest: null
   };
   CONTENT.halls.forEach(h => G.halls[h.id] = { s: 'dark', p: 0 });
   G.halls.great.s = 'lit';
   const n = s.villagers + Math.min(3, (G.reign - 1) * CONTENT.rewards.reignBonusVillagers);
   for (let i = 0; i < n; i++) addVillager(G, 'castle');
   planNight(G);
+  G.quest = makeQuest(G);
   return G;
 }
 
@@ -465,7 +490,7 @@ function assign(G, job, delta, side) {
   if (delta > 0) {
     const v = G.vill.find(v => v.job === 'idle' && !v.wounded);
     if (!v) return false;
-    v.job = job; v.acc = 0; if (side) v.side = side; v.hp = CONTENT.guards.hp;
+    v.job = job; v.acc = 0; if (side) v.side = side; v.hp = job === 'field' ? CONTENT.soldiers.hp : CONTENT.guards.hp;
     emit('assign', { job, x: v.x });
     return true;
   } else {
@@ -477,9 +502,43 @@ function assign(G, job, delta, side) {
     return true;
   }
 }
-function moveGuard(G, from, to) {
-  const v = G.vill.filter(v => v.job === 'wall' && !v.wounded && v.side === from).pop();
-  if (!v) return false; v.side = to; emit('assign', { job: 'wall', x: v.x }); return true;
+function moveGuard(G, from, to, job) {
+  job = job || 'wall';
+  const v = G.vill.filter(v => v.job === job && !v.wounded && v.side === from).pop();
+  if (!v) return false; v.side = to; emit('assign', { job, x: v.x }); return true;
+}
+function buyWeapon(G, id) {
+  const w = CONTENT.weapons.find(x => x.id === id);
+  if (!w || (G.weapons && G.weapons[id]) || !lit(G, w.hall) || !canAfford(G, w.cost)) return false;
+  for (const k in w.cost) G.res[CKEY[k]] -= w.cost[k];
+  (G.weapons = G.weapons || {})[id] = 1;
+  emit('weapon', { id });
+  return true;
+}
+/* Daily orders: one task per day with a reward, checked at the next dawn. */
+function makeQuest(G) {
+  const r = rngNext(G), d = G.day;
+  if (r < 0.3) { const n = 8 + d * 3; return { k: 'kill', n, have: 0, text: `Defeat ${n} Hollow tonight`, reward: { coin: 8 + d * 2 } }; }
+  if (r < 0.5) { const n = 30 + d * 8; return { k: 'gather', r: 'stone', n, have: 0, text: `Quarry ${n} stone`, reward: { ember: 3 + (d >> 1) } }; }
+  if (r < 0.65) { const n = 6 + d * 2; return { k: 'gather', r: 'iron', n, have: 0, text: `Mine ${n} iron`, reward: { coin: 10 + d * 2 } }; }
+  if (r < 0.85 || d < 3) return { k: 'noloss', n: 1, have: 0, text: 'Lose no one tonight', reward: { ember: 4, coin: 6 } };
+  return { k: 'big', n: 1, have: 0, text: 'Slay a Brute or a Hollow Knight', reward: { ember: 6, coin: 12 } };
+}
+function blockingSoldier(G, e, d) {
+  const ax = Math.abs(e.x);
+  for (const v of G.vill) {
+    if (v.job !== 'field' || v.wounded || v.hp <= 0 || v.side !== e.side || v.y !== 0) continue;
+    const vx = Math.abs(v.x);
+    if (ax > vx - 4 && ax - vx < d.size * 0.5 + 14) return v;
+  }
+  return null;
+}
+function explode(G, e, d) {
+  const sk = sideKey(e.side), wall = G.walls[sk];
+  if (wall.hp > 0 && Math.abs(e.x) < WALL_FACE + 60) { const before = wall.hp; wall.hp = Math.max(0, wall.hp - d.boom); W.night.wallDmg += before - wall.hp; if (wall.hp <= 0 && before > 0) emit('breach', { side: e.side }); }
+  for (const v of G.vill) if (v.job === 'field' && !v.wounded && v.hp > 0 && Math.abs(v.x - e.x) < 70) { v.hp -= 20; if (v.hp <= 0) guardFalls(G, v); }
+  e.hp = 0; e.st = 'dead'; e.t = 0;
+  emit('boom', { x: e.x, y: e.y, side: e.side });
 }
 function startRestore(G, id) {
   const h = HALL[id], st = G.halls[id];
@@ -524,13 +583,13 @@ function planNight(G) {
   N.waves.forEach((wtime, wi) => {
     let b = budget * N.waveShare[wi];
     let guard = 0;
-    while (b > 0.5 && guard++ < 80) {
+    while (b > 0.5 && guard++ < 160) {
       const k = pickType();
       const c = CONTENT.hollow[k].cost;
       if (c > b + 0.6) { if (c <= 1) break; continue; }
       b -= c;
       const sd = sideFor();
-      plan.push({ t: wtime + rngNext(G) * 9, k, side: n <= N.oneSideUntil ? 1 : sd, w: wi });
+      plan.push({ t: wtime + rngNext(G) * 5, k, side: n <= N.oneSideUntil ? 1 : sd, w: wi });
     }
     if (n === 1 && wi === 0 && !plan.length) plan.push({ t: wtime, k: 'wisp', side: 1, w: 0 });
   });
@@ -555,7 +614,7 @@ function startNight(G) {
   W.en = []; W.arrows = []; W.spawnI = 0; W.rally = 0;
   W.night = { killed: 0, ember: 0, stolen: {}, lost: 0, wounded: 0, wallDmg: 0, darkened: [], blood: isBlood(G.day, G), startWall: G.walls.L.hp + G.walls.R.hp };
   W.darkened = { L: 0, R: 0 };
-  G.vill.forEach(v => { v.hp = CONTENT.guards.hp; });
+  G.vill.forEach(v => { v.hp = v.job === 'field' ? CONTENT.soldiers.hp * (G.weapons && G.weapons.shields ? 1.8 : 1) : CONTENT.guards.hp; });
   emit('nightStart', { blood: W.night.blood });
 }
 
@@ -564,7 +623,7 @@ function spawnEnemy(G, p) {
   const scale = (1 + 0.12 * (G.day - 1)) * (KM(G).hp || 1);
   let hp = d.hp * scale;
   if (p.k === 'knight') hp = d.hp + CONTENT.night.knightHpPerBlood * (Math.floor(G.day / bloodEvery(G)) - 1);
-  const e = { id: W.eid++, k: p.k, side: p.side, x: p.side * CONTENT.night.spawnX, y: p.k === 'wisp' ? -28 : 0, hp, max: hp,
+  const e = { id: W.eid++, k: p.k, side: p.side, x: p.side * CONTENT.night.spawnX, y: p.k === 'wisp' ? -28 : p.k === 'bat' ? -70 : 0, hp, max: hp,
     st: 'approach', t: 0, slow: 0, reveal: 0, loot: null, ph: rngNext(G) * 6.28, hit: 0 };
   W.en.push(e);
   emit('spawn', { k: p.k, side: p.side });
@@ -578,6 +637,7 @@ function damageEnemy(G, e, dmg, src) {
   if (e.hp <= 0) {
     e.st = 'dead'; e.t = 0;
     W.night.killed++; G.stats.killed++;
+    if (G.quest && (G.quest.k === 'kill' || (G.quest.k === 'big' && (e.k === 'brute' || e.k === 'knight')))) G.quest.have++;
     const d = CONTENT.hollow[e.k];
     let em = rngNext(G) < d.ember ? 1 : 0;
     if (e.k === 'knight') em += d.emberBonus;
@@ -625,12 +685,25 @@ function stepNight(G, dt) {
     e.ph += dt;
     const ax = Math.abs(e.x);
     if (e.st === 'approach') {
-      const stopAt = e.k === 'wailer' ? WALL_FACE + d.range * 0.75 : WALL_FACE + d.size * 0.4;
-      if (wall.hp <= 0 && e.k !== 'wailer') { if (ax > WALL_FACE - 20) e.x -= e.side * spd * dt; else e.st = 'inside'; }
+      const ranged = e.k === 'wailer' || e.k === 'shaman';
+      // soldiers on the ground stop anything that walks (fliers and casters go past)
+      if (!d.fly && e.k !== 'wisp' && !ranged) { const sb = blockingSoldier(G, e, d); if (sb) { e.st = 'brawl'; e.tgt = sb.id; e.t = 0; continue; } }
+      const stopAt = ranged ? WALL_FACE + d.range * 0.75 : WALL_FACE + d.size * 0.4;
+      if (wall.hp <= 0 && !ranged) { if (ax > WALL_FACE - 20) e.x -= e.side * spd * dt; else e.st = 'inside'; }
       else if (ax > stopAt) e.x -= e.side * spd * dt;
+      else if (e.k === 'burster') explode(G, e, d);
+      else if (e.k === 'bat') { e.st = 'onwall'; e.t = 0; e.x = e.side * (WALL_X + 30); e.y = WALL_TOP - 10; }
       else {
-        e.st = e.k === 'thief' ? 'pick' : e.k === 'climber' ? 'climb' : e.k === 'wailer' ? 'wail' : 'attack'; e.t = 0;
+        e.st = e.k === 'thief' ? 'pick' : e.k === 'climber' ? 'climb' : e.k === 'wailer' ? 'wail' : e.k === 'shaman' ? 'heal' : 'attack'; e.t = 0;
       }
+    } else if (e.st === 'brawl') {
+      const sb = G.vill.find(v => v.id === e.tgt && v.job === 'field' && !v.wounded && v.hp > 0);
+      if (!sb) { e.st = 'approach'; continue; }
+      if (e.k === 'burster') { explode(G, e, d); continue; }
+      e.t += dt;
+      if (e.t >= d.rate) { e.t -= d.rate; sb.hp -= Math.max(2, d.dmg); emit('soldierHit', { x: sb.x }); if (sb.hp <= 0) guardFalls(G, sb); }
+    } else if (e.st === 'heal') {
+      for (const o of W.en) if (o !== e && o.side === e.side && o.hp > 0 && o.st !== 'dead' && o.st !== 'gone' && Math.abs(o.x - e.x) < 240 && o.k !== 'shaman' && o.healT !== G.t) { o.healT = G.t; o.hp = Math.min(o.max, o.hp + d.heal * dt); }
     } else if (e.st === 'attack') {
       if (wall.hp <= 0) { e.st = 'inside'; continue; }
       e.t += dt;
@@ -688,7 +761,7 @@ function stepNight(G, dt) {
     for (const e of W.en) {
       if (e.side !== g.side || e.hp <= 0 || e.st === 'gone' || e.st === 'dead') continue;
       if (e.st === 'inside' && Math.abs(e.x) < WALL_X - 120) continue;
-      const dx = Math.abs(e.x - g.x), dd = dx + Math.abs(e.y - g.y) * 0.3;
+      const dx = Math.abs(e.x - g.x), dd = dx + Math.abs(e.y - g.y) * 0.3 - (e.k === 'shaman' || e.k === 'wailer' ? 160 : 0);
       const range = archers ? gd.bowRange : gd.meleeRange + 40;
       if (dx <= range && dd < bd) { bd = dd; best = e; }
     }
@@ -696,14 +769,38 @@ function stepNight(G, dt) {
     if (archers) {
       g.cd = gd.bowRate;
       const dist = Math.hypot(best.x - g.x, best.y - g.y);
-      W.arrows.push({ x: g.x, y: g.y - 10, tx: best.x, ty: best.y - 12, t: 0, dur: Math.max(0.12, dist / 650), tgt: best.id, dmg: gd.bow * mult, kind: 'arrow' });
+      W.arrows.push({ x: g.x, y: g.y - 10, tx: best.x, ty: best.y - 12, t: 0, dur: Math.max(0.12, dist / 650), tgt: best.id, dmg: gd.bow * mult * (G.weapons && G.weapons.crossbows ? 1.6 : 1), kind: 'arrow' });
       emit('bow', { x: g.x });
     } else {
       g.cd = gd.meleeRate; g.thrust = 0.25;
-      damageEnemy(G, best, gd.melee * mult, 'spear');
+      damageEnemy(G, best, gd.melee * mult * (G.weapons && G.weapons.pikes ? 1.5 : 1), 'spear');
       emit('spear', { x: best.x, y: best.y });
     }
     g.face = Math.sign(best.x - g.x) || g.side;
+  }
+  // soldiers on the ground, outside the gates
+  const SD = C.soldiers, w8 = G.weapons || {};
+  for (const sv of G.vill) {
+    if (sv.job !== 'field' || sv.wounded || sv.hp <= 0 || sv.y !== 0) continue;
+    sv.cd -= dt; if (sv.cd > 0) continue;
+    let tgt = null, td = 1e9;
+    for (const e of W.en) {
+      if (e.side !== sv.side || e.hp <= 0 || e.st === 'dead' || e.st === 'gone') continue;
+      const dd = Math.abs(e.x - sv.x) + (e.y < -60 ? 30 : 0);
+      if (dd <= SD.range + C.hollow[e.k].size * 0.4 && dd < td) { td = dd; tgt = e; }
+    }
+    if (!tgt) continue;
+    sv.cd = SD.rate; sv.thrust = 0.25; sv.face = Math.sign(tgt.x - sv.x) || sv.side;
+    damageEnemy(G, tgt, SD.dmg * (lit(G, 'forge') ? 1.3 : 1) * (w8.pikes ? 1.5 : 1) * (W.rally > 0 ? gd.rallyMult : 1), 'sword');
+    emit('spear', { x: tgt.x, y: tgt.y });
+  }
+  // boiling oil on any gate under attack
+  if (w8.oil) for (const sk of ['L', 'R']) {
+    const side = sk === 'L' ? -1 : 1; W['oil' + sk] = (W['oil' + sk] || 0) - dt;
+    if (W['oil' + sk] > 0) continue;
+    const at = W.en.filter(e => e.side === side && e.hp > 0 && e.st !== 'dead' && e.st !== 'gone' && Math.abs(e.x) < WALL_FACE + 130 && e.y > -40);
+    if (!at.length) continue;
+    W['oil' + sk] = 10; at.forEach(e => damageEnemy(G, e, 18, 'oil')); emit('oil', { side });
   }
   // towers
   if (lit(G, 'watchtower')) {
@@ -716,7 +813,7 @@ function stepNight(G, dt) {
       for (const e of W.en) { if (e.side !== side || e.hp <= 0 || e.st === 'gone' || e.st === 'dead') continue; const d = Math.abs(e.x - tx); if (d < C.tower.range && d < bd) { bd = d; best = e; } }
       if (best) {
         W['tcd' + sk] = C.tower.rate;
-        W.arrows.push({ x: tx, y: ty, tx: best.x, ty: best.y - 12, t: 0, dur: Math.max(0.15, Math.hypot(best.x - tx, best.y - ty) / 700), tgt: best.id, dmg: C.tower.dmg * (lit(G, 'forge') ? 1.25 : 1), kind: 'bolt' });
+        W.arrows.push({ x: tx, y: ty, tx: best.x, ty: best.y - 12, t: 0, dur: Math.max(0.15, Math.hypot(best.x - tx, best.y - ty) / 700), tgt: best.id, dmg: C.tower.dmg * (lit(G, 'forge') ? 1.25 : 1) * (G.weapons && G.weapons.ballista && (best.k === 'knight' || best.k === 'brute') ? 3 : 1), kind: 'bolt' });
         emit('bow', { x: tx });
       }
     }
@@ -776,8 +873,12 @@ function villagerTarget(G, v, i, dusk) {
     const k = gs.indexOf(v), n = gs.length, span = Math.min(70, 16 * n);
     return { x: v.side * (WALL_X + 6) + (n > 1 ? (k / (n - 1) - 0.5) * span : 0), y: WALL_TOP };
   }
+  if (v.job === 'field') {
+    const ss = G.vill.filter(o => o.job === 'field' && !o.wounded && o.side === v.side);
+    return { x: v.side * (WALL_FACE + 50 + ss.indexOf(v) * 16), y: 0 };
+  }
   if (nightish) return homeTarget(G, v, i);
-  if (v.job === 'quarry' || v.job === 'wood' || v.job === 'fields') return { x: JOB_SITE[v.job] + off * (v.job === 'fields' ? 2 : 1.4), y: 0 };
+  if (v.job === 'quarry' || v.job === 'wood' || v.job === 'fields' || v.job === 'mine') return { x: JOB_SITE[v.job] + off * (v.job === 'fields' ? 2 : 1.4), y: 0 };
   if (v.job === 'build') {
     if (!G.building) return { x: off * 2, y: 0 };
     const h = HALL[G.building];
@@ -820,14 +921,15 @@ function stepVillagers(G, dt) {
     v.moving = 0; v.at = 1;
     if (!day || dusk || v.wounded) return;
     // working
-    if (v.job === 'quarry' || v.job === 'wood' || v.job === 'fields') {
+    if (v.job === 'quarry' || v.job === 'wood' || v.job === 'fields' || v.job === 'mine') {
       const km = KM(G), td = G.today && G.today.gather;
       let rate = E.gatherPerSec[v.job] * wm * ((km.gather && km.gather[v.job]) || 1) * ((td && td[v.job]) || 1);
       if (v.job === 'fields' && lit(G, 'granary')) rate *= 1.5;
       v.acc += rate * dt; v.work = 1;
       if (v.acc >= E.loadSize) {
         v.acc -= E.loadSize;
-        const r = v.job === 'quarry' ? 'stone' : v.job === 'wood' ? 'timber' : 'grain';
+        const r = v.job === 'quarry' ? 'stone' : v.job === 'wood' ? 'timber' : v.job === 'mine' ? 'iron' : 'grain';
+        if (G.quest && G.quest.k === 'gather' && G.quest.r === r) G.quest.have += E.loadSize;
         G.res[r] += E.loadSize;
         emit('gain', { r, n: E.loadSize, x: v.x, y: v.y - 40 });
       }
@@ -868,6 +970,12 @@ function finishHall(G, id) {
 function doDawn(G) {
   const C = CONTENT, rep = Object.assign({}, W.night || { killed: 0, ember: 0, stolen: {}, lost: 0, wounded: 0, wallDmg: 0, darkened: [] });
   const survivedNight = G.day, km = KM(G);
+  const q = G.quest;
+  if (q) {
+    const ok = q.k === 'noloss' ? (rep.lost || 0) === 0 && (rep.wounded || 0) === 0 : q.have >= q.n;
+    if (ok) for (const k in q.reward) G.res[k] += q.reward[k];
+    rep.quest = { text: q.text, ok, reward: q.reward };
+  }
   G.nightsSurvived++;
   if (!G.kst) G.kst = { breach: 0, lost: 0 };
   if (G.walls.L.hp <= 0 || G.walls.R.hp <= 0) { G.kst.breach++; rep.breached = true; }
@@ -876,7 +984,7 @@ function doDawn(G) {
   // remove sellswords, heal wounded (Infirmary), restore walls and towers
   G.vill = G.vill.filter(v => !v.sell);
   const healed = G.vill.filter(v => v.wounded).length;
-  G.vill.forEach(v => { v.wounded = 0; v.hp = C.guards.hp; });
+  G.vill.forEach(v => { v.wounded = 0; v.hp = v.job === 'field' ? C.soldiers.hp * (G.weapons && G.weapons.shields ? 1.8 : 1) : C.guards.hp; });
   const regen = km.wallRegen != null ? km.wallRegen : C.economy.dawnWallRegen;
   for (const sk of ['L', 'R']) { const w = G.walls[sk]; w.hp = Math.min(w.max, Math.max(w.hp, 0) + w.max * regen); }
   if (lit(G, 'watchtower')) { G.towers.L = C.tower.hp; G.towers.R = C.tower.hp; }
@@ -899,6 +1007,7 @@ function doDawn(G) {
   W.arrows = [];
   planNight(G);
   G.today = {};
+  G.quest = makeQuest(G);
   G.event = null;
   if (G.day >= 2 && rngNext(G) < 0.55) {
     const pool = EVENTS.filter(e => e.id !== G.lastEvent);
@@ -963,6 +1072,7 @@ function deserialize(o) {
   if (!G.kingdom) G.kingdom = 'greywatch';
   if (!G.kst) G.kst = { breach: 0, lost: 0 };
   if (!G.today) G.today = {};
+  if (!G.weapons) G.weapons = {};
   if (G.plan) G.plan.forEach(p => { if (p.w == null) { let w = 0; CONTENT.night.waves.forEach((t, i) => { if (p.t >= t) w = i; }); p.w = w; } });
   CONTENT.halls.forEach(h => { if (!G.halls[h.id]) G.halls[h.id] = { s: 'dark', p: 0 }; });
   RES.forEach(r => { if (typeof G.res[r] !== 'number') G.res[r] = 0; });
@@ -1437,7 +1547,104 @@ function wrapText(str, x, y, maxW, size) {
   lines.slice(0, 4).forEach((l, i) => cx.fillText(l, sx, sy + i * size * 1.35 * cam.z));
 }
 let STONE = '#121214', STONE2 = '#19191c', STONE3 = '#202024';
-function applyLook(G) { const k = KINGDOM[G && G.kingdom] || KINGDOMS[0]; [STONE, STONE2, STONE3] = k.look.stone; VIS.weatherKind = k.look.weather; VIS.wx = null; }
+/* Every kingdom has its own castle: hall slots are [x, y, w, h]; rows share a floor. Greywatch keeps the original keep. */
+const BASE_SLOTS = {}; CONTENT.halls.forEach(h => BASE_SLOTS[h.id] = h.slot.slice());
+const LAYOUTS = {
+  cliffhold: { roof: 'spire', room: ['#1c2128', '#3c4652'], slots: {
+    kitchen: [-280, -130, 200, 130], great: [-80, -130, 160, 130], granary: [80, -130, 200, 130],
+    forge: [-280, -260, 200, 130], market: [-80, -260, 360, 130],
+    barracks: [-280, -390, 280, 130], infirmary: [0, -390, 280, 130],
+    library: [-280, -520, 280, 130], vault: [0, -520, 280, 130],
+    chapel: [-280, -650, 160, 130], throne: [-120, -660, 240, 140], watchtower: [120, -650, 160, 130] } },
+  mirewood: { roof: 'fort', room: ['#1a2216', '#3c4a2a'], slots: {
+    granary: [-600, -130, 260, 130], kitchen: [-340, -130, 220, 130], great: [-120, -130, 240, 130], forge: [120, -130, 240, 130], barracks: [360, -130, 240, 130],
+    chapel: [-600, -260, 160, 130], infirmary: [-440, -260, 160, 130], market: [-280, -260, 280, 130], library: [0, -260, 280, 130], vault: [280, -260, 160, 130], watchtower: [440, -260, 160, 130],
+    throne: [-120, -400, 240, 140] } },
+  frostmere: { roof: 'ziggurat', room: ['#18202c', '#42586e'], slots: {
+    granary: [-560, -130, 180, 130], kitchen: [-380, -130, 260, 130], great: [-120, -130, 240, 130], forge: [120, -130, 260, 130], barracks: [380, -130, 180, 130],
+    infirmary: [-440, -260, 160, 130], market: [-280, -260, 280, 130], library: [0, -260, 280, 130], vault: [280, -260, 160, 130],
+    chapel: [-280, -390, 200, 130], watchtower: [80, -390, 200, 130],
+    throne: [-120, -530, 240, 140] } },
+  ashfall: { roof: 'citadel', room: ['#2a1210', '#6a2a18'], slots: {
+    granary: [-560, -130, 180, 130], kitchen: [-380, -130, 260, 130], great: [-120, -130, 240, 130], forge: [120, -130, 260, 130], barracks: [380, -130, 180, 130],
+    infirmary: [-560, -260, 180, 130], market: [-380, -260, 380, 130], library: [0, -260, 380, 130], vault: [380, -260, 180, 130],
+    chapel: [-560, -390, 180, 130], throne: [-140, -400, 280, 140], watchtower: [380, -390, 180, 130] } }
+};
+let LAY = null, KEEP_HALF = 530, LAY_TOP = -700;
+function applyLook(G) {
+  const k = KINGDOM[G && G.kingdom] || KINGDOMS[0]; [STONE, STONE2, STONE3] = k.look.stone; VIS.weatherKind = k.look.weather; VIS.wx = null;
+  LAY = LAYOUTS[k.id] || null; LAY_ROWS = null;
+  CONTENT.halls.forEach(h => { const sl = (LAY && LAY.slots[h.id]) || BASE_SLOTS[h.id]; h.slot[0] = sl[0]; h.slot[1] = sl[1]; h.slot[2] = sl[2]; h.slot[3] = sl[3]; });
+  KEEP_HALF = Math.max(530, ...CONTENT.halls.map(h => Math.max(-h.slot[0], h.slot[0] + h.slot[2]))) + 10;
+  LAY_TOP = LAY ? Math.min(...CONTENT.halls.map(h => h.slot[1])) - ({ spire: 260, fort: 110, ziggurat: 240, citadel: 300 }[LAY.roof] || 0) : -406;
+}
+/* rows of rooms that share a floor, for drawing the stone around them */
+let LAY_ROWS = null;
+function layRows() {
+  if (LAY_ROWS) return LAY_ROWS;
+  const m = {};
+  for (const h of CONTENT.halls) { const fl = h.slot[1] + h.slot[3]; (m[fl] = m[fl] || []).push(h.slot); }
+  LAY_ROWS = Object.keys(m).map(fl => { const ss = m[fl]; return { fl: +fl, x0: Math.min(...ss.map(q => q[0])), x1: Math.max(...ss.map(q => q[0] + q[2])), top: Math.min(...ss.map(q => q[1])), ss }; }).sort((a, b) => b.fl - a.fl);
+  return LAY_ROWS;
+}
+function shellBlocks() {
+  const P = 16;
+  for (const r of layRows()) R(r.x0 - P, r.top - P, r.x1 - r.x0 + P * 2, r.fl - r.top + P, STONE);
+}
+function shellTops(G) {
+  const P = 16, rows = layRows(), roof = LAY.roof, t = VIS.time;
+  // battlements wherever a row sticks out past the one above it
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i], up = rows[i + 1];
+    if (!up) crenel(r.x0 - P - 4, r.top - P, r.x1 - r.x0 + P * 2 + 8, STONE, 16);
+    else {
+      if (up.x0 > r.x0) crenel(r.x0 - P - 4, r.top - P, up.x0 - r.x0, STONE, 16);
+      if (up.x1 < r.x1) crenel(up.x1 + P, r.top - P, r.x1 - up.x1 + 4, STONE, 16);
+    }
+  }
+  const top = rows[rows.length - 1], cxm = (top.x0 + top.x1) / 2;
+  let apex = [cxm, top.top - P];
+  if (roof === 'spire') {
+    // a tall sea-cliff tower: slate roof, two turrets and a needle spire
+    path([[top.x0 - P - 20, top.top - P], [cxm, top.top - 230], [top.x1 + P + 20, top.top - P]], STONE2);
+    for (const sx of [top.x0 - P, top.x1 + P]) { R(sx - 30, top.top - 120, 60, 104, STONE); path([[sx - 38, top.top - 120], [sx, top.top - 200], [sx + 38, top.top - 120]], STONE2); }
+    R(cxm - 6, top.top - 300, 12, 80, STONE2);
+    apex = [cxm, top.top - 300];
+  } else if (roof === 'fort') {
+    // a long swamp fort: wooden hoardings along the walls and a thatched keep
+    for (const r of rows) { R(r.x0 - P, r.top - P - 18, r.x1 - r.x0 + P * 2, 6, '#2a2016'); for (let x = r.x0 - P; x < r.x1 + P; x += 28) R(x, r.top - P - 18, 4, 18, '#2a2016'); }
+    path([[top.x0 - P - 30, top.top - P], [cxm, top.top - 120], [top.x1 + P + 30, top.top - P]], '#2e2618');
+    for (let i = 0; i < 6; i++) line(top.x0 - P - 20 + i * ((top.x1 - top.x0 + 70) / 6), top.top - P, cxm, top.top - 118, 'rgba(0,0,0,.25)', 1);
+    // hanging vines on the stone
+    for (const r of rows) for (let x = r.x0; x < r.x1; x += 70) { const len = 30 + ((x * 7) % 40); line(x, r.top - P, x + Math.sin(t + x) * 3, r.top - P + len, 'rgba(70,110,60,.75)', 2); }
+    apex = [cxm, top.top - 120];
+  } else if (roof === 'ziggurat') {
+    // stepped frozen hold: snow on every step, icicles below, an ice spire
+    for (const r of rows) {
+      R(r.x0 - P - 4, r.top - P - 6, r.x1 - r.x0 + P * 2 + 8, 8, 'rgba(225,235,245,.8)');
+      for (let x = r.x0 - P; x < r.x1 + P; x += 22) path([[x, r.top - P + 2], [x + 5, r.top - P + 14 + ((x * 3) % 12)], [x + 10, r.top - P + 2]], 'rgba(200,225,245,.7)');
+    }
+    path([[cxm - 70, top.top - P], [cxm, top.top - 260], [cxm + 70, top.top - P]], '#2a3846');
+    path([[cxm - 20, top.top - P - 40], [cxm, top.top - 250], [cxm + 6, top.top - P - 40]], 'rgba(170,210,240,.35)');
+    apex = [cxm, top.top - 260];
+  } else if (roof === 'citadel') {
+    // a great volcanic citadel with twin spires over the end towers and a central keep
+    const r2 = rows.find(r => r.fl === -260) || top;
+    for (const sx of [r2.x0 + 90, r2.x1 - 90]) {
+      R(sx - 70, r2.top - 200, 140, 200, STONE); crenel(sx - 76, r2.top - 200, 152, STONE, 14);
+      path([[sx - 60, r2.top - 200], [sx, r2.top - 420], [sx + 60, r2.top - 200]], STONE2);
+      R(sx - 8, r2.top - 150, 16, 30, `rgba(255,120,50,${0.5 + 0.3 * Math.sin(t * 2 + sx)})`);
+    }
+    R(-100, r2.top - 170, 200, 170, STONE); crenel(-106, r2.top - 170, 212, STONE, 14);
+    path([[-80, r2.top - 170], [0, r2.top - 300], [80, r2.top - 170]], STONE2);
+    apex = [0, r2.top - 300];
+    // lava seams in the stone
+    cx.save(); cx.globalCompositeOperation = 'lighter';
+    for (const r of rows) for (let x = r.x0 + 30; x < r.x1; x += 150) { const a = 0.35 + 0.25 * Math.sin(t * 1.7 + x); line(x, r.fl, x + 18, r.fl - 40, `rgba(255,90,30,${a})`, 2); line(x + 18, r.fl - 40, x + 6, r.fl - 70, `rgba(255,90,30,${a * 0.7})`, 1.5); }
+    cx.restore();
+  }
+  if (G && G.crowned) { const [ax, ay] = apex; line(ax, ay, ax, ay - 60, '#3a3a3a', 3); const f = VIS.reduce ? 0 : Math.sin(VIS.time * 3) * 4; path([[ax, ay - 60], [ax + 44, ay - 50 + f], [ax, ay - 38]], '#D6A94A'); }
+}
 
 /* ---------- ground and outside world ---------- */
 function drawGround(G, L) {
@@ -1464,10 +1671,15 @@ function drawGround(G, L) {
   // quarry (right, outside)
   for (const r of ROCKS) path([[r[0] - r[2], 0], [r[0] - r[2] * 0.6, -r[1]], [r[0] + r[2] * 0.3, -r[1] * 1.1], [r[0] + r[2], 0]], d > 0.6 ? '#1e2024' : rgb([lerp(92, 34, d), lerp(94, 36, d), lerp(98, 40, d)]));
   R(1060, -6, 30, 6, d > 0.6 ? '#2a2c30' : '#7a7c80');
+  // iron mine: a rock mound with a timbered adit and a cart of ore
+  path([[1220, 0], [1250, -70], [1300, -96], [1360, -74], [1390, 0]], d > 0.6 ? '#1a1c20' : rgb([lerp(70, 28, d), lerp(66, 28, d), lerp(70, 32, d)]));
+  R(1282, -46, 36, 46, '#0a0a0c'); R(1278, -50, 6, 50, '#4a3420'); R(1316, -50, 6, 50, '#4a3420'); R(1276, -54, 48, 7, '#5a4028');
+  R(1334, -14, 30, 12, '#3a2a1c'); circ(1340, -2, 3.5, '#222'); circ(1358, -2, 3.5, '#222'); circ(1342, -16, 4, '#8a95a5'); circ(1351, -17, 4, '#a8b4c4'); circ(1358, -15, 3.5, '#7a8494');
+  if (d > 0.3) glow(GLOW.warm, 1300, -30, 30, 0.35 * d);
   // signposts
   if (cam.z > 0.45 && G && !VIS.titleMode) {
     const lab = (x, s) => text(s, x, 16, 11, 'rgba(220,216,202,.45)');
-    lab(JOB_SITE.quarry, 'QUARRY'); lab(JOB_SITE.wood, 'WOODCUTTER'); lab(JOB_SITE.fields, 'FIELDS');
+    lab(JOB_SITE.quarry, 'QUARRY'); lab(JOB_SITE.wood, 'WOODCUTTER'); lab(JOB_SITE.fields, 'FIELDS'); lab(JOB_SITE.mine, 'IRON MINE');
   }
 }
 
@@ -1527,6 +1739,7 @@ function drawWalls(G) {
 const KEEP = { x: -520, w: 1040, floor: 130 };
 function hallRect(h) { return h.slot; }
 function drawCastleShell(G, cut) {
+  if (LAY) { shellBlocks(); shellTops(G); return; }
   // back wall behind the halls (visible in cut-away)
   R(-536, -276, 1072, 276, STONE);
   // corner towers
@@ -1548,7 +1761,7 @@ function drawCastleShell(G, cut) {
 function drawFacade(G, a) {
   if (a <= 0.01) return;
   cx.globalAlpha = a;
-  R(-536, -276, 1072, 276, STONE); R(-536, -406, 192, 140, STONE); R(344, -406, 192, 140, STONE); R(-126, -416, 252, 150, STONE);
+  if (LAY) { shellBlocks(); shellTops(null); } else { R(-536, -276, 1072, 276, STONE); R(-536, -406, 192, 140, STONE); R(344, -406, 192, 140, STONE); R(-126, -416, 252, 150, STONE); }
   // gate arch
   const [ax, ay] = w2s(0, -52); cx.fillStyle = '#0a0a0b'; cx.beginPath(); cx.arc(ax, ay, 42 * cam.z, Math.PI, 0); cx.lineTo(ax + 42 * cam.z, ay + 52 * cam.z); cx.lineTo(ax - 42 * cam.z, ay + 52 * cam.z); cx.fill();
   // one window per hall
@@ -1607,14 +1820,14 @@ function furniture(h, x, y, w, ht, k) {
       R(x + w - 70, fl - 26, 50, 6, wood); path([[x + w - 60, fl - 26], [x + w - 30, fl - 40], [x + w - 28, fl - 34]], '#8a7a5a');
       break;
     case 'market':
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < Math.max(1, Math.min(3, Math.floor((w - 20) / 110))); i++) {
         const sx = x + 30 + i * 110, c = ['#7a2a30', '#2a4a5a', '#6a5a2a'][i];
         R(sx, fl - 30, 70, 30, wood); path([[sx - 6, fl - 50], [sx + 76, fl - 50], [sx + 70, fl - 62], [sx, fl - 62]], c);
         for (let j = 0; j < 4; j++) circ(sx + 12 + j * 15, fl - 34, 5, ['#c9a24a', '#8a3a2a', '#9aa86a', '#d8c08a'][(i + j) % 4]);
       }
       break;
     case 'library':
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < Math.max(1, Math.min(4, Math.floor((w - 20) / 86))); i++) {
         const sx = x + 20 + i * 86; R(sx, y + 18, 60, ht - 18, '#3a2414');
         for (let r = 0; r < 4; r++) for (let b = 0; b < 7; b++) R(sx + 4 + b * 8, y + 24 + r * 24, 6, 18, ['#7a2a30', '#2a4a5a', '#6a5a2a', '#4a3a5a', '#8a6a3a'][(b + r + i) % 5]);
       }
@@ -1636,6 +1849,24 @@ function furniture(h, x, y, w, ht, k) {
       break;
   }
 }
+/* little touches that make each kingdom's rooms feel different */
+function roomDecor(kid, x, y, w, ht) {
+  const fl = y + ht, t = VIS.time;
+  if (kid === 'cliffhold') {
+    for (let i = 0; i < 2; i++) { const lx = x + w * (0.3 + i * 0.4); line(lx, y, lx, y + 22, '#4a4a50', 1.5); R(lx - 5, y + 22, 10, 12, '#3a3a40'); R(lx - 3, y + 25, 6, 6, '#e8c070'); }
+    line(x + 6, y + 30, x + w * 0.25, y + 44, 'rgba(160,140,100,.5)', 1); line(x + w * 0.25, y + 44, x + w * 0.5, y + 32, 'rgba(160,140,100,.5)', 1);
+  } else if (kid === 'mirewood') {
+    for (let xx = x + 10; xx < x + w; xx += 34) { const len = 14 + ((xx * 13) % 26); line(xx, y + 4, xx + Math.sin(t * 0.8 + xx) * 2, y + 4 + len, '#4a7a3a', 2); circ(xx + 1, y + 6 + len, 2.5, '#6a9a4a'); }
+    R(x + w * 0.55, fl - 7, w * 0.25, 3, 'rgba(90,120,110,.5)');
+  } else if (kid === 'frostmere') {
+    for (let xx = x + 6; xx < x + w; xx += 16) path([[xx, y + 4], [xx + 3, y + 10 + ((xx * 5) % 12)], [xx + 6, y + 4]], 'rgba(200,230,250,.75)');
+    R(x + 4, fl - 10, 18, 4, 'rgba(220,235,250,.5)'); R(x + w - 22, fl - 10, 18, 4, 'rgba(220,235,250,.5)');
+  } else if (kid === 'ashfall') {
+    for (let i = 0; i < 2; i++) { const bx = x + 14 + i * (w - 42); R(bx, y + 10, 14, 44, '#6a1a18'); path([[bx, y + 54], [bx + 7, y + 62], [bx + 14, y + 54]], '#6a1a18'); circ(bx + 7, y + 26, 4, '#D6A94A'); }
+    cx.save(); cx.globalCompositeOperation = 'lighter'; const a = 0.35 + 0.2 * Math.sin(t * 2 + x);
+    line(x + w * 0.35, fl - 1, x + w * 0.45, fl - 3, `rgba(255,110,40,${a})`, 2); line(x + w * 0.45, fl - 3, x + w * 0.6, fl - 1, `rgba(255,110,40,${a})`, 2); cx.restore();
+  }
+}
 function hearthPos(h) {
   const s = h.slot, fl = s[1] + s[3];
   const map = { great: [s[0] + 31, fl - 14], kitchen: [s[0] + 38, fl - 14], forge: [s[0] + 44, fl - 12] };
@@ -1651,7 +1882,8 @@ function drawHalls(G, cut, L) {
     if (s === 'lit') {
       const [sx, sy] = w2s(x, y);
       const g = cx.createLinearGradient(0, sy, 0, sy + ht * cam.z);
-      g.addColorStop(0, '#2c1e14'); g.addColorStop(1, '#5a3a20');
+      const rc = LAY ? LAY.room : ['#2c1e14', '#5a3a20'];
+      g.addColorStop(0, rc[0]); g.addColorStop(1, rc[1]);
       cx.fillStyle = g; cx.fillRect(sx, sy, w * cam.z + 0.5, ht * cam.z + 0.5);
       // stone courses on the back wall
       for (let yy = y + 26; yy < y + ht; yy += 26) line(x, yy, x + w, yy, 'rgba(0,0,0,.18)', 1);
@@ -1659,6 +1891,7 @@ function drawHalls(G, cut, L) {
       // back window showing sky
       if (!hearthPos(h) || h.id === 'great') { const wx = x + w - 44; R(wx, y + 22, 18, 30, rgb(L.top)); R(wx + 8, y + 22, 2, 30, '#2a1a12'); R(wx, y + 35, 18, 2, '#2a1a12'); }
       furniture(h, x, y, w, ht);
+      roomDecor(G.kingdom, x, y, w, ht);
       if (fx && fx.t < 1.4 && !VIS.reduce) { cx.globalAlpha = 1 - fx.t / 1.4; R(x, y, w, ht, '#120f0c'); cx.globalAlpha = 1; }
     } else if (s === 'building') {
       R(x, y, w, ht, '#1c1612');
@@ -1725,27 +1958,32 @@ function drawPerson(x, y, face, opts) {
     cx.strokeStyle = tl === 'spear' ? '#a0a6ae' : tl === 'bow' ? '#8a6a42' : '#9a8a6a'; cx.lineWidth = Math.max(1, 1.6 * s);
     cx.beginPath();
     if (tl === 'spear') { const th = opts.thrust > 0 ? 8 * s : 0; cx.moveTo(sx + face * (3 * s + th), sy - 6 * s - bob); cx.lineTo(sx + face * (16 * s + th), sy - 36 * s - bob); }
+    else if (tl === 'sword') { const sw2 = opts.thrust > 0 ? 1 : 0; cx.lineWidth = Math.max(1.4, 2.2 * s); cx.moveTo(sx + face * 5 * s, sy - 16 * s - bob); cx.lineTo(sx + face * (sw2 ? 20 : 9) * s, sy - (sw2 ? 18 : 32) * s - bob); }
     else if (tl === 'bow') { cx.arc(sx + face * 6 * s, sy - 18 * s - bob, 8 * s, face > 0 ? -1.2 : Math.PI - 1.2 + 0, face > 0 ? 1.2 : Math.PI + 1.2); }
     else { const a = -0.9 + sw * 0.9; cx.moveTo(sx + face * 4 * s, sy - 16 * s - bob); cx.lineTo(sx + face * (4 + Math.cos(a) * 13) * s, sy - (16 + Math.sin(-a) * 13) * s - bob); }
     cx.stroke();
   }
+  if (opts.shield) { cx.fillStyle = opts.shield; cx.beginPath(); cx.ellipse(sx - face * 5 * s, sy - 15 * s - bob, (opts.bigShield ? 5 : 3.5) * s, (opts.bigShield ? 9 : 6.5) * s, 0, 0, 7); cx.fill(); cx.fillStyle = '#D6A94A'; cx.fillRect(sx - face * 5 * s - s, sy - 16 * s - bob, 2 * s, 2 * s); }
+  if (opts.lamp) { cx.fillStyle = '#ffd27a'; cx.fillRect(sx + face * 2 * s, sy - 30 * s - bob, 2.4 * s, 2.4 * s); }
   if (opts.carry) { cx.fillStyle = opts.carry; cx.fillRect(sx - 5 * s, sy - 30 * s - bob - 6 * s, 10 * s, 6 * s); }
   cx.globalAlpha = 1;
 }
 const JOB_LOOK = {
   idle: { body: '#8a7a64' }, quarry: { body: '#7a7e86', tool: 'pick', carry: null }, wood: { body: '#6a5236', tool: 'axe' },
-  fields: { body: '#9a8a4a', tool: 'scythe', hood: '#6a5a2a' }, build: { body: '#a0703a', tool: 'hammer' }, wall: { body: '#5a6a7a', head: '#c0b090', tool: 'spear' }
+  fields: { body: '#9a8a4a', tool: 'scythe', hood: '#6a5a2a' }, build: { body: '#a0703a', tool: 'hammer' }, wall: { body: '#5a6a7a', head: '#c0b090', tool: 'spear' },
+  mine: { body: '#5a5048', tool: 'pick', hood: '#6a5a3a', lamp: true }, field: { body: '#8a2e2a', head: '#c0b090', hood: '#9aa0a8', tool: 'sword', shield: '#4a5a7a' }
 };
 function drawVillagers(G, onlyInside) {
   for (const v of G.vill) {
-    const inside = v.y !== WALL_TOP && Math.abs(v.x) < 530;
+    const inside = v.y !== WALL_TOP && Math.abs(v.x) < KEEP_HALF;
     if (onlyInside !== inside) continue;
     const look = JOB_LOOK[v.wounded ? 'idle' : v.job] || JOB_LOOK.idle;
     const archer = v.job === 'wall' && lit(G, 'barracks');
     const atHome = inside && (G.phase === 'night' || v.job === 'idle');
     drawPerson(v.x, v.y, v.face || 1, {
       body: v.sell ? '#6a3a3a' : look.body, head: look.head, hood: look.hood,
-      tool: atHome ? null : (archer ? 'bow' : look.tool), moving: v.moving, anim: v.anim, work: v.work && v.at,
+      tool: atHome && v.job !== 'field' ? null : (archer ? 'bow' : look.tool), moving: v.moving, anim: v.anim, work: v.work && v.at,
+      shield: look.shield, bigShield: G.weapons && G.weapons.shields, lamp: look.lamp,
       thrust: v.thrust, alpha: v.fade > 0 ? 0.35 : (v.wounded ? 0.6 : 1), scale: 1,
       carry: v.job === 'quarry' && v.moving && v.x > 400 ? null : null
     });
@@ -1753,15 +1991,25 @@ function drawVillagers(G, onlyInside) {
 }
 
 /* ---------- the Hollow ---------- */
+/* body and eye colour per kind, so a horde reads at a glance */
+const HLOOK = {
+  wisp: { body: '#123a4a', eye: '#7fe8ff' }, husk: { body: '#3a2818', eye: '#ffb347' }, thief: { body: '#1c3a22', eye: '#9cff7a' },
+  climber: { body: '#3e1838', eye: '#ff5ad0' }, wailer: { body: '#2a2448', eye: '#c8a8ff' }, knight: { body: '#141018', eye: '#ff3a3a' },
+  brute: { body: '#4e2014', eye: '#ff7a2a' }, bat: { body: '#2c1a40', eye: '#ff4a6a' }, burster: { body: '#4a4a12', eye: '#e8ff4a' }, shaman: { body: '#173a32', eye: '#4affb0' }
+};
+const GLOWC = {};
+function glowFor(hex) { if (!GLOWC[hex]) { const n = parseInt(hex.slice(1), 16); GLOWC[hex] = glowSprite(n >> 16, (n >> 8) & 255, n & 255); } return GLOWC[hex]; }
+let EYE = '#b89af0';
 function drawEnemy(e, G) {
   const d = CONTENT.hollow[e.k], [sx, sy] = w2s(e.x, e.y), z = cam.z;
+  const hl = HLOOK[e.k] || HLOOK.husk; EYE = hl.eye;
   if (sx < -80 || sx > VW + 80) return;
   let a = 1;
   if (e.st === 'dead' || e.st === 'gone') a = Math.max(0, 1 - e.t / 0.8);
   if (a <= 0) return;
   const s = d.size * z, f = -e.side, t = e.ph, rev = e.reveal > 0;
   cx.globalAlpha = a;
-  const body = e.hit > 0 ? '#3a3046' : '#08070c';
+  const body = e.hit > 0 ? '#e8d8d0' : hl.body;
   const wob = VIS.reduce ? 0 : Math.sin(t * 6) * 0.08;
   cx.fillStyle = body;
   cx.beginPath();
@@ -1797,18 +2045,44 @@ function drawEnemy(e, G) {
     const sw = e.st === 'attack' ? Math.sin(e.t / d.rate * Math.PI * 2) : 0;
     cx.strokeStyle = '#1a1622'; cx.lineWidth = 5 * z; cx.beginPath(); cx.moveTo(sx + f * s * 0.4, sy - s * 1.0); cx.lineTo(sx + f * s * (1.0 + sw * 0.3), sy - s * (1.9 - sw * 1.2)); cx.stroke();
     eyes(sx + f * s * 0.1, sy - s * 1.68, s * 0.07, f, s);
-    // hp bar
-    R(e.x - 50, e.y - d.size * 2.6, 100, 6, 'rgba(0,0,0,.7)'); R(e.x - 50, e.y - d.size * 2.6, 100 * clamp(e.hp / e.max, 0, 1), 6, '#8c2c3c');
+  } else if (e.k === 'brute') {
+    // hulking ogre: hunched back, huge shoulders, a club
+    cx.moveTo(sx - s * 0.7, sy); cx.quadraticCurveTo(sx - s * 0.9, sy - s * 0.9, sx - s * 0.3, sy - s * (1.25 + wob)); cx.quadraticCurveTo(sx + s * 0.5, sy - s * 1.35, sx + s * 0.75, sy - s * 0.7); cx.lineTo(sx + s * 0.6, sy); cx.fill();
+    cx.beginPath(); cx.arc(sx + f * s * 0.35, sy - s * 1.1, s * 0.22, 0, 7); cx.fill();
+    const sw = e.st === 'attack' || e.st === 'brawl' ? Math.sin(e.t / d.rate * Math.PI * 2) : 0;
+    cx.strokeStyle = '#5a3a22'; cx.lineWidth = 6 * z; cx.beginPath(); cx.moveTo(sx + f * s * 0.5, sy - s * 0.8); cx.lineTo(sx + f * s * (0.9 + sw * 0.2), sy - s * (1.4 - sw * 0.9)); cx.stroke();
+    eyes(sx + f * s * 0.42, sy - s * 1.12, s * 0.06, f, s);
+  } else if (e.k === 'bat') {
+    const fl = VIS.reduce ? 0.5 : Math.sin(t * 18) * 0.5 + 0.5, by = sy + Math.sin(t * 5) * 5 * z;
+    cx.ellipse(sx, by, s * 0.35, s * 0.25, 0, 0, 7); cx.fill();
+    cx.beginPath(); cx.moveTo(sx - s * 0.2, by); cx.lineTo(sx - s * 1.1, by - s * (0.2 + fl * 0.8)); cx.lineTo(sx - s * 0.7, by + s * 0.1); cx.lineTo(sx - s * 1.0, by + s * 0.3); cx.closePath(); cx.fill();
+    cx.beginPath(); cx.moveTo(sx + s * 0.2, by); cx.lineTo(sx + s * 1.1, by - s * (0.2 + fl * 0.8)); cx.lineTo(sx + s * 0.7, by + s * 0.1); cx.lineTo(sx + s * 1.0, by + s * 0.3); cx.closePath(); cx.fill();
+    eyes(sx + f * s * 0.08, by - s * 0.05, s * 0.07, f, s);
+  } else if (e.k === 'burster') {
+    // bloated sack with a glowing core, ready to pop at the gate
+    const pu = VIS.reduce ? 0 : Math.sin(t * 9) * 0.06;
+    cx.arc(sx, sy - s * 0.75, s * (0.62 + pu), 0, 7); cx.fill();
+    cx.save(); cx.globalCompositeOperation = 'lighter'; cx.globalAlpha = a * (0.55 + pu * 4); cx.drawImage(glowFor('#e8ff4a'), sx - s * 0.7, sy - s * 1.45, s * 1.4, s * 1.4); cx.restore(); cx.globalAlpha = a;
+    cx.fillStyle = body; for (let i = -1; i <= 1; i += 2) cx.fillRect(sx + i * s * 0.3 - 1.5 * z, sy - s * 0.2, 3 * z, s * 0.2);
+    eyes(sx + f * s * 0.2, sy - s * 0.95, s * 0.07, f, s);
+  } else if (e.k === 'shaman') {
+    // robed caster with a staff topped by a green orb; pulses when healing
+    cx.moveTo(sx - s * 0.5, sy); cx.lineTo(sx - s * 0.25, sy - s * 1.6); cx.lineTo(sx + s * 0.25, sy - s * 1.6); cx.lineTo(sx + s * 0.5, sy); cx.fill();
+    cx.beginPath(); cx.arc(sx, sy - s * 1.8, s * 0.28, 0, 7); cx.fill();
+    cx.strokeStyle = '#6a5a3a'; cx.lineWidth = 2 * z; cx.beginPath(); cx.moveTo(sx + f * s * 0.5, sy); cx.lineTo(sx + f * s * 0.5, sy - s * 2.4); cx.stroke();
+    cx.save(); cx.globalCompositeOperation = 'lighter'; cx.drawImage(glowFor('#4affb0'), sx + f * s * 0.5 - s * 0.5, sy - s * 2.9, s, s); cx.restore();
+    if (e.st === 'heal' && !VIS.reduce) { cx.save(); cx.globalCompositeOperation = 'lighter'; const r = (VIS.time * 50) % 50; cx.strokeStyle = `rgba(74,255,176,${0.3 * (1 - r / 50)})`; cx.lineWidth = 2; cx.beginPath(); cx.arc(sx, sy - s, (20 + r * 3) * z, 0, 7); cx.stroke(); cx.restore(); }
+    eyes(sx + f * s * 0.08, sy - s * 1.82, s * 0.07, f, s);
   }
   if (rev && e.hp > 0) { cx.globalCompositeOperation = 'lighter'; cx.globalAlpha = 0.5; cx.drawImage(GLOW.gold, sx - s * 1.2, sy - s * 2, s * 2.4, s * 2.4); cx.globalCompositeOperation = 'source-over'; }
   cx.globalAlpha = 1;
 }
 function eyes(x, y, r, f, s) {
   cx.globalCompositeOperation = 'lighter';
-  cx.fillStyle = '#b89af0';
+  cx.fillStyle = EYE;
   const o = Math.max(1.2, r);
   cx.beginPath(); cx.arc(x - o * 0.9 + f * o * 0.6, y, Math.max(1, r * 0.55), 0, 7); cx.arc(x + o * 0.9 + f * o * 0.6, y, Math.max(1, r * 0.55), 0, 7); cx.fill();
-  cx.globalAlpha *= 0.6; cx.drawImage(GLOW.violet, x - s * 0.5, y - s * 0.5, s, s);
+  cx.globalAlpha *= 0.6; cx.drawImage(glowFor(EYE), x - s * 0.5, y - s * 0.5, s, s);
   cx.globalCompositeOperation = 'source-over';
 }
 
@@ -1988,14 +2262,19 @@ function render(G, dt) {
 }
 /* Health bar over every living Hollow at night; the Knight gets a wide named bar. */
 function drawEnemyBars() {
+  // Thin bars well above the head, only once a monster is hurt (the Knight always shows), so hordes stay readable.
   for (const e of W.en) {
     if (e.hp <= 0 || e.st === 'dead' || e.st === 'gone') continue;
-    const d = CONTENT.hollow[e.k], [sx, sy] = w2s(e.x, e.y - d.size * 1.25 - 10);
+    const knight = e.k === 'knight';
+    if (!knight && e.hp >= e.max) continue;
+    const d = CONTENT.hollow[e.k], [sx, sy] = w2s(e.x, e.y - d.size * 1.6 - 16);
     if (sx < -60 || sx > VW + 60) continue;
-    const knight = e.k === 'knight', w = knight ? 110 : clamp(d.size * cam.z * 1.5, 22, 60), h = knight ? 7 : 4, f = clamp(e.hp / e.max, 0, 1);
-    cx.fillStyle = 'rgba(0,0,0,.65)'; cx.fillRect(sx - w / 2 - 1, sy - 1, w + 2, h + 2);
+    const w = knight ? 80 : clamp(d.size * cam.z * 0.9, 14, 34), h = knight ? 3 : 2, f = clamp(e.hp / e.max, 0, 1);
+    cx.globalAlpha = 0.85;
+    cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(sx - w / 2, sy, w, h);
     cx.fillStyle = f > 0.5 ? '#d6a94a' : f > 0.25 ? '#e08a3a' : '#e05a4a'; cx.fillRect(sx - w / 2, sy, w * f, h);
-    if (knight) { cx.font = '700 11px system-ui,sans-serif'; cx.textAlign = 'center'; cx.fillStyle = '#e5a0a8'; cx.fillText('HOLLOW KNIGHT', sx, sy - 5); }
+    cx.globalAlpha = 1;
+    if (knight) { cx.font = '700 10px system-ui,sans-serif'; cx.textAlign = 'center'; cx.fillStyle = 'rgba(229,160,168,.9)'; cx.fillText('HOLLOW KNIGHT', sx, sy - 4); }
   }
 }
 /* Hollow beyond the screen edge: a pill with an arrow and a count, plus a pulse when a wave is announced. */
@@ -2058,14 +2337,17 @@ const ICON = {
   timber: '<svg viewBox="0 0 20 20"><rect x="2" y="7" width="16" height="6" rx="3" fill="#8a5a32"/><circle cx="16" cy="10" r="3" fill="#c49060"/><circle cx="16" cy="10" r="1.2" fill="#8a5a32"/></svg>',
   grain: '<svg viewBox="0 0 20 20"><path d="M10 18V5" stroke="#c9a24a" stroke-width="1.6"/><g fill="#D6A94A"><ellipse cx="8" cy="7" rx="2" ry="3"/><ellipse cx="12" cy="7" rx="2" ry="3"/><ellipse cx="8" cy="12" rx="2" ry="3"/><ellipse cx="12" cy="12" rx="2" ry="3"/><ellipse cx="10" cy="4" rx="1.6" ry="2.6"/></g></svg>',
   ember: '<svg viewBox="0 0 20 20"><path d="M10 2c3 4 6 6 6 10a6 6 0 01-12 0c0-3 2-4 3-6 0 2 1 3 2 3 0-3 0-5 1-7z" fill="#e0703a"/><path d="M10 9c2 2 3 3 3 5a3 3 0 01-6 0c0-2 2-3 3-5z" fill="#ffd27a"/></svg>',
+  iron: '<svg viewBox="0 0 20 20"><path d="M3 14l3-6h8l3 6z" fill="#8a95a5"/><path d="M6 8h8l-1.5 2.5h-5z" fill="#c4ccd8"/></svg>',
   coin: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" fill="#D6A94A"/><circle cx="10" cy="10" r="4.6" fill="none" stroke="#9a7428" stroke-width="1.2"/></svg>',
   villager: '<svg viewBox="0 0 20 20"><circle cx="10" cy="6" r="3.2" fill="#e0c8a0"/><path d="M4 18c0-5 3-8 6-8s6 3 6 8z" fill="#8a7a64"/></svg>',
   sun: '<circle cx="20" cy="20" r="6" fill="#f3dcae"/>',
   moon: '<circle cx="20" cy="20" r="6.5" fill="#DCD8CA"/><circle cx="23" cy="18" r="5.5" fill="#2a2f35"/>'
 };
-const RES_COL = { stone: '#c4c8cc', timber: '#d8a070', grain: '#e8c060', ember: '#ff9a50', coin: '#f0cc6a' };
-const JOB_NAME = { quarry: 'Quarry', wood: 'Woodcutter', fields: 'Fields', build: 'Build', wall: 'Walls' };
-const JOB_ICON = { quarry: ICON.stone, wood: ICON.timber, fields: ICON.grain, build: '<svg viewBox="0 0 20 20"><path d="M3 15l8-8 2 2-8 8z" fill="#8a6a42"/><rect x="10" y="3" width="8" height="5" rx="1" fill="#9aa0a8" transform="rotate(45 14 5)"/></svg>', wall: '<svg viewBox="0 0 20 20"><path d="M3 18V8h3v2h2V8h4v2h2V8h3v10z" fill="#9aa0a8"/></svg>' };
+const RES_COL = { stone: '#c4c8cc', timber: '#d8a070', iron: '#a8b4c4', grain: '#e8c060', ember: '#ff9a50', coin: '#f0cc6a' };
+const JOB_NAME = { quarry: 'Quarry', wood: 'Woodcutter', mine: 'Mine', fields: 'Fields', build: 'Build', wall: 'Walls', field: 'Soldiers' };
+const JOB_ICON = { quarry: ICON.stone, wood: ICON.timber, fields: ICON.grain, build: '<svg viewBox="0 0 20 20"><path d="M3 15l8-8 2 2-8 8z" fill="#8a6a42"/><rect x="10" y="3" width="8" height="5" rx="1" fill="#9aa0a8" transform="rotate(45 14 5)"/></svg>', wall: '<svg viewBox="0 0 20 20"><path d="M3 18V8h3v2h2V8h4v2h2V8h3v10z" fill="#9aa0a8"/></svg>',
+  mine: '<svg viewBox="0 0 20 20"><path d="M4 17L14 7" stroke="#8a6a42" stroke-width="2"/><path d="M8 4c4 0 8 2 9 6-3-2-6-3-9-3z" fill="#a8b4c4"/></svg>',
+  field: '<svg viewBox="0 0 20 20"><path d="M5 15L15 5" stroke="#c4ccd8" stroke-width="2.2"/><path d="M4 12l4 4M3 17l2-2" stroke="#8a6a42" stroke-width="2"/><ellipse cx="13" cy="13" rx="3.5" ry="4.5" fill="#4a5a7a"/></svg>' };
 
 let G = null;
 let state = 'boot'; // boot | title | play
@@ -2137,13 +2419,15 @@ function buildHUD() {
   $('res').innerHTML = RES.map(r => `<div class="r" id="r_${r}" title="${r[0].toUpperCase() + r.slice(1)}">${ICON[r]}<span>0</span></div>`).join('') +
     `<div class="r" id="r_v" title="Villagers">${ICON.villager}<span>0</span></div>`;
   $('jobs').innerHTML = `<div class="job idle" id="j_idle"><div class="jn">Idle</div><div class="jc"><b>0</b></div></div>` +
-    JOBS.map(j => `<div class="job" id="j_${j}"><div class="jn">${JOB_ICON[j]}${JOB_NAME[j]}</div><div class="jc"><button data-j="${j}" data-d="-1" aria-label="Remove from ${JOB_NAME[j]}">&minus;</button><b>0</b><button data-j="${j}" data-d="1" aria-label="Add to ${JOB_NAME[j]}">+</button></div>${j === 'wall' ? '<div class="side"><button data-mv="-1" title="Move a guard to the west wall">&larr;</button><span id="wallLR">0 | 0</span><button data-mv="1" title="Move a guard to the east wall">&rarr;</button></div>' : ''}</div>`).join('');
+    JOBS.map(j => `<div class="job" id="j_${j}"><div class="jn">${JOB_ICON[j]}${JOB_NAME[j]}</div><div class="jc"><button data-j="${j}" data-d="-1" aria-label="Remove from ${JOB_NAME[j]}">&minus;</button><b>0</b><button data-j="${j}" data-d="1" aria-label="Add to ${JOB_NAME[j]}">+</button></div>${j === 'wall' ? '<div class="side"><button data-mv="-1" title="Move a guard to the west wall">&larr;</button><span id="wallLR">0 | 0</span><button data-mv="1" title="Move a guard to the east wall">&rarr;</button></div>' : ''}${j === 'field' ? '<div class="side"><button data-mvf="-1" title="Move a soldier to the west gate">&larr;</button><span id="fieldLR">0 | 0</span><button data-mvf="1" title="Move a soldier to the east gate">&rarr;</button></div>' : ''}</div>`).join('');
   $('powers').innerHTML = CONTENT.powers.map(p => `<div class="pw" id="p_${p.id}" role="button" tabindex="0" title="${p.desc}"><span class="k">${p.key}</span><span class="pn">${p.name}</span><span class="pc">${ICON.ember}${p.ember}</span><i class="cd"></i></div>`).join('') +
     `<div id="guardsBox"><div>Guards L <b id="gL">0</b> | R <b id="gR">0</b></div><div class="side"><button data-mv="-1" title="Move a guard west">&larr;</button><button data-mv="1" title="Move a guard east">&rarr;</button><button id="hire" title="Hire a sellsword for tonight">Hire</button></div><div id="walls"><span>L<div class="bar"><i id="wL"></i></div></span><span>R<div class="bar"><i id="wR"></i></div></span></div></div>`;
   $('jobs').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || !G) return;
     if (b.dataset.mv) { const to = +b.dataset.mv; if (moveGuard(G, -to, to)) Audio.sfx('assign'); else Audio.sfx('deny'); updateHUD(true); return; }
+    if (b.dataset.mvf) { const to = +b.dataset.mvf; if (moveGuard(G, -to, to, 'field')) Audio.sfx('assign'); else Audio.sfx('deny'); updateHUD(true); return; }
     const j = b.dataset.j, d = +b.dataset.d;
+    if (j === 'field' && d > 0) { const l = jobCount(G, 'field', -1), r = jobCount(G, 'field', 1); if (assign(G, j, 1, r <= l ? 1 : -1)) { Audio.sfx('assign'); updateHUD(true); } else nobody(); return; }
     if (j === 'build' && d > 0 && !G.building) { toast('Pick a hall to restore first. Open Halls or tap a dark room.'); Audio.sfx('deny'); return; }
     if (j === 'wall' && d > 0) { const l = jobCount(G, 'wall', -1), r = jobCount(G, 'wall', 1); if (assign(G, j, 1, (r <= l || G.day <= CONTENT.night.oneSideUntil) ? 1 : -1)) Audio.sfx('assign'); else nobody(); return; }
     if (assign(G, j, d)) { Audio.sfx(d > 0 ? 'assign' : 'back'); if (d > 0) tutEvent('assign_' + j); }
@@ -2158,6 +2442,7 @@ function buildHUD() {
   });
   $('speed').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { setSpeed(+b.dataset.s); Audio.sfx('click'); } });
   $('btnHalls').onclick = () => { Audio.sfx('select'); openHallsList(); };
+  $('btnArmory').onclick = () => { Audio.sfx('select'); openArmory(); };
   $('btnMenu').onclick = () => { Audio.sfx('select'); openPause(); };
   $('goal').onclick = () => { const h = nextGoal(G); if (h) { Audio.sfx('select'); selectHall(h.id, true); } };
 }
@@ -2198,6 +2483,7 @@ function updateHUD(force) {
     minus.disabled = jobCount(G, j) === 0; plus.disabled = idleCount(G) === 0 || (j === 'build' && !G.building);
   }
   $('wallLR').textContent = `${jobCount(G, 'wall', -1)} | ${jobCount(G, 'wall', 1)}`;
+  $('fieldLR').textContent = `${jobCount(G, 'field', -1)} | ${jobCount(G, 'field', 1)}`;
   if (!day) {
     $('gL').textContent = jobCount(G, 'wall', -1); $('gR').textContent = jobCount(G, 'wall', 1);
     $('wL').style.width = (100 * G.walls.L.hp / G.walls.L.max) + '%'; $('wR').style.width = (100 * G.walls.R.hp / G.walls.R.max) + '%';
@@ -2227,6 +2513,8 @@ function updateHUD(force) {
     }
   }
   const K = KINGDOM[G.kingdom] || KINGDOMS[0];
+  if (G.quest) { const q = G.quest, rw = Object.keys(q.reward).map(k => q.reward[k] + ' ' + k).join(', '), prog = q.k === 'noloss' ? '' : ` (${Math.min(q.have, q.n) | 0}/${q.n})`;
+    $('goal').insertAdjacentHTML('beforeend', `<div class="quest ${q.k !== 'noloss' && q.have >= q.n ? 'ok' : ''}"><b>Order</b> ${q.text}${prog}<br><small>Reward at dawn: ${rw}</small></div>`); }
   $('goal').insertAdjacentHTML('afterbegin', `<div class="kobj">${K.name} &middot; halls ${Math.min(restoredCount(G), K.goal.halls)}/${K.goal.halls} &middot; nights ${Math.min(G.nightsSurvived, K.goal.nights)}/${K.goal.nights}</div>`);
   // preview (watchtower)
   const pv = $('preview');
@@ -2364,6 +2652,10 @@ function handleFX() {
       case 'vanish': puff(e.x, e.y - 10, 8, '#2a2436', 60, 40, 0.8, 4); break;
       case 'power': Audio.sfx(e.id); if (e.id === 'light') { cam.shake = 0.35; VIS.flash = 0.5; } if (e.id === 'mend') puff(e.x, -60, 14, '#8a8c90', 80, 60, 0.8, 5); if (e.id === 'rally') banner('Rally!', '', ''); break;
       case 'assign': break;
+      case 'boom': Audio.sfx('breach'); cam.shake = Math.max(cam.shake, 0.4); if (!VIS.reduce) { puff(e.x, e.y - 16, 26, '#c8d84a', 200, 90, 0.9, 7); puff(e.x, e.y - 16, 14, 'ember', 160, 120, 1, 4); VIS.flash = Math.max(VIS.flash, 0.15); } break;
+      case 'oil': Audio.sfx('mend', { gap: 0.3 }); if (!VIS.reduce) puff(e.side * WALL_FACE, -60, 30, 'ember', 140, 20, 1.2, 6); toast('Boiling oil pours from the ' + (e.side < 0 ? 'west' : 'east') + ' wall!', 'good', 1800); break;
+      case 'soldierHit': Audio.sfx('hit', { gap: 0.1 }); break;
+      case 'weapon': break;
     }
   }
 }
@@ -2396,6 +2688,7 @@ function showReport(r) {
   if (r.darkened && r.darkened.length) rows += `<tr><td>Halls darkened</td><td class="bad">${r.darkened.join(', ')}</td></tr>`;
   if (r.bloodReward) rows += `<tr><td>Blood Moon reward</td><td class="good">+${CONTENT.rewards.bloodEmber} ember, +${CONTENT.rewards.bloodCoin} coin</td></tr>`;
   rows += `<tr><td>Grain eaten</td><td class="${r.hungry ? 'bad' : ''}">${r.eaten}${r.hungry ? ' (hungry!)' : ''}</td></tr><tr><td>Taxes</td><td class="good">+${r.tax} coin</td></tr>`;
+  if (r.quest) rows += `<tr><td>Order: ${r.quest.text}</td><td class="${r.quest.ok ? 'good' : 'bad'}">${r.quest.ok ? '+' + Object.keys(r.quest.reward).map(k => r.quest.reward[k] + ' ' + k).join(', ') : 'failed'}</td></tr>`;
   if (r.chapel) rows += `<tr><td>Chapel</td><td class="good">+${r.chapel} ember</td></tr>`;
   if (r.market) rows += `<tr><td>Market</td><td class="good">+${r.market} coin</td></tr>`;
   if (r.ash) rows += `<tr><td>Ember in the ash</td><td class="good">+${r.ash} ember</td></tr>`;
@@ -2489,7 +2782,7 @@ function tutUpdate() {
 /* ---------- input: mouse, touch, keyboard, gamepad ---------- */
 const ptrs = new Map(); let dragMoved = 0, pinch0 = null, downAt = null;
 function hallAt(wx, wy) { for (const h of CONTENT.halls) { const s = h.slot; if (wx >= s[0] && wx <= s[0] + s[2] && wy >= s[1] && wy <= s[1] + s[3]) return h.id; } return null; }
-function clampCam() { cam.tz = clamp(cam.tz, 0.32, 2.2); cam.tx = clamp(cam.tx, -1500, 1500); cam.ty = clamp(cam.ty, -720, 60); }
+function clampCam() { cam.tz = clamp(cam.tz, 0.32, 2.2); cam.tx = clamp(cam.tx, -1500, 1500); cam.ty = clamp(cam.ty, Math.min(-720, LAY_TOP - 200), 60); }
 function zoomAt(sx, sy, f) {
   const [wx, wy] = s2w(sx, sy); const nz = clamp(cam.tz * f, 0.32, 2.2);
   cam.tx = wx - (sx - VW / 2) / nz; cam.ty = wy - (sy - VH * 0.55) / nz; cam.tz = nz; cam.z = nz; cam.x = cam.tx; cam.y = cam.ty; clampCam();
@@ -2613,7 +2906,7 @@ document.addEventListener('visibilitychange', () => { Audio.suspend(document.hid
 /* ---------- title + flow ---------- */
 let saved = null;
 function toTitle() {
-  state = 'title'; VIS.titleMode = true; VIS.titleLit = ['great', 'throne', 'barracks'];
+  state = 'title'; VIS.titleMode = true; VIS.titleLit = ['great', 'throne', 'barracks']; applyLook(null);
   cam.tz = cam.z = Math.min(VW / 1250, VH * 0.42 / 760); cam.tx = cam.x = 0; cam.ty = cam.y = (0.05 * VH) / cam.z - 20;
   $('hud').classList.add('hidden'); $('title').classList.remove('hidden'); hideTip();
   $('tContinue').classList.toggle('hidden', !(G || (saved && saved.game)));
@@ -2627,7 +2920,8 @@ function enterPlay() {
   $('title').classList.add('hidden'); $('hud').classList.remove('hidden');
   resetTransient(G);
   if (G.phase === 'night') { G.phase = 'day'; G.t = CONTENT.timing.dayLen - 4; }
-  cam.tz = clamp(Math.min(VW / 1150, (VH - 150) / 520), 0.36, 1.0); cam.tx = 0; cam.ty = -170 + (VW < 720 ? 40 : 0);
+  const tall = Math.max(520, -LAY_TOP + 120);
+  cam.tz = clamp(Math.min(VW / Math.max(1150, KEEP_HALF * 2 + 120), (VH - 150) / tall), 0.32, 1.0); cam.tx = 0; cam.ty = Math.min(-170, LAY_TOP / 2 + 30) + (VW < 720 ? 40 : 0);
   Audio.setLayers(CONTENT.halls.filter(h => lit(G, h.id)).map(h => h.layer), true);
   if (audioStarted) { Audio.setMode('day'); syncLayers(); }
   updateHUD(true);
@@ -2693,6 +2987,16 @@ function showKingdomEnd(kind) {
   if ($('kVote')) $('kVote').onclick = () => { save(); post({ type: 'playchain:exit' }); };
   post({ type: 'playchain:score', score: score(G) });
 }
+function openArmory() {
+  const C = CONTENT, own = G.weapons || {};
+  const row = w => { const has = own[w.id], unl = lit(G, w.hall), ok = canAfford(G, w.cost);
+    return `<div class="wp ${has ? 'own' : ''}"><b>${w.name}</b>${has ? '<span style="color:var(--gold)">Owned</span>' : `<button data-w="${w.id}" ${unl && ok ? 'class="primary"' : 'disabled'}>Buy</button>`}<small>${w.desc}${unl ? '' : ` Needs the ${HALL[w.hall].name}.`}</small>${has ? '' : `<span class="cost">${Object.keys(w.cost).map(k => `${ICON[CKEY[k]]} ${Math.floor(G.res[CKEY[k]])}/${w.cost[k]}`).join(' ')}</span>`}</div>`; };
+  openModal(`<h3>Iron and coin</h3><h2>Armory</h2><p>Weapons last for the whole kingdom. Miners dig the iron at the mine east of the walls.</p><div class="arm">${C.weapons.map(row).join('')}</div><div class="menu"><button id="aBack">Close</button></div>`, 'armory');
+  $('mcard').querySelectorAll('button[data-w]').forEach(b => b.onclick = () => {
+    if (buyWeapon(G, b.dataset.w)) { Audio.sfx('rally'); toast(C.weapons.find(w => w.id === b.dataset.w).name + ' forged.', 'good'); save(); updateHUD(true); openArmory(); } else Audio.sfx('deny');
+  });
+  $('aBack').onclick = () => { Audio.sfx('back'); closeModal(); };
+}
 function showEvent() {
   const ev = EVENTS.find(e => e.id === G.event); if (!ev) { G.event = null; return; }
   openModal(`<h3>Day ${G.day} &middot; an event</h3><h2>${ev.title}</h2><p>${ev.text}</p><div class="menu">` +
@@ -2708,24 +3012,32 @@ const BEAT = {
   thief: 'Picks the gate lock, steals resources and runs. Kill it on the way out to get the loot back. The Vault halves theft.',
   climber: 'Scales the wall to fight your guards. Keep two or more guards per wall; the Infirmary saves the fallen.',
   wailer: 'Hangs back and halves your guards\u2019 damage nearby. Barracks archers outrange it; Light reaches it.',
-  knight: 'Blood Moon boss. Huge health, smashes towers first. Save ember for Light and Rally, and Mend the wall it hits.'
+  knight: 'Blood Moon boss. Huge health, smashes towers first. Save ember for Light and Rally, and Mend the wall it hits.',
+  brute: 'A hulking ogre with a club. Very tough and hits hard. Soldiers hold it, Ballista Towers triple their damage on it.',
+  bat: 'Flies straight over soldiers and onto the wall to bite your guards. Archers and towers pick them off.',
+  burster: 'A glowing sack that explodes at the gate or among your soldiers. Kill it early, before it gets close.',
+  shaman: 'Stays back and heals the Hollow around it. Guards aim for it first; Light and Flare reach it.'
 };
 function openHowTo(back) {
   const C = CONTENT, cost = h => Object.keys(h.cost).map(k => h.cost[k] + ' ' + CKEY[k]).join(', ') || 'free';
   const K = KINGDOMS.map(k => `<tr><td>${k.name}</td><td>${k.twist} Goal: ${k.goal.halls} halls, ${k.goal.nights} nights.</td></tr>`).join('');
   openModal(`<h3>Guide</h3><h2>How to play</h2><div class="howto">
     <p>Each kingdom is a castle gone dark. By <b>day</b>, send villagers to work and restore halls. By <b>night</b>, the Hollow attack your two walls. Restore enough halls and survive enough nights to win the kingdom.</p>
-    <h4>Day and night</h4><ul><li>A day lasts ${C.timing.dayLen / 60 | 0}:${String(C.timing.dayLen % 60).padStart(2, '0')}. The bell rings ${C.timing.bellAt} seconds before dusk: put guards on the walls.</li><li>Nights last up to ${C.timing.nightLen} seconds, in ${C.night.waves.length} waves. A banner warns you before each wave and red markers show where Hollow are off screen.</li><li>Every ${C.night.bloodEvery}th night (sooner in Ashfall) a Blood Moon brings the Hollow Knight, and a big reward at dawn.</li><li>At dawn: walls mend a little, villagers eat grain, you collect taxes, and sometimes an event asks you to choose.</li></ul>
+    <h4>Day and night</h4><ul><li>A day lasts ${C.timing.dayLen / 60 | 0}:${String(C.timing.dayLen % 60).padStart(2, '0')}. The bell rings ${C.timing.bellAt} seconds before dusk: put guards on the walls.</li><li>Nights last up to ${C.timing.nightLen} seconds, in ${C.night.waves.length} waves. A banner warns you before each wave and red markers show where Hollow are off screen. They come at both walls from the very first night.</li><li>Every ${C.night.bloodEvery}th night (sooner in Ashfall) a Blood Moon brings the Hollow Knight, and a big reward at dawn.</li><li>At dawn: walls mend a little, villagers eat grain, you collect taxes, and sometimes an event asks you to choose.</li></ul>
     <h4>Resources</h4><table>
     <tr><td>Stone</td><td>From the quarry. Restores halls; guards on the walls use it to repair by day.</td></tr>
     <tr><td>Timber</td><td>From the woodcutters. Restores halls.</td></tr>
     <tr><td>Grain</td><td>From the fields. Each villager eats ${C.economy.upkeepPerVillager} per dawn (half with the Kitchen). Short on grain: hungry villagers work at ${C.economy.hungryWorkMult * 100}% speed.</td></tr>
     <tr><td>Ember</td><td>Dropped by the Hollow, +${C.rewards.baseEmber} each dawn, more with the Chapel. Pays for powers and some halls.</td></tr>
+    <tr><td>Iron</td><td>Dug slowly at the iron mine east of the walls. Late halls need it, and so does every weapon in the Armory.</td></tr>
     <tr><td>Coin</td><td>${C.economy.taxPerVillager} per villager each dawn, more with the Market. Hires sellswords and pays for late halls.</td></tr></table>
     <h4>Jobs</h4><table>
-    <tr><td>Quarry, Woodcutter, Fields</td><td>Gather stone, timber and grain.</td></tr>
+    <tr><td>Quarry, Woodcutter, Mine, Fields</td><td>Gather stone, timber, iron and grain. Mining is the slowest work.</td></tr>
     <tr><td>Build</td><td>Works on the hall being restored. More builders, faster halls.</td></tr>
-    <tr><td>Walls</td><td>Guards. They repair by day and fight at night. Use the left and right buttons to choose the wall.</td></tr></table>
+    <tr><td>Walls</td><td>Guards. They repair by day and fight at night. Use the left and right buttons to choose the wall.</td></tr>
+    <tr><td>Soldiers</td><td>Stand on the ground outside a gate with sword and shield (${C.soldiers.hp} health). Walking Hollow must cut through them before they reach the wall. Bats fly over them, and Shamans and Wailers stay back.</td></tr></table>
+    <h4>Armory</h4><table>${C.weapons.map(w => `<tr><td>${w.name}</td><td>${w.desc} <span style="opacity:.6">(${Object.keys(w.cost).map(k => w.cost[k] + ' ' + CKEY[k]).join(', ')}; needs the ${HALL[w.hall].name})</span></td></tr>`).join('')}</table>
+    <h4>Daily orders</h4><p>Each day the steward gives one order, such as quarrying stone or slaying a Brute. Finish it by dawn for a reward.</p>
     <h4>Halls</h4><table>${C.halls.map(h => `<tr><td>${h.name}</td><td>${h.unlock} <span style="opacity:.6">(${cost(h)}${h.deps.length && h.id !== 'throne' ? '; needs ' + h.deps.map(d => HALL[d].name).join(', ') : ''})</span></td></tr>`).join('')}</table>
     <h4>The Hollow and how to beat them</h4><table>${Object.keys(C.hollow).map(k => `<tr><td>${C.hollow[k].name}</td><td>${BEAT[k]}</td></tr>`).join('')}</table>
     <h4>Powers (at night, cost ember)</h4><table>${C.powers.map(p => `<tr><td>${p.key}. ${p.name}</td><td>${p.desc}. ${p.ember} ember, ${p.cd} s cooldown. Unlocked by the ${HALL[p.hall].name}.</td></tr>`).join('')}</table>
