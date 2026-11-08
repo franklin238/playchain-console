@@ -6,6 +6,7 @@ import { useSheets } from "../stores/sheets";
 import { useUi } from "../stores/ui";
 import { formatWifShort } from "../web3/tokens";
 import { switchToRobinhood, useWallet, useWrongNetwork } from "../web3/wallet";
+import { toggleFullscreen, useIsFullscreen } from "./FullscreenControl";
 import { Icon } from "./Icon";
 import { Logo } from "./Logo";
 
@@ -92,6 +93,26 @@ const TABS = [
   { to: "/settings", label: "Settings", end: false },
 ];
 
+/** Press once for fullscreen, press again to go back to the window. */
+function FullscreenButton() {
+  const full = useIsFullscreen();
+  if (typeof document !== "undefined" && !document.fullscreenEnabled) return null;
+  const label = full ? "Exit fullscreen" : "Fullscreen";
+  return (
+    <button
+      type="button"
+      data-fs-toggle
+      onClick={toggleFullscreen}
+      aria-label={label}
+      aria-pressed={full}
+      title={label}
+      className="grid size-10 shrink-0 place-items-center rounded-lg border border-line text-fg hover:border-accent hover:text-accent-text"
+    >
+      <Icon name={full ? "shrink" : "expand"} />
+    </button>
+  );
+}
+
 export function TopBar() {
   const setGuideOpen = useUi((s) => s.setGuideOpen);
   return (
@@ -129,6 +150,7 @@ export function TopBar() {
 
         <div className="ml-auto flex items-center gap-3 lg:ml-2">
           <EpochCountdown className="hidden text-sm md:inline" />
+          <FullscreenButton />
           <WalletButton />
         </div>
       </div>

@@ -4,6 +4,23 @@ import { useSettings } from "../stores/settings";
 const isFull = () => !!document.fullscreenElement;
 let declined = false; // the player left fullscreen with the X: don't pull them back in this visit
 
+/** Live fullscreen state for buttons. */
+export function useIsFullscreen(): boolean {
+  const [full, setFull] = useState(isFull);
+  useEffect(() => {
+    const onChange = () => setFull(isFull());
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+  return full;
+}
+
+/** One press goes fullscreen, the next press goes back to the window. */
+export function toggleFullscreen() {
+  if (isFull()) exitFullscreen();
+  else { declined = false; enterFullscreen(); }
+}
+
 export function enterFullscreen() {
   if (isFull() || !document.fullscreenEnabled) return;
   void document.documentElement.requestFullscreen?.({ navigationUI: "hide" }).catch(() => {});
@@ -34,7 +51,7 @@ export function FullscreenControl({ hidden }: { hidden?: boolean }) {
       if (declined || isFull()) return;
       // never steal the first click on the X itself or on a text field
       const el = e.target as HTMLElement | null;
-      if (el?.closest?.("[data-fs-exit], input, textarea, select")) return;
+      if (el?.closest?.("[data-fs-exit], [data-fs-toggle], input, textarea, select")) return;
       enterFullscreen();
     };
     window.addEventListener("pointerdown", go, { capture: true });
