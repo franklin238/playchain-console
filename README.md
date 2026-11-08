@@ -52,8 +52,12 @@ All three are original, built during the hackathon, and run sandboxed in the con
 | Game | What it is |
 |---|---|
 | **Neon Tide** | A 3D arcade racer on a glowing sea (Three.js). Steer through gates, collect orbs, use boost fuel; 12 levels with star ratings and a music score that builds with your combo. |
-| **Hollow Kingdom** | A day and night castle builder. By day, send villagers to quarry, chop, farm, mine iron and rebuild halls; by night, hold both walls against hordes of Hollow with guards, soldiers, towers, powers and Armory weapons. Five kingdoms, each with its own castle, twist and three crowns to earn. |
-| **Signal Lost** | A relay puzzle game: rotate and place tiles to carry coloured signals to every receiver. 201 solver-verified sectors across 9 regions, a Daily Signal, Static Storm mode, achievements and 8 star awards. |
+| **Hollow Kingdom** | A day and night castle builder. By day, send villagers to quarry, chop, farm, mine iron and rebuild halls; by night, hold both walls against hordes of Hollow with guards, soldiers, towers, powers and Armory weapons. Twelve kingdoms, each with its own castle, rooms, weather and twist, each harder than the last; restore every hall to win one and unlock the next. 74 medals (10 Legendary) and an ending after the last kingdom. |
+| **Signal Lost** | A relay puzzle game: rotate and place tiles to carry coloured signals to every receiver. 271 solver-verified sectors across 9 regions (the last 70 are the hardest), two hints per sector, a Daily Signal, Static Storm mode, achievements and 8 star awards. |
+
+### The console
+
+Keyboard, gamepad, mouse and touch all work. In **Settings** you can pick one of 7 colour themes, 18 backgrounds (most of them animated) and 5 menu music tracks. PlayChain opens in fullscreen on your first click, and every game plays fullscreen. Esc always means back; leave fullscreen with the button in the top bar.
 
 ---
 
@@ -228,7 +232,7 @@ Full end-to-end rehearsal on a mainnet fork (real $WIF, local test wallets): see
 
 **Existed before the hackathon:** Robinhood Chain, $WIF, OpenZeppelin, Foundry, viem, wagmi, React, Vite, Tailwind. From Steeve's main PlayChain project (a separate, Solana-first console): the console shell this build starts from (keyboard and gamepad focus navigation, boot screen, wallpapers, settings and UI controls) and the three cover artworks.
 
-**Built during the hackathon (this repo):** the `PlayChainArcade` contract and all its tests and scripts; the Robinhood Chain wallet, data and transaction layer; the Spotlight, Live Race, vote sheet, Developers, Activity and About screens; the sandboxed game player and bridge; the security headers for the single-origin deploy; the browser demo mode, burn counter and leaderboards; the console audio; and the three games **Neon Tide**, **Hollow Kingdom** and **Signal Lost**, built from their design specs, including all their music and sound.
+**Built during the hackathon (this repo):** the `PlayChainArcade` contract and all its tests and scripts; the Robinhood Chain wallet, data and transaction layer; the Spotlight, Live Race, vote sheet, Developers, Activity and About screens; the sandboxed game player and bridge; the security headers for the single-origin deploy; the browser demo mode, burn counter and leaderboards; the console audio and its menu music tracks; the colour themes, the new animated backgrounds and fullscreen play; and the three games **Neon Tide**, **Hollow Kingdom** and **Signal Lost**, built from their design specs, including all their music and sound.
 
 ## 9. Roadmap
 
