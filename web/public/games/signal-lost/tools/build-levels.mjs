@@ -395,6 +395,24 @@ addGenerated(9, 23, 69000, (u, i) => {
   return { fn: SL.generateOrbit, rec: { w: 9, h: 9, minLen: 6, maxLen: 9, minLen2: 5, maxLen2: 8, tuner: 'violet', invRatio: 0.38, static: 5, decoys: 3, distract: 4, slack: 1, minMoves: 12, maxMoves: 44 } };
 });
 
+// ---------------- Master sectors: 70 more, the hardest takes on each region's rule ----------------
+// Bigger boards, more decoys and static, longer solutions. Appended after the deep sectors, before the finale.
+const master = { w: 9, h: 9, invRatio: 0.42, distract: 4, maxMoves: 50 };
+addGenerated(1, 31, 71000, (u) => tree({ ...master, strength: 12, receivers: 1, minLen: 11, maxLen: 15, lockRatio: 0.12, static: 6, minMoves: lerp(14, 17, u) }));
+addGenerated(2, 30, 72000, (u) => tree({ ...master, strength: 10, receivers: 4, minLen: 5, maxLen: 8, minLen2: 3, maxLen2: 5, static: 4, minMoves: lerp(14, 17, u) }));
+addGenerated(3, 30, 73000, (u) => tree({ ...master, w: 10, strength: 5, receivers: 2, minLen: 10, maxLen: 14, minLen2: 4, maxLen2: 6, boosters: 4, needBooster: true, static: 11, minMoves: lerp(13, 16, u) }));
+addGenerated(4, 30, 74000, (u) => tree({ ...master, strength: 10, receivers: 3, minLen: 6, maxLen: 9, minLen2: 3, maxLen2: 5, tuners: ['amber', 'violet'], static: 5, decoys: lerp(1, 2, u), minMoves: lerp(13, 16, u) }));
+addGenerated(5, 30, 75000, (u) => tree({ ...master, w: 10, strength: 13, receivers: 3, minLen: 7, maxLen: 11, minLen2: 4, maxLen2: 6, bridges: true, bridgeInv: true, static: 5, minMoves: lerp(13, 16, u) }));
+addGenerated(6, 30, 76000, (u) => ({ fn: SL.generateMixer, rec: { w: 9, h: 9, wiggle: lerp(5, 6, u), outMin: 3, outMax: 5, both: true, invRatio: 0.42, static: lerp(5, 7, u), decoys: lerp(2, 3, u), distract: 4, slack: 1, minMoves: lerp(13, 16, u), maxMoves: 50 } }));
+addGenerated(7, 30, 77000, (u) => tree({ ...master, w: 10, strength: 10, receivers: 3, minLen: 6, maxLen: 9, minLen2: 3, maxLen2: 5, decoys: lerp(7, 9, u), static: 4, minMoves: lerp(13, 16, u) }));
+addGenerated(8, 30, 78000, (u) => ({ fn: SL.generateOrbit, rec: { w: 9, h: 10, minLen: 6, maxLen: 9, minLen2: 5, maxLen2: 8, tuner: u > 0.4 ? 'violet' : 'amber', invRatio: 0.42, static: lerp(5, 7, u), decoys: lerp(2, 4, u), distract: 4, slack: 1, minMoves: lerp(13, 16, u), maxMoves: 50 } }));
+addGenerated(9, 29, 79000, (u, i) => {
+  const kind = i % 3;
+  if (kind === 0) return tree({ ...master, w: 10, strength: 12, receivers: 3, minLen: 7, maxLen: 10, minLen2: 4, maxLen2: 6, tuners: ['amber', 'violet'], bridges: true, bridgeInv: true, decoys: 4, static: 6, minMoves: 16 });
+  if (kind === 1) return { fn: SL.generateMixer, rec: { w: 10, h: 9, wiggle: 6, outMin: 3, outMax: 6, both: true, invRatio: 0.45, static: 7, decoys: 4, distract: 5, slack: 1, minMoves: 16, maxMoves: 54 } };
+  return { fn: SL.generateOrbit, rec: { w: 10, h: 10, minLen: 7, maxLen: 10, minLen2: 6, maxLen2: 9, tuner: 'violet', invRatio: 0.45, static: 7, decoys: 4, distract: 5, slack: 1, minMoves: 16, maxMoves: 54 } };
+});
+
 // ---------------- The Last Tower finale, always the very last sector ----------------
 const finale = fromAscii('9-12', [   // the original id keeps the original scramble; renamed below
   '...X.....',

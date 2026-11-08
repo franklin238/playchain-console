@@ -236,7 +236,7 @@ var inFrame = window.parent !== window;
 function post(msg) { if (inFrame) try { window.parent.postMessage(msg, '*'); } catch (e) {} }
 var prefersRM = false; try { prefersRM = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
 var save = {
-  v: 3, stars: {}, best: {}, hintsUsed: 0, hinted: {}, unlocked: [1], decoded: [], daily: {}, lastRegion: 1,
+  v: 4, stars: {}, best: {}, hintsUsed: 0, hinted: {}, hintN: {}, unlocked: [1], decoded: [], daily: {}, lastRegion: 1,
   partial: [], ach: {}, storm: { best: 0, runs: 0 }, finalHeard: false,
   settings: { music: 0.8, amb: 0.55, sfx: 0.8, ui: 0.6, scan: true, reduce: prefersRM, patterns: true, text: 1 }
 };
@@ -262,7 +262,13 @@ function mergeSave(d) {
     ['stars', 'best', 'hinted'].forEach(function (k) { if (d[k] && d[k]['9-12'] != null) { d[k][fin] = d[k]['9-12']; delete d[k]['9-12']; } });
     d.v = 3;
   }
-  ['stars', 'best', 'hinted', 'daily'].forEach(function (k) { if (d[k] && typeof d[k] === 'object') save[k] = d[k]; });
+  if (!(d.v >= 4)) {
+    // v4 added 70 master sectors; the final sector moved from 9-24 to the new last sector
+    var fin4 = LEVELS[LEVELS.length - 1].id;
+    if (d.v === 3) ['stars', 'best', 'hinted'].forEach(function (k) { if (d[k] && d[k]['9-24'] != null) { d[k][fin4] = d[k]['9-24']; delete d[k]['9-24']; } });
+    d.v = 4;
+  }
+  ['stars', 'best', 'hinted', 'hintN', 'daily'].forEach(function (k) { if (d[k] && typeof d[k] === 'object') save[k] = d[k]; });
   if (Array.isArray(d.decoded)) save.decoded = d.decoded;
   if (typeof d.hintsUsed === 'number') save.hintsUsed = d.hintsUsed;
   if (typeof d.lastRegion === 'number') save.lastRegion = d.lastRegion;
@@ -281,6 +287,7 @@ function persist() {
   else try { localStorage.setItem('signal-lost-save', JSON.stringify(data)); } catch (e) {}
 }
 function totalStars() { var s = 0; for (var k in save.stars) if (LEVEL_BY_ID[k]) s += save.stars[k]; return s; }
+var HINTS_PER_SECTOR = 2;
 function hintsAvail() { return Math.max(0, Math.floor(totalStars() / 3) - save.hintsUsed); }
 function regionSolved(n) { return (byRegion[n] || []).filter(function (l) { return save.stars[l.id] > 0; }).length; }
 function regionUnlocked(n) { return n === 1 || regionSolved(n - 1) >= 3 || regionSolved(n) > 0; }
@@ -429,7 +436,7 @@ var Audio = (function () {
     if (!ctx) return; var t = ctx.currentTime;
     layers.title.gain.setTargetAtTime(m === 'title' ? 1 : 0, t, 0.6);
     delay.delayTime.setTargetAtTime(60 / theme.bpm * 0.75, t, 0.05);
-    if (prev !== theme) { step = 0; nextT = Math.max(nextT, t + 0.05); }
+    // keep the beat running across screens: the new key and groove pick up on the next step, never from bar 1
   }
   /* tune-in: r = receivers lit / total */
   function setTune(r, instant, count) {
@@ -678,7 +685,7 @@ function startLevel(level, opts) {
   setScreen('puzzle');
   var region = +level.id.split('-')[0];
   Audio.setMode('puzzle', G.storm ? 'storm' : G.daily ? 'daily' : region);
-  Audio.setTune(0, true);
+  Audio.setTune(0);
   updateHud(); layout();
   Solver.solve(level).then(function (s) { if (G && G.level === level) G.sol = s; });
 }
@@ -742,10 +749,14 @@ function hint() {
   if (!G.sol || !G.sol.ok) { toast('Solver still tuning…'); return; }
   var step = nextHintStep();
   if (!step) { toast('Route is right. Clean up stray relays'); return; }
+  if (G.hint) { G.hint.t0 = now; Audio.play('hint'); return; }   // the current hint is still showing: no extra charge
+  var used = save.hintN[G.level.id] || 0;
+  if (used >= HINTS_PER_SECTOR) { toast('Only ' + HINTS_PER_SECTOR + ' hints per sector. Work out the rest yourself'); Audio.play('locked'); return; }
   if (!G.hintUsed) {
     if (hintsAvail() <= 0) { toast('Earn a hint for every 3 stars'); Audio.play('locked'); return; }
     save.hintsUsed++; save.hinted[G.level.id] = 1; G.hintUsed = true; persist();
   }
+  save.hintN[G.level.id] = used + 1; persist();
   G.hint = { step: step, t0: now }; Audio.play('hint'); updateHud();
   cursor.x = step.x; cursor.y = step.y;
 }
@@ -1245,7 +1256,7 @@ function updateHud() {
   $('bUndo').disabled = !G.hist.length; $('bRedo').disabled = !G.redo.length;
   var pb = $('bPulse'); pb.classList.toggle('hide', !G.storm); $('bHint').classList.toggle('hide', !!G.storm);
   if (G.storm) { pb.disabled = !(G.level.soft || []).length || !Storm || Storm.charges <= 0 || !!G.pulseUntil; pb.classList.toggle('live', !!G.pulseUntil); $('pulseBadge').textContent = Storm ? Storm.charges : 0; }
-  var h = hintsAvail(), hb = $('hintBadge'); hb.textContent = G.hintUsed ? '✓' : h; hb.className = 'badge' + (h || G.hintUsed ? '' : ' zero');
+  var h = hintsAvail(), hb = $('hintBadge'), left = HINTS_PER_SECTOR - (save.hintN[G.level.id] || 0); hb.textContent = left <= 0 ? '0' : G.hintUsed ? left : h; hb.className = 'badge' + ((G.hintUsed ? left > 0 : h > 0 && left > 0) ? '' : ' zero');
   // frequency legend
   var used = {}; used[SL.fIndex(G.level.tower.freq)] = 1; G.level.receivers.forEach(function (r) { if (r.freq !== 'any') used[SL.fIndex(r.freq)] = 1; });
   Object.keys(G.L.inv0).concat((G.level.fixed || []).map(function (f) { return f.type === 'tuner' ? 'tuner:' + f.freq : ''; })).forEach(function (k) { var p = SL.parseKey(k); if (p.t === 'tuner') used[SL.fIndex(p.f)] = 1; });
@@ -1346,13 +1357,13 @@ function startDaily() {
 
 /* ------------------------------------------------------------------ awards: star milestones across the whole campaign */
 var AWARDS = [
-  { id: 'listener', name: 'Static Listener', need: 25, tier: 0, d: 'You tuned in. The network hears you.' },
-  { id: 'rookie', name: 'Relay Rookie', need: 75, tier: 1, d: 'Routes hold. Towers answer back.' },
-  { id: 'keeper', name: 'Signal Keeper', need: 150, tier: 2, d: 'Whole towns run on your signal.' },
-  { id: 'engineer', name: 'Network Engineer', need: 250, tier: 3, d: 'Mixers, bridges and dishes bend to you.' },
-  { id: 'master', name: 'Frequency Master', need: 350, tier: 4, d: 'Every colour, every crossing, clean.' },
-  { id: 'sage', name: 'Spectrum Sage', need: 450, tier: 5, d: 'Few listeners ever hear this far.' },
-  { id: 'legend', name: 'Legend of the Last Tower', need: 540, tier: 6, d: 'Spoken about on every frequency.' },
+  { id: 'listener', name: 'Static Listener', need: 30, tier: 0, d: 'You tuned in. The network hears you.' },
+  { id: 'rookie', name: 'Relay Rookie', need: 90, tier: 1, d: 'Routes hold. Towers answer back.' },
+  { id: 'keeper', name: 'Signal Keeper', need: 180, tier: 2, d: 'Whole towns run on your signal.' },
+  { id: 'engineer', name: 'Network Engineer', need: 300, tier: 3, d: 'Mixers, bridges and dishes bend to you.' },
+  { id: 'master', name: 'Frequency Master', need: 430, tier: 4, d: 'Every colour, every crossing, clean.' },
+  { id: 'sage', name: 'Spectrum Sage', need: 570, tier: 5, d: 'Few listeners ever hear this far.' },
+  { id: 'legend', name: 'Legend of the Last Tower', need: 720, tier: 6, d: 'Spoken about on every frequency.' },
   { id: 'perfect', name: 'Perfect Signal', need: MAX_STARS, tier: 7, d: 'Every sector, every star. Nothing left in the static.' }
 ];
 var AWARD_COL = [['#c98a52', '#7a4a22'], ['#cfd6da', '#6f7c84'], ['#f0c45a', '#9a6a12'], ['#4fd1a0', '#1b6b52'], ['#5fa6ff', '#1f4f9a'], ['#b392f0', '#5a3a96'], ['#ff6f7d', '#8a2333'], ['#ffffff', '#5fc9c9']];
