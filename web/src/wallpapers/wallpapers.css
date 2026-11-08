@@ -378,7 +378,7 @@
 /* ---------------------------------------------------------------- Circuit */
 .wp-circuit { background: radial-gradient(80cqw 70cqh at 50% 50%, #062018, #020806 80%); }
 .wp-circuit .board { inset: 0; width: 100%; height: 100%; }
-.wp-circuit .pulse { animation-name: wp-pulse; animation-timing-function: linear; animation-iteration-count: infinite; filter: drop-shadow(0 0 4px rgb(90 255 200 / 0.8)); }
+.wp-circuit .pulse { animation-name: wp-pulse; animation-timing-function: linear; animation-iteration-count: infinite; }
 @keyframes wp-pulse { from { stroke-dashoffset: var(--len); } to { stroke-dashoffset: 0; } }
 
 /* ------------------------------------------------------------ Desert Dusk */
@@ -393,11 +393,12 @@
 
 /* -------------------------------------------------------------- Lava Lamp */
 .wp-lava { background: linear-gradient(180deg, #1a0a24, #2a0a18); }
-.wp-lava .blob { border-radius: 50%; filter: blur(28px); mix-blend-mode: screen; opacity: 0.75; }
-.wp-lava .l1 { left: 10%; top: 60%; width: 40cqmin; height: 40cqmin; background: #ff5a3a; animation: wp-lava-a 26s ease-in-out infinite alternate; }
-.wp-lava .l2 { left: 55%; top: 10%; width: 46cqmin; height: 46cqmin; background: #b03aff; animation: wp-lava-b 32s ease-in-out infinite alternate; }
-.wp-lava .l3 { left: 35%; top: 40%; width: 30cqmin; height: 30cqmin; background: #ff9a2a; animation: wp-lava-a 22s ease-in-out -8s infinite alternate-reverse; }
-.wp-lava .l4 { left: 70%; top: 65%; width: 26cqmin; height: 26cqmin; background: #ff3a8a; animation: wp-lava-b 28s ease-in-out -12s infinite alternate; }
+/* soft edges come from the gradient itself: no blur filter or blend mode, so moving them stays cheap */
+.wp-lava .blob { border-radius: 50%; opacity: 0.8; will-change: transform; }
+.wp-lava .l1 { left: 10%; top: 60%; width: 40cqmin; height: 40cqmin; background: radial-gradient(circle, rgb(255 90 58 / 0.95) 0%, rgb(255 90 58 / 0.45) 40%, rgb(255 90 58 / 0) 70%); animation: wp-lava-a 26s ease-in-out infinite alternate; }
+.wp-lava .l2 { left: 55%; top: 10%; width: 46cqmin; height: 46cqmin; background: radial-gradient(circle, rgb(176 58 255 / 0.95) 0%, rgb(176 58 255 / 0.45) 40%, rgb(176 58 255 / 0) 70%); animation: wp-lava-b 32s ease-in-out infinite alternate; }
+.wp-lava .l3 { left: 35%; top: 40%; width: 30cqmin; height: 30cqmin; background: radial-gradient(circle, rgb(255 154 42 / 0.95) 0%, rgb(255 154 42 / 0.45) 40%, rgb(255 154 42 / 0) 70%); animation: wp-lava-a 22s ease-in-out -8s infinite alternate-reverse; }
+.wp-lava .l4 { left: 70%; top: 65%; width: 26cqmin; height: 26cqmin; background: radial-gradient(circle, rgb(255 58 138 / 0.95) 0%, rgb(255 58 138 / 0.45) 40%, rgb(255 58 138 / 0) 70%); animation: wp-lava-b 28s ease-in-out -12s infinite alternate; }
 @keyframes wp-lava-a { to { transform: translate(18cqw, -45cqh) scale(1.25); } }
 @keyframes wp-lava-b { to { transform: translate(-22cqw, 40cqh) scale(0.85); } }
 
@@ -448,3 +449,11 @@
 .wp-empty {
   background: repeating-linear-gradient(45deg, #1a1a1a 0 12px, #202020 12px 24px);
 }
+
+/* Settings previews stay still until you point at one, so 18 thumbnails don't all animate at once. */
+.wp-preview, .wp-preview * { animation-play-state: paused !important; }
+[data-wallpaper-option]:hover .wp-preview, [data-wallpaper-option]:hover .wp-preview *,
+[data-wallpaper-option]:focus-visible .wp-preview, [data-wallpaper-option]:focus-visible .wp-preview * { animation-play-state: running !important; }
+
+/* Low frame rate detected: the background keeps its look but stops moving. */
+html[data-wp-lite] .wp-fixed .wp, html[data-wp-lite] .wp-fixed .wp * { animation-play-state: paused !important; }

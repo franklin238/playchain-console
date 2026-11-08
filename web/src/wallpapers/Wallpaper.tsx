@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from "react";
+import { useEffect, useMemo, type CSSProperties } from "react";
 import { useArcade } from "../arcade/store";
 import { useSettings } from "../stores/settings";
 import { useWallpaper } from "../stores/wallpaper";
@@ -42,7 +42,7 @@ function particles(seed: number, n: number, size: [number, number], dur: [number
 }
 const BUBBLES = particles(7, 22, [3, 9], [10, 20], 6);
 const PETALS = particles(11, 24, [6, 11], [12, 22], 30);
-const SNOW = particles(23, 60, [1.5, 4.5], [9, 18], 12);
+const SNOW = particles(23, 40, [1.5, 4.5], [9, 18], 12);
 const FIREFLIES = particles(31, 28, [2.5, 4.5], [5, 11], 10);
 const PRISM = (() => {
   const rand = seeded(5), hues = [190, 260, 320, 30, 160, 220];
@@ -328,7 +328,7 @@ export function WallpaperView({
   const className = id === "custom" ? (customUrl ? "wp-image" : "wp-empty") : id === "game-art" ? "wp-art" : `wp-${id}`;
 
   return (
-    <div className={`wp ${className}`} aria-hidden="true">
+    <div className={`wp ${className}${preview ? " wp-preview" : ""}`} aria-hidden="true">
       <Layers id={id} preview={preview} customUrl={customUrl} artUrl={art} blur={blur} />
       {DESIGNED.includes(id) && (
         <>
@@ -342,6 +342,30 @@ export function WallpaperView({
   );
 }
 
+/**
+ * Frame-rate guard: if the page runs slowly for a few seconds in a row (a busy or low-power
+ * graphics chip), the animated background freezes in place so menus stay smooth.
+ */
+function useSmoothnessGuard(active: boolean) {
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!active) { delete root.dataset.wpLite; return; }
+    let raf = 0, frames = 0, start = performance.now(), slow = 0;
+    const loop = (t: number) => {
+      frames++;
+      if (t - start >= 2000) {
+        const fps = (frames * 1000) / (t - start);
+        if (document.visibilityState === "visible") slow = fps < 40 ? slow + 1 : 0;
+        if (slow >= 2) { root.dataset.wpLite = "1"; return; }
+        frames = 0; start = t;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [active]);
+}
+
 /** The console's full-screen background. */
 export function Wallpaper() {
   const chosen = useSettings((s) => s.wallpaper);
@@ -353,6 +377,7 @@ export function Wallpaper() {
     if (chosen === "custom" && !hasCustom) return DEFAULT_WALLPAPER;
     return chosen;
   }, [chosen, hasCustom]);
+  useSmoothnessGuard(DESIGNED.includes(id));
 
   return (
     <div className="wp-fixed" data-testid="wallpaper" data-wallpaper={id}>
