@@ -148,7 +148,30 @@ button.danger{border-color:rgba(160,60,75,.6)}
 .card td.bad{color:#e07a6a}.card td.good{color:#cfd9b0}
 .card.wide{max-width:min(42rem,94vw)}
 .card p{font-size:.9rem;line-height:1.5;opacity:.9}
-.klist{display:grid;gap:.5rem;margin-top:.6rem}
+.medalwrap{max-height:58vh;overflow-y:auto;padding-right:.3rem}
+.medalwrap h4{margin:.8rem 0 .4rem}
+.medals{display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:.45rem}
+.mcell{display:grid;grid-template-columns:3.4rem 1fr;gap:.55rem;align-items:center;border:1px solid var(--line);border-radius:.6rem;padding:.4rem .55rem;font-size:.78rem;line-height:1.25}
+.mcell.on{border-color:rgba(214,169,74,.55);background:rgba(214,169,74,.06)}
+.mcell.on.legend{border-color:rgba(255,122,154,.7);background:linear-gradient(135deg,rgba(255,215,106,.08),rgba(154,122,255,.1))}
+.mcell b{display:block;font-size:.86rem}
+.mcell small.tier{display:block;opacity:.6;text-transform:uppercase;letter-spacing:.1em;font-size:.6rem}
+.mcell .bar{height:4px;border-radius:2px;background:rgba(255,255,255,.1);margin:.25rem 0 .1rem;overflow:hidden}
+.mcell .bar i{display:block;height:100%;background:var(--gold)}
+.mcell .prog{opacity:.6;font-size:.68rem}
+.mcell .got{display:block;color:var(--gold);font-size:.7rem;margin-top:.15rem}
+svg.medal{width:3.3rem;height:3.3rem}
+svg.medal.off{filter:grayscale(1) brightness(.55);opacity:.55}
+.medalpop{position:fixed;left:50%;top:5.2rem;transform:translateX(-50%);display:flex;gap:.7rem;align-items:center;background:rgba(18,16,14,.96);border:1px solid rgba(214,169,74,.7);border-radius:.8rem;padding:.55rem .9rem;z-index:60;max-width:92vw;box-shadow:0 10px 40px rgba(0,0,0,.6);animation:mpIn .35s ease-out}
+.medalpop.legend{border-color:#ff8a9a;box-shadow:0 0 40px rgba(255,122,154,.35)}
+.medalpop.out{opacity:0;transition:opacity .45s}
+.medalpop svg{width:3.4rem;height:3.4rem;flex:none}
+.medalpop small{display:block;color:var(--gold);text-transform:uppercase;letter-spacing:.12em;font-size:.62rem}
+.medalpop b{display:block;font-family:var(--serif);font-size:1.05rem}
+.medalpop span{font-size:.78rem;opacity:.8}
+@keyframes mpIn{from{opacity:0;transform:translate(-50%,-12px)}to{opacity:1;transform:translate(-50%,0)}}
+.ending p{font-family:var(--serif);font-size:1rem;line-height:1.55}
+.klist{display:grid;gap:.5rem;margin-top:.6rem;max-height:58vh;overflow-y:auto;padding-right:.3rem}
 .kitem{text-align:left;display:block;width:100%;padding:.7rem .9rem;border-radius:.7rem;border:1px solid var(--line);background:rgba(255,255,255,.02)}
 .kitem:not(:disabled):hover,.kitem:not(:disabled):focus-visible{border-color:var(--gold)}
 .kitem:disabled{opacity:.45}
@@ -227,6 +250,7 @@ button.danger{border-color:rgba(160,60,75,.6)}
   <div class="menu">
     <button id="tContinue" class="primary hidden">Continue</button>
     <button id="tNew">Kingdoms</button>
+    <button id="tMedals">Medals</button>
     <button id="tHow">How to Play</button>
     <button id="tSettings">Settings</button>
   </div>
@@ -338,25 +362,53 @@ const HALL = {}; CONTENT.halls.forEach(h => HALL[h.id] = h);
    goal: restore this many halls (Great Hall not counted) and survive this many nights.
    mod: multipliers the simulation reads through KM(G). look: palette and weather only. */
 const KINGDOMS = [
-  { id: 'greywatch', name: 'Greywatch', place: 'The valley keep', goal: { halls: 5, nights: 6 },
+  { id: 'greywatch', name: 'Greywatch', place: 'The valley keep', goal: { halls: 11, nights: 6 },
     twist: 'A quiet valley keep. Learn the rhythm of day and night before the hordes grow.',
-    mod: {}, look: { stone: ['#121214', '#19191c', '#202024'], tint: null, weather: null } },
-  { id: 'cliffhold', name: 'Cliffhold', place: 'A keep on the sea cliffs', goal: { halls: 6, nights: 7 },
+    mod: { cost: 0.55 }, look: { stone: ['#121214', '#19191c', '#202024'], tint: null, weather: null } },
+  { id: 'cliffhold', name: 'Cliffhold', place: 'A keep on the sea cliffs', goal: { halls: 11, nights: 7 },
     twist: 'A tall keep on the sea cliffs. Stone is rich, timber is scarce, and bats pour off the cliffs onto your walls.',
-    mod: { budget: 1.1, gather: { quarry: 1.4, wood: 0.7 }, weights: { bat: 2.5, climber: 1.5 }, from: { climber: 2, bat: 1 } },
+    mod: { cost: 0.65, budget: 1.1, gather: { quarry: 1.4, wood: 0.7 }, weights: { bat: 2.5, climber: 1.5 }, from: { climber: 2, bat: 1 } },
     look: { stone: ['#131518', '#1a1d22', '#22262c'], tint: [40, 60, 90, 0.16], weather: 'wind' } },
-  { id: 'mirewood', name: 'Mirewood', place: 'A fort in the drowned marsh', goal: { halls: 7, nights: 8 },
+  { id: 'mirewood', name: 'Mirewood', place: 'A fort in the drowned marsh', goal: { halls: 11, nights: 8 },
     twist: 'Wet fields grow less grain but timber is plentiful. Mud slows everyone, and Wisps rise thick from the bog.',
-    mod: { budget: 1.3, gather: { fields: 0.7, wood: 1.3 }, walk: 0.8, enemySpeed: 0.85, hp: 1.1, weights: { wisp: 2.5 } },
-    look: { stone: ['#111512', '#181d19', '#1f2520'], tint: [40, 70, 50, 0.2], weather: 'fog' } },
-  { id: 'frostmere', name: 'Frostmere', place: 'A frozen hold in the north', goal: { halls: 8, nights: 9 },
+    mod: { cost: 0.75, budget: 1.3, gather: { fields: 0.7, wood: 1.3 }, walk: 0.8, enemySpeed: 0.85, hp: 1.1, weights: { wisp: 2.5 } },
+    look: { stone: ['#111512', '#181d19', '#1f2520'], tint: null, weather: null } },
+  { id: 'frostmere', name: 'Frostmere', place: 'A frozen hold in the north', goal: { halls: 11, nights: 9 },
     twist: 'Winter doubles what villagers eat. Ice makes the walls stronger and slows the Hollow, but far more of them come.',
-    mod: { budget: 1.35, upkeep: 2, wallHp: 1.4, enemySpeed: 0.85, hp: 1.15 },
+    mod: { cost: 0.8, budget: 1.35, upkeep: 2, wallHp: 1.4, enemySpeed: 0.85, hp: 1.15 },
     look: { stone: ['#14181d', '#1b2026', '#232a31'], tint: [150, 185, 220, 0.12], weather: 'snow' } },
-  { id: 'ashfall', name: 'Ashfall', place: 'A citadel under the volcano', goal: { halls: 11, nights: 12 },
-    twist: 'Ember falls with the ash, but walls barely mend at dawn, Wailers come early and the Blood Moon rises every fifth night. Crown the Throne Room to win.',
-    mod: { budget: 1.3, bloodEvery: 5, emberDawn: 2, wallRegen: 0.12, hp: 1.15, from: { wailer: 3, climber: 2 } },
-    look: { stone: ['#161211', '#1e1816', '#27201d'], tint: [140, 60, 30, 0.16], weather: 'ash' } }
+  { id: 'ashfall', name: 'Ashfall', place: 'A citadel under the volcano', goal: { halls: 11, nights: 10 },
+    twist: 'Ember falls with the ash, but walls barely mend at dawn, Wailers come early and the Blood Moon rises every fifth night.',
+    mod: { cost: 0.85, budget: 1.3, bloodEvery: 5, emberDawn: 2, wallRegen: 0.12, hp: 1.15, from: { wailer: 3, climber: 2 } },
+    look: { stone: ['#161211', '#1e1816', '#27201d'], tint: [140, 60, 30, 0.16], weather: 'ash' } },
+  { id: 'sunspire', name: 'Sunspire', place: 'A domed palace in the desert', goal: { halls: 11, nights: 10 },
+    twist: 'Sand starves the fields and the heat makes everyone eat more. Bursters roll in early and Thieves love the gold domes.',
+    mod: { cost: 0.9, budget: 1.35, hp: 1.15, upkeep: 1.15, gather: { fields: 0.8, quarry: 1.2 }, weights: { burster: 2, thief: 1.6 }, from: { burster: 2 } },
+    look: { stone: ['#1c160f', '#261d14', '#30251a'], tint: [200, 150, 80, 0.1], weather: 'sand' } },
+  { id: 'jadegate', name: 'Jadegate', place: 'A pagoda fortress in the eastern hills', goal: { halls: 11, nights: 11 },
+    twist: 'A tiered pagoda among blossom trees. Thieves come from the first night and Shamans soon after.',
+    mod: { cost: 0.9, budget: 1.5, hp: 1.25, enemySpeed: 1.05, weights: { thief: 2, climber: 1.5 }, from: { thief: 1, shaman: 4 } },
+    look: { stone: ['#121614', '#18201c', '#1f2a24'], tint: [60, 120, 90, 0.08], weather: 'petals' } },
+  { id: 'stormwatch', name: 'Stormwatch', place: 'A sea fortress with a lighthouse', goal: { halls: 11, nights: 11 },
+    twist: 'Storms batter the coast. Bats ride the wind, Brutes wade in early, and the Blood Moon rises every sixth night.',
+    mod: { cost: 0.95, budget: 1.55, hp: 1.3, bloodEvery: 6, wallRegen: 0.15, weights: { bat: 2.5, burster: 1.5 }, from: { bat: 1, brute: 3 } },
+    look: { stone: ['#101418', '#161c22', '#1d242c'], tint: [40, 70, 110, 0.12], weather: 'rain' } },
+  { id: 'deepdelve', name: 'Deepdelve', place: 'A hold carved into the mountain', goal: { halls: 11, nights: 12 },
+    twist: 'Iron runs thick in the rock but little grows here. Brutes and Climbers swarm up from the deep roads.',
+    mod: { cost: 0.95, budget: 1.6, hp: 1.35, gather: { mine: 1.8, wood: 0.6, fields: 0.7 }, weights: { brute: 2.2, climber: 1.5 }, from: { brute: 2 } },
+    look: { stone: ['#15130f', '#1d1a15', '#26221b'], tint: null, weather: null } },
+  { id: 'thornwood', name: 'Thornwood', place: 'A castle grown into a great tree', goal: { halls: 11, nights: 12 },
+    twist: 'Roots slow your villagers. Wisps drift through the leaves and Shamans heal the Hollow from the start.',
+    mod: { cost: 1, budget: 1.7, hp: 1.4, walk: 0.9, weights: { wisp: 2, shaman: 2 }, from: { shaman: 3, wisp: 1 } },
+    look: { stone: ['#0f1410', '#151c16', '#1c251d'], tint: [50, 90, 60, 0.08], weather: 'leaves' } },
+  { id: 'duskfall', name: 'Duskfall', place: 'A gothic cathedral in the twilight', goal: { halls: 11, nights: 13 },
+    twist: 'The bells call the Blood Moon every fourth night. Wailers fill the nave and walls mend slowly.',
+    mod: { cost: 1, budget: 1.8, hp: 1.5, bloodEvery: 4, wallRegen: 0.15, weights: { wailer: 2, shaman: 1.5 }, from: { wailer: 2, shaman: 3 } },
+    look: { stone: ['#141218', '#1b1820', '#24202b'], tint: [80, 50, 110, 0.1], weather: null } },
+  { id: 'hollowthrone', name: 'The Hollow Throne', place: 'The obsidian seat of the Hollow', goal: { halls: 11, nights: 14 },
+    twist: 'The last kingdom. Every kind of Hollow comes early, faster and tougher, and the Blood Moon rises every third night.',
+    mod: { cost: 1.05, budget: 2.0, hp: 1.6, bloodEvery: 3, enemySpeed: 1.1, wallRegen: 0.1, weights: { brute: 1.8, burster: 1.5, shaman: 1.5 }, from: { brute: 2, burster: 2, shaman: 3, wailer: 2, climber: 2 } },
+    look: { stone: ['#0c0a10', '#131018', '#1a1620'], tint: [90, 30, 60, 0.1], weather: 'ash' } }
 ];
 const KINGDOM = {}; KINGDOMS.forEach((k, i) => { k.n = i + 1; KINGDOM[k.id] = k; });
 const KM = G => (KINGDOM[G.kingdom] || KINGDOMS[0]).mod;
@@ -478,7 +530,8 @@ function nextGoal(G) {
   return open.find(h => canAfford(G, hallCost(G, h))) || open[0] || null;
 }
 function hallCost(G, h) {
-  const st = G.halls[h.id].s, f = st === 'damaged' ? CONTENT.repairCostFrac : 1, o = {};
+  // early kingdoms build cheaper so every hall can be restored; later ones cost full price and more
+  const st = G.halls[h.id].s, f = (st === 'damaged' ? CONTENT.repairCostFrac : 1) * (KM(G).cost || 1), o = {};
   for (const k in h.cost) o[k] = Math.ceil(h.cost[k] * f);
   return o;
 }
@@ -770,7 +823,7 @@ function stepNight(G, dt) {
       g.cd = gd.bowRate;
       const dist = Math.hypot(best.x - g.x, best.y - g.y);
       W.arrows.push({ x: g.x, y: g.y - 10, tx: best.x, ty: best.y - 12, t: 0, dur: Math.max(0.12, dist / 650), tgt: best.id, dmg: gd.bow * mult * (G.weapons && G.weapons.crossbows ? 1.6 : 1), kind: 'arrow' });
-      emit('bow', { x: g.x });
+      emit('bow', { x: g.x, xb: !!(G.weapons && G.weapons.crossbows) });
     } else {
       g.cd = gd.meleeRate; g.thrust = 0.25;
       damageEnemy(G, best, gd.melee * mult * (G.weapons && G.weapons.pikes ? 1.5 : 1), 'spear');
@@ -792,7 +845,7 @@ function stepNight(G, dt) {
     if (!tgt) continue;
     sv.cd = SD.rate; sv.thrust = 0.25; sv.face = Math.sign(tgt.x - sv.x) || sv.side;
     damageEnemy(G, tgt, SD.dmg * (lit(G, 'forge') ? 1.3 : 1) * (w8.pikes ? 1.5 : 1) * (W.rally > 0 ? gd.rallyMult : 1), 'sword');
-    emit('spear', { x: tgt.x, y: tgt.y });
+    emit('sword', { x: tgt.x, y: tgt.y });
   }
   // boiling oil on any gate under attack
   if (w8.oil) for (const sk of ['L', 'R']) {
@@ -814,7 +867,7 @@ function stepNight(G, dt) {
       if (best) {
         W['tcd' + sk] = C.tower.rate;
         W.arrows.push({ x: tx, y: ty, tx: best.x, ty: best.y - 12, t: 0, dur: Math.max(0.15, Math.hypot(best.x - tx, best.y - ty) / 700), tgt: best.id, dmg: C.tower.dmg * (lit(G, 'forge') ? 1.25 : 1) * (G.weapons && G.weapons.ballista && (best.k === 'knight' || best.k === 'brute') ? 3 : 1), kind: 'bolt' });
-        emit('bow', { x: tx });
+        emit('bow', { x: tx, tower: 1, ballista: !!(G.weapons && G.weapons.ballista) });
       }
     }
   }
@@ -1340,6 +1393,8 @@ const Audio = (() => {
     const t = now + 0.01, S = bus.sfx, U = bus.ui, vol = o.vol == null ? 1 : o.vol;
     const tap = (dest, f, v) => { const g = gainTo(dest, 0); hit(g, t, v, 0.08); osc('triangle', f, t, t + 0.1, filt('lowpass', 2000, 1, g)); };
     const blip = (dest, m, at, peak, dur, type) => { const g = gainTo(dest, 0); hit(g, t + at, peak, dur); osc(type || 'triangle', mtof(m), t + at, t + at + dur, g); };
+    const whoosh = (at, v) => { const g = gainTo(S, 0); env(g, t + at, 0.03, v, 0.06, 0.3, 0.05, t + at + 0.14); const f = filt('bandpass', 900, 1.5, g); f.frequency.setValueAtTime(700, t + at); f.frequency.exponentialRampToValueAtTime(2400, t + at + 0.14); noise(t + at, 0.2, f); };
+    const n0 = o.n || 0;
     const thud = (dest, f0, f1, peak, dur) => { const g = gainTo(dest, 0); hit(g, t, peak, dur); const o = osc('sine', f0, t, t + dur, g); o.frequency.exponentialRampToValueAtTime(f1, t + dur * 0.6); };
     switch (name) {
       case 'click': blip(U, 76, 0, 0.18, 0.08, 'triangle'); break;
@@ -1366,8 +1421,22 @@ const Audio = (() => {
         break;
       }
       case 'approach': { const g = gainTo(S, 0); env(g, t, 0.5, 0.08 * vol, 0.4, 0.6, 0.4, t + 1); const o = osc('sawtooth', 55, t, t + 1.5, filt('lowpass', 300, 2, g)); o.frequency.linearRampToValueAtTime(65, t + 1.2); break; }
-      case 'spear': { const g = gainTo(S, 0); hit(g, t, 0.1, 0.1); const o = osc('triangle', 900, t, t + 0.11, g); o.frequency.exponentialRampToValueAtTime(260, t + 0.09); break; }
-      case 'bow': pluck(t, 45, S, 0.12, 4); break;
+      case 'spear': { whoosh(0, 0.04); const g = gainTo(S, 0); hit(g, t + 0.05, 0.1, 0.1); const o2 = osc('triangle', 900, t + 0.05, t + 0.16, g); o2.frequency.exponentialRampToValueAtTime(260, t + 0.14); break; }
+      case 'bow': pluck(t, 52, S, 0.11, 4); pluck(t, 59, S, 0.04, 6); whoosh(0.02, 0.035); break;
+      // weapons
+      case 'crossbow': { const g = gainTo(S, 0); hit(g, t, 0.1, 0.03); noise(t, 0.03, filt('highpass', 2500, 1, g)); pluck(t + 0.01, 40, S, 0.16, 5); pluck(t + 0.01, 52, S, 0.06, 8); whoosh(0.03, 0.045); break; }
+      case 'ballista': { pluck(t, 35, S, 0.22, 4); pluck(t, 47, S, 0.08, 6); thud(S, 130, 50, 0.28, 0.25); const g = gainTo(S, 0); env(g, t, 0.02, 0.05, 0.1, 0.3, 0.1, t + 0.25); noise(t, 0.3, filt('lowpass', 500, 2, g)); whoosh(0.05, 0.07); break; }
+      case 'thwack': { thud(S, 420, 160, 0.12 * vol, 0.05); const g = gainTo(S, 0); hit(g, t, 0.06 * vol, 0.03); noise(t, 0.03, filt('bandpass', 1800, 1, g)); break; }
+      case 'clash': { const g = gainTo(S, 0); hit(g, t, 0.06, 0.4); [1, 2.41, 3.93].forEach((r, i) => osc('sine', mtof(86 + n0) * r, t, t + 0.42, gainTo(g, [0.6, 0.3, 0.15][i]))); const h = gainTo(S, 0); hit(h, t, 0.05, 0.05); noise(t, 0.05, filt('highpass', 4000, 0.7, h)); break; }
+      case 'shield': thud(S, 170, 70, 0.22, 0.12); pluck(t, 47, S, 0.06, 2); break;
+      case 'oil': { const g = gainTo(S, 0); env(g, t, 0.05, 0.07, 0.4, 0.5, 0.4, t + 1.1); noise(t, 1.4, filt('highpass', 3800, 0.7, g)); for (let i = 0; i < 7; i++) blip(S, 40 + ((i * 5) % 12), 0.08 + i * 0.11, 0.05, 0.1, 'sine'); break; }
+      case 'boom': { const g = gainTo(S, 0); hit(g, t, 0.35, 0.9); noise(t, 0.9, filt('lowpass', 900, 0.8, g)); thud(S, 110, 35, 0.5, 0.5); timpani(t, 33, S, 0.25); break; }
+      // work: tuned to the score's E minor so a busy keep sounds musical
+      case 'chop': thud(S, 180, 90, 0.24 * vol, 0.09); { const g = gainTo(S, 0); hit(g, t, 0.06 * vol, 0.07); noise(t, 0.07, filt('bandpass', 1400, 1.4, g)); } pluck(t + 0.005, 59 + n0, S, 0.05 * vol, 3); break;
+      case 'pick': bell(t, 88 + n0, S, 0.04 * vol, 0.4); { const g = gainTo(S, 0); hit(g, t, 0.05 * vol, 0.04); noise(t, 0.05, filt('highpass', 3500, 0.8, g)); } thud(S, 260, 140, 0.07 * vol, 0.05); break;
+      case 'quarry': thud(S, 240, 120, 0.15 * vol, 0.06); { const g = gainTo(S, 0); hit(g, t, 0.07 * vol, 0.06); noise(t, 0.07, filt('bandpass', 2600, 1.2, g)); } blip(S, 76 + n0, 0, 0.03 * vol, 0.12, 'sine'); break;
+      case 'hammer': { const g = gainTo(S, 0); hit(g, t, 0.065 * vol, 0.45); osc('sine', mtof(83 + n0), t, t + 0.5, gainTo(g, 0.6)); osc('sine', mtof(83 + n0) * 2.76, t, t + 0.25, gainTo(g, 0.25)); thud(S, 200, 100, 0.1 * vol, 0.05); break; }
+      case 'scythe': { const g = gainTo(S, 0); env(g, t, 0.04, 0.045 * vol, 0.05, 0.3, 0.05, t + 0.16); const f = filt('bandpass', 2500, 2, g); f.frequency.setValueAtTime(1600, t); f.frequency.exponentialRampToValueAtTime(5200, t + 0.15); noise(t, 0.22, f); break; }
       case 'hit': thud(S, 300, 120, 0.12, 0.06); break;
       case 'defeat': [79, 76, 72].forEach((m, k) => blip(S, m, k * 0.05, 0.05, 0.3, 'sine')); break;
       case 'gate': thud(S, 90, 40, 0.45 * vol, 0.35); timpani(t, 35, S, 0.18 * vol); break;
@@ -1568,7 +1637,41 @@ const LAYOUTS = {
   ashfall: { roof: 'citadel', room: ['#2a1210', '#6a2a18'], slots: {
     granary: [-560, -130, 180, 130], kitchen: [-380, -130, 260, 130], great: [-120, -130, 240, 130], forge: [120, -130, 260, 130], barracks: [380, -130, 180, 130],
     infirmary: [-560, -260, 180, 130], market: [-380, -260, 380, 130], library: [0, -260, 380, 130], vault: [380, -260, 180, 130],
-    chapel: [-560, -390, 180, 130], throne: [-140, -400, 280, 140], watchtower: [380, -390, 180, 130] } }
+    chapel: [-560, -390, 180, 130], throne: [-140, -400, 280, 140], watchtower: [380, -390, 180, 130] } },
+  sunspire: { roof: 'domes', room: ['#2e2214', '#7a5a30'], slots: {
+    granary: [-600, -130, 220, 130], kitchen: [-380, -130, 260, 130], great: [-120, -130, 240, 130], forge: [120, -130, 260, 130], barracks: [380, -130, 220, 130],
+    infirmary: [-520, -260, 180, 130], market: [-340, -260, 340, 130], library: [0, -260, 340, 130], vault: [340, -260, 180, 130],
+    chapel: [-420, -390, 200, 130], throne: [-140, -400, 280, 140], watchtower: [220, -390, 200, 130] } },
+  jadegate: { roof: 'pagoda', room: ['#2a1414', '#6a2a22'], slots: {
+    granary: [-500, -130, 200, 130], kitchen: [-300, -130, 200, 130], great: [-100, -130, 200, 130], forge: [100, -130, 200, 130], barracks: [300, -130, 200, 130],
+    infirmary: [-400, -260, 180, 130], market: [-220, -260, 220, 130], library: [0, -260, 220, 130], vault: [220, -260, 180, 130],
+    chapel: [-260, -390, 180, 130], watchtower: [80, -390, 180, 130],
+    throne: [-130, -530, 260, 140] } },
+  stormwatch: { roof: 'lighthouse', room: ['#182028', '#3a4a5a'], slots: {
+    granary: [-560, -130, 180, 130], kitchen: [-380, -130, 220, 130], great: [-160, -130, 240, 130], forge: [80, -130, 220, 130], barracks: [300, -130, 200, 130],
+    infirmary: [-560, -260, 180, 130], market: [-380, -260, 260, 130], library: [-120, -260, 260, 130], vault: [140, -260, 160, 130], watchtower: [300, -260, 200, 130],
+    chapel: [310, -390, 180, 130], throne: [300, -530, 200, 140] } },
+  deepdelve: { roof: 'mountain', room: ['#2a1e12', '#5e4222'], slots: {
+    granary: [-600, -130, 200, 130], kitchen: [-400, -130, 240, 130], great: [-160, -130, 320, 130], forge: [160, -130, 240, 130], barracks: [400, -130, 200, 130],
+    infirmary: [-480, -260, 180, 130], market: [-300, -260, 300, 130], library: [0, -260, 300, 130], vault: [300, -260, 180, 130],
+    chapel: [-340, -390, 200, 130], watchtower: [140, -390, 200, 130],
+    throne: [-130, -530, 260, 140] } },
+  thornwood: { roof: 'treetop', room: ['#1c2416', '#46602e'], slots: {
+    granary: [-460, -130, 180, 130], kitchen: [-280, -130, 200, 130], great: [-80, -130, 240, 130], forge: [160, -130, 200, 130],
+    barracks: [-560, -260, 200, 130], market: [-360, -260, 240, 130], library: [-120, -260, 260, 130], infirmary: [140, -260, 180, 130],
+    vault: [-300, -390, 180, 130], chapel: [-120, -390, 180, 130], watchtower: [60, -390, 200, 130],
+    throne: [-200, -530, 240, 140] } },
+  duskfall: { roof: 'cathedral', room: ['#1e1628', '#4a3466'], slots: {
+    granary: [-560, -130, 200, 130], kitchen: [-360, -130, 220, 130], great: [-140, -130, 280, 130], forge: [140, -130, 220, 130], barracks: [360, -130, 200, 130],
+    infirmary: [-500, -260, 180, 130], vault: [-320, -260, 180, 130], library: [-140, -260, 280, 130], market: [140, -260, 220, 130], watchtower: [360, -260, 180, 130],
+    chapel: [-140, -390, 280, 130],
+    throne: [-140, -530, 280, 140] } },
+  hollowthrone: { roof: 'obsidian', room: ['#1a1020', '#3e2050'], slots: {
+    granary: [-520, -130, 200, 130], kitchen: [-320, -130, 200, 130], great: [-120, -130, 240, 130], forge: [120, -130, 200, 130], barracks: [320, -130, 200, 130],
+    infirmary: [-440, -260, 180, 130], market: [-260, -260, 260, 130], library: [0, -260, 260, 130],
+    vault: [-60, -390, 180, 130], watchtower: [120, -390, 200, 130],
+    chapel: [-300, -520, 180, 130],
+    throne: [-120, -660, 240, 140] } }
 };
 let LAY = null, KEEP_HALF = 530, LAY_TOP = -700;
 function applyLook(G) {
@@ -1576,7 +1679,7 @@ function applyLook(G) {
   LAY = LAYOUTS[k.id] || null; LAY_ROWS = null;
   CONTENT.halls.forEach(h => { const sl = (LAY && LAY.slots[h.id]) || BASE_SLOTS[h.id]; h.slot[0] = sl[0]; h.slot[1] = sl[1]; h.slot[2] = sl[2]; h.slot[3] = sl[3]; });
   KEEP_HALF = Math.max(530, ...CONTENT.halls.map(h => Math.max(-h.slot[0], h.slot[0] + h.slot[2]))) + 10;
-  LAY_TOP = LAY ? Math.min(...CONTENT.halls.map(h => h.slot[1])) - ({ spire: 260, fort: 110, ziggurat: 240, citadel: 300 }[LAY.roof] || 0) : -406;
+  LAY_TOP = LAY ? Math.min(...CONTENT.halls.map(h => h.slot[1])) - ({ spire: 260, fort: 110, ziggurat: 240, citadel: 300, domes: 230, pagoda: 200, lighthouse: 200, mountain: 320, treetop: 420, cathedral: 420, obsidian: 200 }[LAY.roof] || 0) : -406;
 }
 /* rows of rooms that share a floor, for drawing the stone around them */
 let LAY_ROWS = null;
@@ -1588,7 +1691,17 @@ function layRows() {
   return LAY_ROWS;
 }
 function shellBlocks() {
-  const P = 16;
+  const P = 16, rows0 = layRows(), tp = rows0[rows0.length - 1].top;
+  if (LAY.roof === 'mountain') {
+    path([[-860, 0], [-600, -260], [-470, -330], [-260, tp - 120], [-90, tp - 250], [0, tp - 300], [120, tp - 230], [300, tp - 110], [480, -360], [640, -240], [880, 0]], STONE2);
+    path([[-160, tp - 190], [-90, tp - 250], [0, tp - 300], [120, tp - 230], [60, tp - 220], [10, tp - 255], [-40, tp - 215]], 'rgba(220,226,232,.7)');
+  } else if (LAY.roof === 'treetop') {
+    const bark = '#2a1d12';
+    R(-70, tp - 120, 140, -(tp - 120), bark);
+    path([[-70, 0], [-170, 0], [-70, -70]], bark); path([[70, 0], [170, 0], [70, -70]], bark);
+    line(0, -330, -470, -420, bark, 22); line(0, -470, 420, -540, bark, 18); line(0, -200, 360, -250, bark, 16);
+    for (const c of [[-280, tp - 130, 170], [0, tp - 230, 210], [270, tp - 120, 160], [-520, -460, 120], [470, -560, 120]]) circ(c[0], c[1], c[2], 'rgba(30,54,28,.97)');
+  }
   for (const r of layRows()) R(r.x0 - P, r.top - P, r.x1 - r.x0 + P * 2, r.fl - r.top + P, STONE);
 }
 function shellTops(G) {
@@ -1642,6 +1755,69 @@ function shellTops(G) {
     cx.save(); cx.globalCompositeOperation = 'lighter';
     for (const r of rows) for (let x = r.x0 + 30; x < r.x1; x += 150) { const a = 0.35 + 0.25 * Math.sin(t * 1.7 + x); line(x, r.fl, x + 18, r.fl - 40, `rgba(255,90,30,${a})`, 2); line(x + 18, r.fl - 40, x + 6, r.fl - 70, `rgba(255,90,30,${a * 0.7})`, 1.5); }
     cx.restore();
+  }
+  else if (roof === 'domes') {
+    // desert palace: onion domes over the top rooms, minarets at the ends
+    const dome = (x, y, w, col) => { const [sx, sy] = w2s(x, y), k = cam.z; cx.fillStyle = col; cx.beginPath(); cx.moveTo(sx - w / 2 * k, sy); cx.bezierCurveTo(sx - w / 2 * k, sy - w * 0.9 * k, sx - w * 0.05 * k, sy - w * 0.75 * k, sx, sy - w * 1.15 * k); cx.bezierCurveTo(sx + w * 0.05 * k, sy - w * 0.75 * k, sx + w / 2 * k, sy - w * 0.9 * k, sx + w / 2 * k, sy); cx.fill(); };
+    for (const sl of top.ss) { const big = sl === HALL.throne.slot, w = big ? 230 : 130, x = sl[0] + sl[2] / 2; dome(x, sl[1] - P, w, big ? '#b8892e' : '#2f7f7a'); line(x, sl[1] - P - w * 1.15, x, sl[1] - P - w * 1.15 - 30, '#d6a94a', 3); if (big) apex = [x, sl[1] - P - w * 1.15 - 30]; }
+    const base = rows[0];
+    for (const mx of [base.x0 - P - 22, base.x1 + P + 22]) { R(mx - 16, -420, 32, 420, STONE); R(mx - 22, -430, 44, 12, STONE2); dome(mx, -430, 44, '#2f7f7a'); }
+  } else if (roof === 'pagoda') {
+    // tiered pagoda: upturned eaves on every tier and a ringed spire
+    for (const r of rows) {
+      const y = r.top - P, x0 = r.x0 - P, x1 = r.x1 + P;
+      path([[x0 - 60, y - 26], [x0 - 22, y - 4], [x1 + 22, y - 4], [x1 + 60, y - 26], [x1 + 14, y - 34], [x0 - 14, y - 34]], '#4a1c18');
+      line(x0 - 22, y - 4, x1 + 22, y - 4, '#c9963a', 2);
+    }
+    const ty = top.top - P - 34;
+    line(cxm, ty, cxm, ty - 150, '#c9963a', 4);
+    for (let i = 0; i < 5; i++) R(cxm - 14 + i * 2, ty - 30 - i * 22, 28 - i * 4, 5, '#c9963a');
+    apex = [cxm, ty - 150];
+  } else if (roof === 'lighthouse') {
+    // coastal fort with a striped lighthouse; its beam sweeps the sea at night
+    for (const r of rows) if (r.x0 >= 280) for (let y = r.top + 20; y < r.fl; y += 64) R(r.x0 - P, y, r.x1 - r.x0 + P * 2, 14, 'rgba(150,40,40,.35)');
+    const ly = top.top - P;
+    R(cxm - 56, ly - 70, 112, 70, '#222a33'); R(cxm - 40, ly - 62, 80, 50, 'rgba(255,214,140,.85)');
+    path([[cxm - 66, ly - 70], [cxm, ly - 130], [cxm + 66, ly - 70]], '#3a2022');
+    apex = [cxm, ly - 130];
+    if (!VIS.reduce && G) {
+      const a = Math.sin(VIS.time * 0.8), [lx, lyy] = w2s(cxm, ly - 38), L = 1500 * cam.z, sp = 0.12;
+      cx.save(); cx.globalCompositeOperation = 'lighter'; cx.fillStyle = 'rgba(255,220,150,.10)';
+      cx.beginPath(); cx.moveTo(lx, lyy); cx.lineTo(lx + Math.cos(a * 1.2 - sp) * L, lyy + Math.sin(a * 0.15 - sp) * L * 0.2); cx.lineTo(lx + Math.cos(a * 1.2 + sp) * L, lyy + Math.sin(a * 0.15 + sp) * L * 0.2); cx.fill(); cx.restore();
+    }
+  } else if (roof === 'mountain') {
+    // carved gates and glowing runes in the rock
+    cx.save(); cx.globalCompositeOperation = 'lighter';
+    for (const r of rows) for (const x of [r.x0 - P + 8, r.x1 + P - 8]) { const a = 0.45 + 0.3 * Math.sin(t * 1.5 + x); circ(x, r.top + 30, 5, `rgba(120,200,255,${a})`); line(x, r.top + 40, x, r.top + 70, `rgba(120,200,255,${a * 0.6})`, 2); }
+    cx.restore();
+    apex = [0, top.top - 300];
+  } else if (roof === 'treetop') {
+    // leaves over the top room and lanterns in the branches
+    for (let i = 0; i < 7; i++) circ(top.x0 + (top.x1 - top.x0) * i / 6, top.top - P - 10 - (i % 2) * 14, 34, 'rgba(46,80,38,.98)');
+    for (const lp of [[-380, -400], [-200, -360], [300, -470], [180, -230]]) { line(lp[0], lp[1] - 20, lp[0], lp[1], '#3a2a1a', 1.5); circ(lp[0], lp[1] + 4, 6, '#e8b860'); if (G) glow(GLOW.warm, lp[0], lp[1] + 4, 40, 0.5); }
+    apex = [0, top.top - 440];
+  } else if (roof === 'cathedral') {
+    // a steep nave with a rose window, a needle spire, pinnacles and flying buttresses
+    path([[top.x0 - P - 10, top.top - P], [cxm, top.top - 250], [top.x1 + P + 10, top.top - P]], STONE2);
+    path([[cxm - 16, top.top - 230], [cxm, top.top - 430], [cxm + 16, top.top - 230]], STONE2);
+    cx.save(); cx.globalCompositeOperation = 'lighter';
+    const rc = ['rgba(200,60,80,.5)', 'rgba(70,110,220,.5)', 'rgba(220,180,60,.5)', 'rgba(120,200,140,.45)'];
+    for (let i = 0; i < 8; i++) { const an = i / 8 * 6.283 + t * 0.05; circ(cxm + Math.cos(an) * 18, top.top - 110 + Math.sin(an) * 18, 11, rc[i % 4]); }
+    circ(cxm, top.top - 110, 9, 'rgba(255,230,180,.6)'); cx.restore();
+    for (const r of rows) for (let x = r.x0 - P; x <= r.x1 + P; x += 60) path([[x - 5, r.top - P], [x, r.top - P - 42], [x + 5, r.top - P]], STONE2);
+    const nave = rows.find(r => r.fl === -260);
+    if (nave) for (const r of rows.filter(q => q.fl > -260)) { line(r.x0 - P, r.top - P, nave.x0 - P, nave.top + 40, STONE2, 6); line(r.x1 + P, r.top - P, nave.x1 + P, nave.top + 40, STONE2, 6); }
+    apex = [cxm, top.top - 430];
+  } else if (roof === 'obsidian') {
+    // jagged black crystal with violet light and a floating heart-stone over the throne
+    for (const r of rows) for (let x = r.x0 - P; x < r.x1 + P; x += 34) { const h = 30 + ((x * 37) % 50 + 50) % 50; path([[x, r.top - P], [x + 14, r.top - P - h], [x + 28, r.top - P]], '#1a1222'); }
+    cx.save(); cx.globalCompositeOperation = 'lighter';
+    for (const r of rows) { const a = 0.3 + 0.25 * Math.sin(t * 2 + r.fl); line(r.x0, r.fl - 4, r.x1, r.fl - 4, `rgba(170,80,255,${a})`, 2); }
+    const fy = top.top - P - 120 + Math.sin(t * 1.5) * 8;
+    path([[cxm, fy - 40], [cxm + 22, fy], [cxm, fy + 40], [cxm - 22, fy]], 'rgba(190,110,255,.9)');
+    if (G) glow(glowFor('#b06cff'), cxm, fy, 90, 0.7);
+    cx.restore();
+    apex = [cxm, fy - 40];
   }
   if (G && G.crowned) { const [ax, ay] = apex; line(ax, ay, ax, ay - 60, '#3a3a3a', 3); const f = VIS.reduce ? 0 : Math.sin(VIS.time * 3) * 4; path([[ax, ay - 60], [ax + 44, ay - 50 + f], [ax, ay - 38]], '#D6A94A'); }
 }
@@ -1861,6 +2037,30 @@ function roomDecor(kid, x, y, w, ht) {
   } else if (kid === 'frostmere') {
     for (let xx = x + 6; xx < x + w; xx += 16) path([[xx, y + 4], [xx + 3, y + 10 + ((xx * 5) % 12)], [xx + 6, y + 4]], 'rgba(200,230,250,.75)');
     R(x + 4, fl - 10, 18, 4, 'rgba(220,235,250,.5)'); R(x + w - 22, fl - 10, 18, 4, 'rgba(220,235,250,.5)');
+  } else if (kid === 'sunspire') {
+    R(x + w * 0.2, fl - 4, w * 0.6, 4, '#8a3a2a'); for (let i = 0; i < 6; i++) R(x + w * 0.2 + i * w * 0.1, fl - 4, w * 0.05, 4, '#c9963a');
+    for (let i = 0; i < 2; i++) { const lx = x + w * (0.25 + i * 0.5); line(lx, y, lx, y + 18, '#8a6a3a', 1.5); path([[lx - 6, y + 18], [lx, y + 30], [lx + 6, y + 18]], '#e0a040'); }
+  } else if (kid === 'jadegate') {
+    for (let i = 0; i < 3; i++) { const lx = x + w * (0.2 + i * 0.3); line(lx, y, lx, y + 14, '#3a2a1a', 1.5); circ(lx, y + 24, 9, '#c8302a'); R(lx - 9, y + 23, 18, 2, '#e8c060'); }
+    R(x + 6, y + 6, 4, ht - 12, '#8a2a22'); R(x + w - 10, y + 6, 4, ht - 12, '#8a2a22');
+  } else if (kid === 'stormwatch') {
+    circ(x + w - 34, y + 40, 12, '#2a3440'); circ(x + w - 34, y + 40, 8, '#5a7a9a');
+    line(x + 10, y + 10, x + w * 0.4, y + 26, 'rgba(180,160,120,.6)', 1.5); line(x + w * 0.4, y + 26, x + w * 0.7, y + 12, 'rgba(180,160,120,.6)', 1.5);
+  } else if (kid === 'deepdelve') {
+    cx.save(); cx.globalCompositeOperation = 'lighter'; const a = 0.4 + 0.2 * Math.sin(t + x);
+    line(x + 8, y + 20, x + 30, y + 50, `rgba(230,180,60,${a})`, 2); line(x + w - 12, y + 30, x + w - 34, y + 70, `rgba(230,180,60,${a})`, 2); cx.restore();
+    R(x + w / 2 - 30, y + 4, 60, 6, '#5a4a30');
+  } else if (kid === 'thornwood') {
+    for (let xx = x + 12; xx < x + w; xx += 44) { line(xx, y + 2, xx + 6, y + 20, '#3e6a2e', 2); circ(xx + 6, y + 22, 5, '#5a8a3a'); }
+    circ(x + 16, fl - 6, 6, '#c84a3a'); R(x + 14, fl - 6, 4, 6, '#e8e0c8'); circ(x + w - 20, fl - 5, 5, '#d8a040'); R(x + w - 22, fl - 5, 4, 5, '#e8e0c8');
+  } else if (kid === 'duskfall') {
+    const wx = x + w - 40; cx.save(); cx.globalCompositeOperation = 'lighter';
+    [['rgba(200,60,80,.45)', 0], ['rgba(70,110,220,.45)', 1], ['rgba(220,180,60,.45)', 2]].forEach(([c, i]) => R(wx + i * 8, y + 16, 8, 40, c)); cx.restore();
+    path([[wx - 2, y + 16], [wx + 12, y + 4], [wx + 26, y + 16]], '#2a2234');
+  } else if (kid === 'hollowthrone') {
+    cx.save(); cx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 3; i++) { const cxx = x + 20 + i * (w - 40) / 2, a = 0.5 + 0.3 * Math.sin(t * 2 + i); path([[cxx - 6, fl], [cxx, fl - 22 - i * 6], [cxx + 6, fl]], `rgba(170,90,255,${a})`); }
+    cx.restore();
   } else if (kid === 'ashfall') {
     for (let i = 0; i < 2; i++) { const bx = x + 14 + i * (w - 42); R(bx, y + 10, 14, 44, '#6a1a18'); path([[bx, y + 54], [bx + 7, y + 62], [bx + 14, y + 54]], '#6a1a18'); circ(bx + 7, y + 26, 4, '#D6A94A'); }
     cx.save(); cx.globalCompositeOperation = 'lighter'; const a = 0.35 + 0.2 * Math.sin(t * 2 + x);
@@ -2205,7 +2405,8 @@ function render(G, dt) {
   const look = G && !VIS.titleMode && KINGDOM[G.kingdom] ? KINGDOM[G.kingdom].look : null;
   if (look && look.tint) { const t = look.tint; cx.fillStyle = `rgba(${t[0]},${t[1]},${t[2]},${t[3]})`; cx.fillRect(0, 0, VW, VH); }
   drawWalls(G);
-  const cut = VIS.titleMode ? 0 : clamp((cam.z - 0.38) / 0.22, 0, 1);
+  // no see-through stage: the castle is either solid (zoomed out) or opened up (zoomed in)
+  const cut = VIS.titleMode ? 0 : (cam.z >= 0.42 ? 1 : 0);
   drawCastleShell(G, cut);
   if (G && !VIS.titleMode) {
     drawHalls(G, cut, L);
@@ -2258,7 +2459,24 @@ function render(G, dt) {
   if (G && !VIS.titleMode && G.phase === 'night' && W && W.night && W.night.blood) { const v = cx.createRadialGradient(VW / 2, VH / 2, VH * 0.3, VW / 2, VH / 2, VH * 0.9); v.addColorStop(0, 'rgba(90,30,42,0)'); v.addColorStop(1, 'rgba(90,30,42,.35)'); cx.fillStyle = v; cx.fillRect(0, 0, VW, VH); }
   cam.x -= shx / cam.z; cam.y -= shy / cam.z;
   if (G && !VIS.titleMode) drawWeather(dt);
+  workSounds(G);
   drawFloats();
+}
+/* Work sounds: each tool hit plays on its downstroke, loudest near the middle of the screen. */
+const WORK_SFX = { quarry: 'quarry', mine: 'pick', wood: 'chop', fields: 'scythe', build: 'hammer', wall: 'hammer' };
+const WORK_NOTES = [0, 3, 5, 7, 10];
+function workSounds(G) {
+  if (!G || VIS.titleMode || G.phase !== 'day' || cam.z < 0.4 || paused || state !== 'play') return;
+  let n = 0;
+  for (const v of G.vill) {
+    const k = WORK_SFX[v.job]; if (!k || v.wounded) { v._ws = null; continue; }
+    const down = Math.sin(v.anim * 7) <= 0, was = v._ws; v._ws = down;
+    if (!v.work || !v.at || !down || was !== false) continue;
+    const [sx] = w2s(v.x, v.y); if (sx < -40 || sx > VW + 40) continue;
+    const d = Math.abs(sx - VW / 2) / (VW / 2);
+    Audio.sfx(k, { vol: clamp(1.1 - d * 0.6, 0.3, 1) * clamp(cam.z, 0.5, 1.2) * (v.job === 'wall' ? 0.6 : 1), gap: 0.09, n: WORK_NOTES[v.id % 5] });
+    if (++n >= 3) break;
+  }
 }
 /* Health bar over every living Hollow at night; the Knight gets a wide named bar. */
 function drawEnemyBars() {
@@ -2297,11 +2515,18 @@ function drawEdgeCounts() {
 /* Weather per kingdom, in screen space. Reduce motion freezes it. */
 function drawWeather(dt) {
   const k = VIS.weatherKind; if (!k) return;
-  if (!VIS.wx) { VIS.wx = []; const n = k === 'fog' ? 5 : k === 'wind' ? 40 : 110; for (let i = 0; i < n; i++) VIS.wx.push({ x: Math.random() * VW, y: Math.random() * VH, r: Math.random(), s: Math.random() }); }
+  if (!VIS.wx) { VIS.wx = []; const n = { fog: 5, wind: 40, sand: 90, petals: 50, rain: 130, leaves: 45 }[k] || 110; for (let i = 0; i < n; i++) VIS.wx.push({ x: Math.random() * VW, y: Math.random() * VH, r: Math.random(), s: Math.random() }); }
   const mv = VIS.reduce ? 0 : dt;
   for (const p of VIS.wx) {
     if (k === 'snow') { p.y += (18 + p.s * 30) * mv; p.x += Math.sin(VIS.time + p.r * 9) * 12 * mv; cx.fillStyle = `rgba(235,240,248,${0.35 + p.r * 0.45})`; cx.fillRect(p.x, p.y, 1.2 + p.r * 2, 1.2 + p.r * 2); }
     else if (k === 'ash') { p.y += (10 + p.s * 18) * mv; p.x += (6 + Math.sin(VIS.time * 0.7 + p.r * 9) * 10) * mv; const ember = p.r > 0.92; cx.fillStyle = ember ? `rgba(255,140,60,${0.5 + 0.4 * Math.sin(VIS.time * 3 + p.s * 9)})` : `rgba(150,140,135,${0.25 + p.r * 0.35})`; cx.fillRect(p.x, p.y, ember ? 2 : 1.5 + p.s * 1.5, ember ? 2 : 1.5 + p.s * 1.5); }
+    else if (k === 'sand') { p.x += (140 + p.s * 120) * mv; p.y += Math.sin(VIS.time * 2 + p.r * 9) * 8 * mv; cx.fillStyle = `rgba(214,184,132,${0.2 + p.r * 0.35})`; cx.fillRect(p.x, p.y, 1.5 + p.s * 2, 1.2); }
+    else if (k === 'petals' || k === 'leaves') {
+      p.y += (16 + p.s * 18) * mv; p.x += (24 + Math.sin(VIS.time + p.r * 9) * 22) * mv;
+      const c = k === 'petals' ? `rgba(246,182,200,${0.55 + p.r * 0.35})` : ['rgba(200,120,50,.7)', 'rgba(120,160,70,.7)', 'rgba(220,170,60,.7)'][(p.r * 3) | 0];
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(VIS.time * (1 + p.s) + p.r * 6); cx.fillStyle = c; cx.fillRect(-3, -1.5, 6, 3); cx.restore();
+    }
+    else if (k === 'rain') { p.y += (620 + p.s * 300) * mv; p.x += 90 * mv; cx.strokeStyle = `rgba(170,190,220,${0.12 + p.r * 0.18})`; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(p.x - 3, p.y - 14); cx.stroke(); }
     else if (k === 'wind') { p.x += (260 + p.s * 220) * mv; p.y += 12 * mv; cx.strokeStyle = `rgba(220,230,240,${0.06 + p.r * 0.1})`; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(p.x - 30 - p.s * 40, p.y - 2); cx.stroke(); }
     else if (k === 'fog') { p.x += (8 + p.s * 10) * mv; const [, gy] = w2s(0, 0), y = gy - 30 + p.r * 70, rw = VW * (0.35 + p.s * 0.3); const g = cx.createRadialGradient(p.x, y, 0, p.x, y, rw); g.addColorStop(0, 'rgba(170,190,180,.13)'); g.addColorStop(1, 'rgba(170,190,180,0)'); cx.fillStyle = g; cx.fillRect(p.x - rw, y - rw * 0.35, rw * 2, rw * 0.7); }
     if (p.y > VH + 10) { p.y = -10; p.x = Math.random() * VW; }
@@ -2437,7 +2662,7 @@ function buildHUD() {
   $('powers').addEventListener('click', e => {
     const b = e.target.closest('button');
     if (b && b.dataset.mv) { const to = +b.dataset.mv; if (moveGuard(G, -to, to)) Audio.sfx('assign'); else Audio.sfx('deny'); updateHUD(true); return; }
-    if (b && b.id === 'hire') { if (hireSellsword(G)) { Audio.sfx('rally'); toast('A sellsword takes the wall for tonight.'); } else { Audio.sfx('deny'); toast(lit(G, 'barracks') ? `Need ${CONTENT.economy.sellswordCost} coin (max ${CONTENT.economy.sellswordMax}).` : 'Restore the Barracks to hire sellswords.'); } return; }
+    if (b && b.id === 'hire') { if (hireSellsword(G)) { stat('hired'); G.hired = 1; Audio.sfx('rally'); toast('A sellsword takes the wall for tonight.'); } else { Audio.sfx('deny'); toast(lit(G, 'barracks') ? `Need ${CONTENT.economy.sellswordCost} coin (max ${CONTENT.economy.sellswordMax}).` : 'Restore the Barracks to hire sellswords.'); } return; }
     const p = e.target.closest('.pw'); if (p) pickPower(p.id.slice(2));
   });
   $('speed').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { setSpeed(+b.dataset.s); Audio.sfx('click'); } });
@@ -2483,6 +2708,10 @@ function updateHUD(force) {
     minus.disabled = jobCount(G, j) === 0; plus.disabled = idleCount(G) === 0 || (j === 'build' && !G.building);
   }
   $('wallLR').textContent = `${jobCount(G, 'wall', -1)} | ${jobCount(G, 'wall', 1)}`;
+  statMax('maxVill', G.vill.length); statMax('maxCoin', Math.floor(G.res.coin)); statMax('maxField', jobCount(G, 'field')); statMax('maxWall', jobCount(G, 'wall'));
+  statMax('maxWeapons', Object.keys(G.weapons || {}).length);
+  if (G.endless) statMax('endlessRun', G.nightsSurvived - (KINGDOM[G.kingdom] || KINGDOMS[0]).goal.nights);
+  if (!updateHUD.mc || ++updateHUD.mc > 20) { updateHUD.mc = 1; checkMedals(); }
   $('fieldLR').textContent = `${jobCount(G, 'field', -1)} | ${jobCount(G, 'field', 1)}`;
   if (!day) {
     $('gL').textContent = jobCount(G, 'wall', -1); $('gR').textContent = jobCount(G, 'wall', 1);
@@ -2607,6 +2836,7 @@ function handleFX() {
     const e = FX.shift();
     switch (e.type) {
       case 'gain': {
+        stat(e.r, e.n);
         const near = cam.z > 0.5 ? 1 : 0.6;
         Audio.sfx(e.r, { vol: near, gap: 0.12 });
         VIS.floats.push({ x: e.x, y: e.y, text: '+' + e.n, col: RES_COL[e.r], t: 0, life: 1.3, r: e.r });
@@ -2617,6 +2847,7 @@ function handleFX() {
       case 'buildStart': { const h = HALL[e.id]; puff(h.slot[0] + h.slot[2] / 2, h.slot[1] + h.slot[3], 12, '#6a5a4a', 160, 40, 1, 6); break; }
       case 'hallLit': {
         const h = HALL[e.id];
+        if (!e.repair) { stat('halls'); stat('h_' + e.id); if (e.id === 'throne') stat('thrones'); }
         VIS.hallFx[e.id] = { t: 0 };
         Audio.sfx('hall'); syncLayers();
         if (!VIS.reduce) { puff(h.slot[0] + h.slot[2] / 2, h.slot[1] + h.slot[3], 24, '#7a6a5a', 260, 60, 1.2, 7); puff(h.slot[0] + h.slot[2] / 2, h.slot[1] + h.slot[3] * 0.6, 26, 'gold', 120, 120, 1.6, 6); VIS.flash = 0.3; }
@@ -2638,9 +2869,10 @@ function handleFX() {
         break;
       case 'spawn': Audio.sfx('approach', { vol: e.k === 'knight' ? 1.5 : 0.6, gap: 0.6 }); if (G && W) Audio.setNight(clamp(W.spawnI / Math.max(1, G.plan.length), 0, 1), W.night.blood); break;
       case 'spear': Audio.sfx('spear', { gap: 0.08 }); if (!VIS.reduce) puff(e.x, e.y - 14, 3, '#3a3046', 60, 30, 0.4, 3); break;
-      case 'bow': Audio.sfx('bow', { gap: 0.07 }); break;
-      case 'arrowHit': Audio.sfx('hit', { gap: 0.06 }); break;
-      case 'kill': Audio.sfx('defeat', { gap: 0.1 }); puff(e.x, e.y - 14, e.k === 'knight' ? 40 : 10, '#2a2436', 90, 50, 1.2, e.k === 'knight' ? 10 : 5); if (e.em) { Audio.sfx('ember', { gap: 0.1 }); puff(e.x, e.y - 14, 4, 'ember', 50, 80, 1, 3); VIS.floats.push({ x: e.x, y: e.y - 40, text: '+' + e.em, col: RES_COL.ember, t: 0, life: 1.3, r: 'ember' }); } if (e.k === 'knight') { banner('The Hollow Knight falls', '', ''); cam.shake = 0.6; } break;
+      case 'bow': Audio.sfx(e.tower ? (e.ballista ? 'ballista' : 'crossbow') : e.xb ? 'crossbow' : 'bow', { gap: 0.07 }); break;
+      case 'sword': Audio.sfx('clash', { gap: 0.07, n: [0, 3, 5, 7][(Math.abs(e.x) | 0) % 4] }); if (!VIS.reduce) puff(e.x, e.y - 14, 3, '#c4ccd8', 60, 30, 0.3, 2); break;
+      case 'arrowHit': Audio.sfx('thwack', { gap: 0.05 }); break;
+      case 'kill': stat('kills'); stat('k_' + e.k); if (e.em) stat('ember', e.em); Audio.sfx('defeat', { gap: 0.1 }); puff(e.x, e.y - 14, e.k === 'knight' ? 40 : 10, '#2a2436', 90, 50, 1.2, e.k === 'knight' ? 10 : 5); if (e.em) { Audio.sfx('ember', { gap: 0.1 }); puff(e.x, e.y - 14, 4, 'ember', 50, 80, 1, 3); VIS.floats.push({ x: e.x, y: e.y - 40, text: '+' + e.em, col: RES_COL.ember, t: 0, life: 1.3, r: 'ember' }); } if (e.k === 'knight') { banner('The Hollow Knight falls', '', ''); cam.shake = 0.6; } break;
       case 'gateHit': Audio.sfx('gate', { vol: e.heavy ? 1 : 0.6, gap: 0.15 }); if (e.heavy) cam.shake = Math.max(cam.shake, 0.18); puff(e.side * WALL_FACE, -30, 3, '#5a4a3a', 60, 40, 0.6, 3); break;
       case 'towerHit': Audio.sfx('gate', { gap: 0.2 }); if (e.broke) toast('A tower has fallen.', 'bad'); break;
       case 'breach': Audio.sfx('breach'); cam.shake = 0.7; toast(`The ${e.side < 0 ? 'west' : 'east'} gate is broken!`, 'bad', 4000); break;
@@ -2650,12 +2882,13 @@ function handleFX() {
       case 'darken': toast(`The Hollow darkened the ${HALL[e.id].name}.`, 'bad', 4000); Audio.sfx('defeat'); syncLayers(); break;
       case 'guardDown': Audio.sfx('defeat'); puff(e.x, e.y - 10, 8, '#5a6a7a', 60, 40, 0.8, 4); break;
       case 'vanish': puff(e.x, e.y - 10, 8, '#2a2436', 60, 40, 0.8, 4); break;
-      case 'power': Audio.sfx(e.id); if (e.id === 'light') { cam.shake = 0.35; VIS.flash = 0.5; } if (e.id === 'mend') puff(e.x, -60, 14, '#8a8c90', 80, 60, 0.8, 5); if (e.id === 'rally') banner('Rally!', '', ''); break;
+      case 'power': stat('powers'); stat('p_' + e.id); G.usedPower = 1; Audio.sfx(e.id); if (e.id === 'light') { cam.shake = 0.35; VIS.flash = 0.5; } if (e.id === 'mend') puff(e.x, -60, 14, '#8a8c90', 80, 60, 0.8, 5); if (e.id === 'rally') banner('Rally!', '', ''); break;
       case 'assign': break;
-      case 'boom': Audio.sfx('breach'); cam.shake = Math.max(cam.shake, 0.4); if (!VIS.reduce) { puff(e.x, e.y - 16, 26, '#c8d84a', 200, 90, 0.9, 7); puff(e.x, e.y - 16, 14, 'ember', 160, 120, 1, 4); VIS.flash = Math.max(VIS.flash, 0.15); } break;
-      case 'oil': Audio.sfx('mend', { gap: 0.3 }); if (!VIS.reduce) puff(e.side * WALL_FACE, -60, 30, 'ember', 140, 20, 1.2, 6); toast('Boiling oil pours from the ' + (e.side < 0 ? 'west' : 'east') + ' wall!', 'good', 1800); break;
-      case 'soldierHit': Audio.sfx('hit', { gap: 0.1 }); break;
-      case 'weapon': break;
+      case 'boom': Audio.sfx('boom'); cam.shake = Math.max(cam.shake, 0.4); if (!VIS.reduce) { puff(e.x, e.y - 16, 26, '#c8d84a', 200, 90, 0.9, 7); puff(e.x, e.y - 16, 14, 'ember', 160, 120, 1, 4); VIS.flash = Math.max(VIS.flash, 0.15); } break;
+      case 'oil': Audio.sfx('oil', { gap: 0.3 }); if (!VIS.reduce) puff(e.side * WALL_FACE, -60, 30, 'ember', 140, 20, 1.2, 6); toast('Boiling oil pours from the ' + (e.side < 0 ? 'west' : 'east') + ' wall!', 'good', 1800); break;
+      case 'soldierHit': Audio.sfx('shield', { gap: 0.1 }); break;
+      case 'weapon': stat('weapons'); checkMedals(); break;
+      case 'trade': stat('trades'); break;
     }
   }
 }
@@ -2671,6 +2904,11 @@ function syncLayers() {
 function dawn() {
   if (W) W.en.forEach(e => { if (e.st !== 'dead') puff(e.x, e.y - 14, 10, '#3a3446', 80, 50, 1.4, 6); });
   report = doDawn(G);
+  stat('nights'); if (report.blood) stat('bloods');
+  if (!report.lost && !report.wounded && (report.wallDmg || 0) < 1) stat('perfect');
+  if (report.lost) { if (campaign.st) campaign.st.runNoLoss = 0; } else { stat('runNoLoss'); statMax('bestNoLoss', campaign.st.runNoLoss); }
+  if (report.quest && report.quest.ok) stat('orders');
+  checkMedals();
   W.en = []; W.effects = [];
   Audio.setMode('day'); Audio.sfx('dawn'); syncLayers();
   VIS.sweep = 0;
@@ -2709,10 +2947,11 @@ function closeModal() { $('modal').classList.add('hidden'); modalKind = null; me
 function openPause() {
   if (state !== 'play') return;
   openModal(`<h3>Paused</h3><h2>${(KINGDOM[G.kingdom] || KINGDOMS[0]).name} &middot; Day ${G.day}</h2><div class="costrow" style="opacity:.7">${G.nightsSurvived} nights survived &middot; ${litCount(G)} of ${CONTENT.halls.length} halls lit &middot; score ${score(G)}</div><div class="menu">
-    <button class="primary" id="mResume">Resume</button><button id="mHalls">Halls</button><button id="mHow">How to Play</button><button id="mSettings">Settings</button><button id="mTut">${G.tut >= 0 && G.tut < 99 ? 'Skip tutorial' : 'Replay tutorial'}</button><button id="mRestart" class="danger">Restart this kingdom</button><button id="mKing">Kingdoms</button><button id="mTitle">Title screen</button>${inFrame ? '<button id="mQuit">Quit to PlayChain</button>' : ''}</div>`, 'pause');
+    <button class="primary" id="mResume">Resume</button><button id="mHalls">Halls</button><button id="mMedals">Medals</button><button id="mHow">How to Play</button><button id="mSettings">Settings</button><button id="mTut">${G.tut >= 0 && G.tut < 99 ? 'Skip tutorial' : 'Replay tutorial'}</button><button id="mRestart" class="danger">Restart this kingdom</button><button id="mKing">Kingdoms</button><button id="mTitle">Title screen</button>${inFrame ? '<button id="mQuit">Quit to PlayChain</button>' : ''}</div>`, 'pause');
   $('mResume').onclick = () => { Audio.sfx('back'); closeModal(); };
   $('mHalls').onclick = () => { Audio.sfx('select'); closeModal(); openHallsList(); };
   $('mHow').onclick = () => { Audio.sfx('select'); openHowTo(openPause); };
+  $('mMedals').onclick = () => { Audio.sfx('select'); openMedals(openPause); };
   $('mKing').onclick = () => { Audio.sfx('select'); openKingdoms(openPause); };
   $('mSettings').onclick = () => { Audio.sfx('select'); openSettings(openPause); };
   $('mTut').onclick = () => { Audio.sfx('select'); if (G.tut >= 0 && G.tut < 99) { G.tut = 99; hideTip(); } else { G.tut = 0; } closeModal(); save(); tutUpdate(); };
@@ -2938,17 +3177,190 @@ function startKingdom(id) {
   VIS.hallFx = {}; save(); enterPlay();
   const K = KINGDOM[id];
   setTimeout(() => banner(K.name, K.place), 450);
-  setTimeout(() => toast(`${K.twist} Goal: restore ${K.goal.halls} halls and survive ${K.goal.nights} nights.`, '', 7000), 3200);
+  setTimeout(() => toast(`${K.twist} Goal: restore every hall and survive ${K.goal.nights} nights.`, '', 7000), 3200);
 }
 /* ---------- kingdoms (campaign) ---------- */
 let campaign = { crowns: {} };
+/* ---------- medals (achievements), kept in the campaign save ---------- */
+const MEDAL_TIERS = { bronze: ['#e0a066', '#7a4620', 'Bronze'], silver: ['#eef2f6', '#7d8792', 'Silver'], gold: ['#ffd76a', '#9a6a12', 'Gold'], platinum: ['#c8f2fa', '#3f8796', 'Platinum'], legend: ['#ff8a9a', '#6a1238', 'Legendary'] };
+const MEDAL_CATS = { war: ['Battle', '#8c2c3c'], build: ['Building', '#6a4a2a'], night: ['Survival', '#2a3a6a'], craft: ['Economy', '#2e6a3a'], arms: ['Arms and powers', '#4a3a7a'], realm: ['Kingdoms', '#8a6a1a'] };
+const sv = k => (campaign.st && campaign.st[k]) || 0;
+const winsCount = () => KINGDOMS.filter(k => (campaign.crowns[k.id] || 0) > 0).length;
+const crownTotal = () => KINGDOMS.reduce((a, k) => a + (campaign.crowns[k.id] || 0), 0);
+const MEDALS = [];
+function M(id, name, cat, tier, icon, desc, need, cur) { MEDALS.push({ id, name, cat, tier, icon, desc, need, cur }); }
+// battle
+M('first_blood', 'First Light', 'war', 'bronze', 'sword', 'Defeat your first Hollow.', 1, () => sv('kills'));
+M('k100', 'Wallwarden', 'war', 'silver', 'sword', 'Defeat 100 Hollow.', 100, () => sv('kills'));
+M('k500', 'Bane of the Dark', 'war', 'gold', 'swords', 'Defeat 500 Hollow.', 500, () => sv('kills'));
+M('k2000', 'Hollowbreaker', 'war', 'platinum', 'swords', 'Defeat 2,000 Hollow.', 2000, () => sv('kills'));
+M('k10000', 'The Undying Flame', 'war', 'legend', 'flame', 'Defeat 10,000 Hollow.', 10000, () => sv('kills'));
+M('wisp50', 'Wisp Catcher', 'war', 'bronze', 'wisp', 'Defeat 50 Wisps.', 50, () => sv('k_wisp'));
+M('husk50', 'Husk Splitter', 'war', 'bronze', 'axe', 'Defeat 50 Husks.', 50, () => sv('k_husk'));
+M('thief25', 'Thief Taker', 'war', 'silver', 'bag', 'Defeat 25 Thieves.', 25, () => sv('k_thief'));
+M('climber50', 'Ladder Kicker', 'war', 'silver', 'spider', 'Defeat 50 Climbers.', 50, () => sv('k_climber'));
+M('wailer40', 'Silence', 'war', 'silver', 'bell', 'Defeat 40 Wailers.', 40, () => sv('k_wailer'));
+M('bat100', 'Batfall', 'war', 'silver', 'bat', 'Defeat 100 Bats.', 100, () => sv('k_bat'));
+M('burster50', 'Pop Goes the Sack', 'war', 'silver', 'burst', 'Defeat 50 Bursters before they explode.', 50, () => sv('k_burster'));
+M('brute25', 'Giant Felling', 'war', 'gold', 'club', 'Defeat 25 Brutes.', 25, () => sv('k_brute'));
+M('shaman30', 'Break the Staff', 'war', 'gold', 'staff', 'Defeat 30 Shamans.', 30, () => sv('k_shaman'));
+M('knight1', 'Knightfall', 'war', 'gold', 'helm', 'Slay a Hollow Knight.', 1, () => sv('k_knight'));
+M('knight10', 'Order of the Dawn', 'war', 'platinum', 'helm', 'Slay 10 Hollow Knights.', 10, () => sv('k_knight'));
+M('knight50', 'Kingslayer of the Hollow', 'war', 'legend', 'skull', 'Slay 50 Hollow Knights.', 50, () => sv('k_knight'));
+// building
+M('hall1', 'Hearth Relit', 'build', 'bronze', 'hearth', 'Restore your first hall.', 1, () => sv('halls'));
+M('hall10', 'Mason', 'build', 'bronze', 'hammer', 'Restore 10 halls.', 10, () => sv('halls'));
+M('hall50', 'Master Builder', 'build', 'silver', 'hammer', 'Restore 50 halls.', 50, () => sv('halls'));
+M('hall100', 'Architect of Ages', 'build', 'gold', 'tower', 'Restore 100 halls.', 100, () => sv('halls'));
+M('throne1', 'Long Live the King', 'build', 'silver', 'crown', 'Restore a Throne Room.', 1, () => sv('thrones'));
+M('throne6', 'Throne Keeper', 'build', 'gold', 'crown', 'Restore 6 Throne Rooms.', 6, () => sv('thrones'));
+M('fastbuild', 'Swift Restoration', 'build', 'gold', 'hourglass', 'Win a kingdom by day 12.', 1, () => sv('fast12'));
+M('chapel_bells', 'Bells of Morning', 'build', 'bronze', 'bell', 'Restore 5 Chapels.', 5, () => sv('h_chapel'));
+M('forge5', 'Fire in the Forge', 'build', 'bronze', 'anvil', 'Restore 5 Forges.', 5, () => sv('h_forge'));
+M('library5', 'Keeper of Lore', 'build', 'silver', 'book', 'Restore 5 Libraries.', 5, () => sv('h_library'));
+// survival
+M('night1', 'First Dawn', 'night', 'bronze', 'sun', 'Survive your first night.', 1, () => sv('nights'));
+M('night25', 'Watchful', 'night', 'silver', 'moon', 'Survive 25 nights.', 25, () => sv('nights'));
+M('night100', 'Hundred Dawns', 'night', 'gold', 'moon', 'Survive 100 nights.', 100, () => sv('nights'));
+M('night300', 'Keeper of the Long Night', 'night', 'platinum', 'stars', 'Survive 300 nights.', 300, () => sv('nights'));
+M('blood1', 'Red Sky', 'night', 'bronze', 'bloodmoon', 'Survive a Blood Moon.', 1, () => sv('bloods'));
+M('blood10', 'Blood and Iron', 'night', 'gold', 'bloodmoon', 'Survive 10 Blood Moons.', 10, () => sv('bloods'));
+M('perfect1', 'Not a Scratch', 'night', 'silver', 'shield', 'A perfect night: no wall damage, nobody lost or hurt.', 1, () => sv('perfect'));
+M('perfect10', 'Untouchable', 'night', 'gold', 'shield', 'Have 10 perfect nights.', 10, () => sv('perfect'));
+M('noloss7', 'Shepherd', 'night', 'silver', 'heart', 'Lose nobody for 7 nights in a row.', 7, () => sv('bestNoLoss'));
+M('noloss30', 'Not One Soul', 'night', 'legend', 'heart', 'Lose nobody for 30 nights in a row.', 30, () => sv('bestNoLoss'));
+M('endless20', 'Endless Watch', 'night', 'platinum', 'hourglass', 'Survive 20 Endless Nights in one kingdom.', 20, () => sv('endlessRun'));
+M('endless50', 'The Night Has No End', 'night', 'legend', 'infinity', 'Survive 50 Endless Nights in one kingdom.', 50, () => sv('endlessRun'));
+// economy
+M('stone1k', 'Stonecutter', 'craft', 'bronze', 'stone', 'Quarry 1,000 stone.', 1000, () => sv('stone'));
+M('stone10k', 'Mountain Mover', 'craft', 'silver', 'stone', 'Quarry 10,000 stone.', 10000, () => sv('stone'));
+M('timber1k', 'Woodcutter', 'craft', 'bronze', 'log', 'Cut 1,000 timber.', 1000, () => sv('timber'));
+M('timber10k', 'Forest Feller', 'craft', 'silver', 'log', 'Cut 10,000 timber.', 10000, () => sv('timber'));
+M('iron100', 'Iron Vein', 'craft', 'bronze', 'pick', 'Mine 100 iron.', 100, () => sv('iron'));
+M('iron1k', 'Deep Miner', 'craft', 'gold', 'pick', 'Mine 1,000 iron.', 1000, () => sv('iron'));
+M('grain2k', 'Bountiful Harvest', 'craft', 'silver', 'wheat', 'Harvest 2,000 grain.', 2000, () => sv('grain'));
+M('ember500', 'Ember Keeper', 'craft', 'silver', 'ember', 'Earn 500 ember from fallen Hollow.', 500, () => sv('ember'));
+M('ember5k', 'Living Fire', 'craft', 'platinum', 'ember', 'Earn 5,000 ember from fallen Hollow.', 5000, () => sv('ember'));
+M('coin300', 'Treasury', 'craft', 'gold', 'coin', 'Hold 300 coin at once.', 300, () => sv('maxCoin'));
+M('pop30', 'Bustling Keep', 'craft', 'gold', 'people', 'Have 30 villagers at once.', 30, () => sv('maxVill'));
+M('pop50', 'A City in the Dark', 'craft', 'legend', 'people', 'Have 50 villagers at once.', 50, () => sv('maxVill'));
+M('orders10', 'Dutiful', 'craft', 'silver', 'scroll', 'Complete 10 daily orders.', 10, () => sv('orders'));
+M('orders100', "The Steward's Favourite", 'craft', 'platinum', 'scroll', 'Complete 100 daily orders.', 100, () => sv('orders'));
+M('trade20', 'Merchant Prince', 'craft', 'silver', 'scales', 'Make 20 trades at the Market.', 20, () => sv('trades'));
+M('events10', 'Judge of the Realm', 'craft', 'bronze', 'gavel', 'Answer 10 events.', 10, () => sv('events'));
+// arms and powers
+M('weapon1', 'Armed', 'arms', 'bronze', 'sword', 'Forge your first weapon.', 1, () => sv('weapons'));
+M('weapons5', 'Full Armory', 'arms', 'gold', 'rack', 'Own all five weapons in one kingdom.', 5, () => sv('maxWeapons'));
+M('weapons30', 'Warsmith', 'arms', 'platinum', 'anvil', 'Forge 30 weapons in total.', 30, () => sv('weapons'));
+M('power1', 'Spark', 'arms', 'bronze', 'star', 'Cast your first power.', 1, () => sv('powers'));
+M('power100', 'Stormcaller', 'arms', 'silver', 'bolt', 'Cast 100 powers.', 100, () => sv('powers'));
+M('light50', 'Bringer of Light', 'arms', 'gold', 'sun', 'Cast Light 50 times.', 50, () => sv('p_light'));
+M('soldiers10', 'Shield Wall', 'arms', 'silver', 'shield', 'Have 10 soldiers in the field at once.', 10, () => sv('maxField'));
+M('guards12', 'Crowded Battlements', 'arms', 'silver', 'tower', 'Put 12 guards on the walls at once.', 12, () => sv('maxWall'));
+M('hire20', 'Coin for Swords', 'arms', 'bronze', 'coin', 'Hire 20 sellswords.', 20, () => sv('hired'));
+// kingdoms
+M('win1', 'Kingdom Restored', 'realm', 'silver', 'flag', 'Restore your first kingdom.', 1, winsCount);
+M('win3', 'Three Banners', 'realm', 'gold', 'flag', 'Restore 3 kingdoms.', 3, winsCount);
+M('win6', 'Half the World', 'realm', 'platinum', 'map', 'Restore 6 kingdoms.', 6, winsCount);
+M('win12', 'Dawn Over All', 'realm', 'legend', 'sunrise', 'Restore all 12 kingdoms.', 12, winsCount);
+M('crowns3', 'Three Crowns', 'realm', 'gold', 'crown', 'Earn all 3 crowns in a kingdom.', 3, () => Math.max(0, ...KINGDOMS.map(k => campaign.crowns[k.id] || 0)));
+M('crowns15', 'Crown Collector', 'realm', 'platinum', 'crown', 'Earn 15 crowns.', 15, crownTotal);
+M('crowns36', 'Sovereign of Twelve', 'realm', 'legend', 'crowns', 'Earn all 36 crowns.', 36, crownTotal);
+M('throne3', 'The Hollow Throne Falls', 'realm', 'legend', 'skull', 'Win The Hollow Throne with all 3 crowns.', 1, () => sv('throne3'));
+M('ironwill', 'Iron Will', 'realm', 'legend', 'fist', 'Win a kingdom from Sunspire on without casting a power or hiring a sellsword.', 1, () => sv('ironWill'));
+M('swift', 'Swift as Dawn', 'realm', 'legend', 'hourglass', 'Win a kingdom from Sunspire on by day 13.', 1, () => sv('swift'));
+
+function stat(k, n) { const st = campaign.st || (campaign.st = {}); st[k] = (st[k] || 0) + (n == null ? 1 : n); }
+function statMax(k, v) { const st = campaign.st || (campaign.st = {}); if (v > (st[k] || 0)) st[k] = v; }
+function medalEarned(m) { return !!(campaign.ach && campaign.ach[m.id]); }
+let medalQueue = [];
+function checkMedals() {
+  if (!campaign.ach) campaign.ach = {};
+  let any = false;
+  for (const m of MEDALS) if (!campaign.ach[m.id] && m.cur() >= m.need) { campaign.ach[m.id] = Date.now(); medalQueue.push(m); any = true; }
+  if (any) { save(); saveSettingsOnly(); if (!checkMedals.busy) showNextMedal(); }
+}
+function showNextMedal() {
+  const m = medalQueue.shift(); if (!m) { checkMedals.busy = false; return; }
+  checkMedals.busy = true;
+  const el = document.createElement('div'); el.className = 'medalpop ' + m.tier;
+  el.innerHTML = medalSvg(m) + `<div><small>${MEDAL_TIERS[m.tier][2]} medal earned</small><b>${m.name}</b><span>${m.desc}</span></div>`;
+  document.body.appendChild(el); Audio.sfx(m.tier === 'legend' ? 'crown' : 'flare');
+  setTimeout(() => el.classList.add('out'), 3600); setTimeout(() => { el.remove(); showNextMedal(); }, 4100);
+}
+/* Each medal is drawn from its category (shape), tier (metal) and its own emblem and number, so no two look alike. */
+const MEDAL_ICON = {
+  sword: 'M32 14l3 3-11 22-4 1 1-4zM20 38l6 6M18 46l4-4', swords: 'M20 16l22 22M44 16L22 38M18 40l6 6M46 40l-6 6', flame: 'M32 14c6 8 10 12 10 20a10 10 0 01-20 0c0-6 4-8 6-12 0 4 2 6 4 6 0-6-2-10 0-14z',
+  wisp: 'M26 30a6 6 0 1112 0c0 6-6 12-12 14 2-4 0-8 0-14z', axe: 'M24 44l14-26M36 16c6 0 10 4 10 10l-8-2z', bag: 'M24 26h16l3 18H21zM28 26c0-4 8-4 8 0',
+  spider: 'M32 30m-6 0a6 6 0 1012 0 6 6 0 10-12 0M26 28l-8-6M26 32l-9 2M38 28l8-6M38 32l9 2', bell: 'M24 40c2-2 2-14 8-16 6 2 6 14 8 16zM30 42a2 2 0 004 0',
+  bat: 'M18 30c4-4 8 2 10 0l4-4 4 4c2 2 6-4 10 0-4 2-6 8-10 6l-4 4-4-4c-4 2-6-4-10-6z', burst: 'M32 16l4 10 10-4-6 10 8 6-10 2 2 10-8-6-8 6 2-10-10-2 8-6-6-10 10 4z',
+  club: 'M24 44l12-20M34 16c6 0 10 6 6 10l-6 2-4-6z', staff: 'M32 46V20M32 14a4 4 0 110 8 4 4 0 010-8', helm: 'M22 40V28c0-8 20-8 20 0v12h-6v-8h-8v8z', skull: 'M24 30a8 8 0 1116 0v6h-4v4h-8v-4h-4zM28 30h2M34 30h2',
+  hearth: 'M22 44V26l10-8 10 8v18zM28 44v-8h8v8', hammer: 'M24 44l12-14M30 20l10 10 4-4-10-10z', tower: 'M24 46V24h4v-4h3v4h2v-4h3v4h4v22z', crown: 'M20 40l-2-16 8 7 6-10 6 10 8-7-2 16z', crowns: 'M16 40l-2-12 6 5 4-8 4 8 6-5-2 12zM30 36l-1-9 5 4 3-6 3 6 5-4-1 9z',
+  hourglass: 'M24 16h16M24 46h16M26 16c0 8 12 8 12 16s-12 8-12 14M38 16c0 8-12 8-12 16', anvil: 'M20 28h24c0 4-4 6-8 6v6h4v4H24v-4h4v-6c-4 0-8-2-8-6z', book: 'M20 20h11v24H20zM33 20h11v24H33z',
+  sun: 'M32 26a6 6 0 110 12 6 6 0 010-12M32 16v4M32 44v4M16 32h4M44 32h4M21 21l3 3M40 40l3 3M43 21l-3 3M24 40l-3 3', moon: 'M38 18a12 12 0 100 28 14 14 0 010-28z', stars: 'M24 22l2 4 4 1-4 2-2 4-2-4-4-2 4-1zM40 30l2 4 4 1-4 2-2 4-2-4-4-2 4-1z',
+  bloodmoon: 'M32 20a12 12 0 110 24 12 12 0 010-24M28 28h2M34 34h2', shield: 'M32 16l12 4v10c0 8-6 14-12 16-6-2-12-8-12-16V20z', heart: 'M32 44c-10-6-14-12-12-18 2-5 9-5 12 0 3-5 10-5 12 0 2 6-2 12-12 18z',
+  infinity: 'M20 32c0-8 10-8 12 0s12 8 12 0-10-8-12 0-12 8-12 0z', stone: 'M20 42l4-12 8-6 10 4 2 14z', log: 'M18 28h24a4 4 0 010 8H18a4 4 0 010-8zM42 28a4 4 0 010 8', pick: 'M24 46l14-20M20 22c8-6 18-4 24 2-8-2-16-2-24-2z',
+  wheat: 'M32 46V20M32 22c-4 2-4 6 0 8 4-2 4-6 0-8M32 30c-4 2-4 6 0 8 4-2 4-6 0-8', ember: 'M32 16c5 6 9 9 9 15a9 9 0 01-18 0c0-4 3-6 4-9 0 3 1 4 3 4 0-4 0-7 2-10z', coin: 'M32 20a12 12 0 110 24 12 12 0 010-24M32 25v14M28 28h6a2 2 0 010 4h-4a2 2 0 000 4h6',
+  people: 'M24 28a4 4 0 110-8 4 4 0 010 8M40 28a4 4 0 110-8 4 4 0 010 8M16 42c0-6 4-10 8-10s8 4 8 10M32 42c0-6 4-10 8-10s8 4 8 10', scroll: 'M22 18h18v24H22zM26 24h10M26 30h10M26 36h6', scales: 'M32 16v28M22 22h20M22 22l-4 10h8zM42 22l-4 10h8zM26 44h12',
+  gavel: 'M22 44h14M26 20l10 10M30 16l10 10-4 4-10-10z', rack: 'M20 44V18M44 44V18M26 42V22M32 42V22M38 42V22', star: 'M32 16l4 10 10 1-8 7 3 10-9-6-9 6 3-10-8-7 10-1z', bolt: 'M34 14L22 34h8l-4 16 14-22h-8z',
+  flag: 'M24 46V16M24 18h18l-4 6 4 6H24', map: 'M18 20l9-3 10 3 9-3v26l-9 3-10-3-9 3z', sunrise: 'M18 40h28M22 40a10 10 0 0120 0M32 22v4M20 28l3 3M44 28l-3 3', fist: 'M24 30h16v10a6 6 0 01-6 6h-4a6 6 0 01-6-6zM24 30v-6h4v6M28 24v-4h4v10M32 22h4v8M36 24h4v6'
+};
+function medalSvg(m, small) {
+  const T = MEDAL_TIERS[m.tier], cat = MEDAL_CATS[m.cat], id = 'md_' + m.id, on = medalEarned(m);
+  const c = m.cat, fill = `url(#${id})`;
+  const shape = c === 'war' ? `<path d="M32 6l22 8v16c0 14-10 24-22 28C20 54 10 44 10 30V14z" fill="${fill}" stroke="${T[1]}" stroke-width="2.5"/>`
+    : c === 'build' ? `<path d="M32 5l23 13v28L32 59 9 46V18z" fill="${fill}" stroke="${T[1]}" stroke-width="2.5"/>`
+    : c === 'night' ? `<circle cx="32" cy="32" r="25" fill="${fill}" stroke="${T[1]}" stroke-width="2.5"/><circle cx="32" cy="32" r="20" fill="none" stroke="${T[1]}" stroke-opacity=".5" stroke-dasharray="2 3"/>`
+    : c === 'craft' ? `<rect x="9" y="9" width="46" height="46" rx="14" fill="${fill}" stroke="${T[1]}" stroke-width="2.5"/>`
+    : c === 'arms' ? `<path d="M32 4l7 14 15 2-11 11 3 15-14-7-14 7 3-15L10 20l15-2z" transform="translate(0 4)" fill="${fill}" stroke="${T[1]}" stroke-width="2.5"/>`
+    : `<path d="M10 50l-3-30 13 10 12-20 12 20 13-10-3 30z" fill="${fill}" stroke="${T[1]}" stroke-width="2.5"/>`;
+  const grad = m.tier === 'legend'
+    ? `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd76a"/><stop offset=".5" stop-color="#ff7a9a"/><stop offset="1" stop-color="#9a7aff"/></linearGradient>`
+    : `<radialGradient id="${id}" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset=".3" stop-color="${T[0]}"/><stop offset="1" stop-color="${T[1]}"/></radialGradient>`;
+  const ribbon = `<path d="M20 0h9l3 9-6 2zM44 0h-9l-3 9 6 2z" fill="${cat[1]}"/>`;
+  const num = m.need > 1 ? `<text x="32" y="${c === 'realm' ? 47 : 52}" text-anchor="middle" font-size="8" font-weight="800" fill="#1a1410" opacity=".75" font-family="system-ui,sans-serif">${m.need >= 1000 ? (m.need / 1000) + 'K' : m.need}</text>` : '';
+  const icon = `<path d="${MEDAL_ICON[m.icon] || MEDAL_ICON.star}" fill="none" stroke="#1a1410" stroke-opacity=".8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" transform="${m.need > 1 ? 'translate(4 0) scale(.88)' : ''}"/>`;
+  return `<svg viewBox="0 0 64 64" class="medal ${on ? 'on' : 'off'} ${small ? 'sm' : ''}" aria-hidden="true"><defs>${grad}</defs>${ribbon}${shape}${icon}${num}</svg>`;
+}
+function openMedals(back) {
+  const got = MEDALS.filter(medalEarned).length;
+  const groups = Object.keys(MEDAL_CATS).map(c => {
+    const ms = MEDALS.filter(m => m.cat === c);
+    return `<h4>${MEDAL_CATS[c][0]} <span style="opacity:.6">${ms.filter(medalEarned).length}/${ms.length}</span></h4><div class="medals">` + ms.map(m => {
+      const on = medalEarned(m), cur = Math.min(m.cur(), m.need), pct = Math.round(cur / m.need * 100);
+      return `<div class="mcell ${on ? 'on' : ''} ${m.tier}">${medalSvg(m)}<div><b>${m.name}</b><small class="tier">${MEDAL_TIERS[m.tier][2]}</small><span>${m.desc}</span>${on ? '<span class="got">Earned</span>' : `<div class="bar"><i style="width:${pct}%"></i></div><span class="prog">${fmt(cur)} / ${fmt(m.need)}</span>`}</div></div>`;
+    }).join('') + `</div>`;
+  }).join('');
+  openModal(`<h3>Hall of Medals</h3><h2>${got} of ${MEDALS.length} medals</h2><p>Medals are kept across every kingdom and every reign. Legendary medals are the hardest deeds in the realm.</p><div class="medalwrap">${groups}</div><div class="menu"><button class="primary" id="mdBack">Back</button></div>`, 'medals');
+  $('mcard').classList.add('wide');
+  $('mdBack').onclick = () => { Audio.sfx('back'); back ? back() : closeModal(); };
+}
+/* The ending: after the last kingdom falls back into the light. */
+function showEnding(back) {
+  const st = campaign.st || {};
+  Audio.sfx('dawn'); setTimeout(() => Audio.sfx('crown'), 1800); VIS.sweep = 0;
+  openModal(`<h3>The end of the Long Night</h3><h2>Dawn over twelve kingdoms</h2>
+    <div class="ending"><p>The obsidian throne cracks like ice in spring. One by one the Hollow stop where they stand, and the dark drains out of them like smoke. What is left is only wind.</p>
+    <p>From Greywatch to Duskfall, bells ring that have not rung in a hundred years. Hearths burn in every hall. The roads between the castles fill with carts and songs again.</p>
+    <p>They will tell this story for a long time: how one keeper relit the halls, held the walls, and brought the morning back.</p></div>
+    <table><tr><td>Kingdoms restored</td><td class="good">${winsCount()} / ${KINGDOMS.length}</td></tr><tr><td>Crowns</td><td class="good">${crownTotal()} / ${KINGDOMS.length * 3}</td></tr>
+    <tr><td>Hollow defeated</td><td>${fmt(st.kills || 0)}</td></tr><tr><td>Nights survived</td><td>${fmt(st.nights || 0)}</td></tr><tr><td>Halls restored</td><td>${fmt(st.halls || 0)}</td></tr>
+    <tr><td>Medals</td><td>${MEDALS.filter(medalEarned).length} / ${MEDALS.length}</td></tr></table>
+    <p style="opacity:.7">Thank you for playing Hollow Kingdom. The Endless Nights are still there for anyone who wants more, and some medals are still waiting.</p>
+    <div class="menu"><button class="primary" id="eStay">Keep defending (Endless Nights)</button><button id="eMedals">Hall of Medals</button><button id="eList">Kingdoms</button>${inFrame ? '<button id="eVote">Back to PlayChain</button>' : ''}</div>`, 'ending');
+  $('mcard').classList.add('wide');
+  $('eStay').onclick = () => { Audio.sfx('select'); G.endless = true; save(); closeModal(); };
+  $('eMedals').onclick = () => { Audio.sfx('select'); openMedals(() => showEnding(back)); };
+  $('eList').onclick = () => { Audio.sfx('select'); openKingdoms(() => showEnding(back)); };
+  if ($('eVote')) $('eVote').onclick = () => { save(); post({ type: 'playchain:exit' }); };
+}
 const kUnlocked = i => i === 0 || (campaign.crowns[KINGDOMS[i - 1].id] || 0) > 0;
 const crownStr = n => [0, 1, 2].map(i => i < n ? '\u265B' : '<span class="off">\u265B</span>').join('');
 function openKingdoms(back) {
   const total = KINGDOMS.reduce((a, k) => a + (campaign.crowns[k.id] || 0), 0);
-  openModal(`<h3>Campaign &middot; ${total} of ${KINGDOMS.length * 3} crowns</h3><h2>Kingdoms</h2><p>Each crown: restore the kingdom, keep every wall standing, and lose no villagers.</p><div class="klist">` +
+  openModal(`<h3>Campaign &middot; ${total} of ${KINGDOMS.length * 3} crowns</h3><h2>Kingdoms</h2><p>To win a kingdom and unlock the next, restore every hall (all ${CONTENT.halls.length - 1}, ending with the Throne Room) and survive its nights. Each kingdom is harder than the last. Extra crowns: keep every wall standing, and lose no villagers.</p><div class="klist">` +
     KINGDOMS.map((k, i) => { const ok = kUnlocked(i), c = campaign.crowns[k.id] || 0, cur = G && G.kingdom === k.id && !G.done;
-      return `<button class="kitem" data-k="${k.id}" ${ok ? '' : 'disabled'}><span class="kc">${crownStr(c)}</span><b>${i + 1}. ${k.name}</b><small>${ok ? k.place + '. ' + k.twist : 'Restore ' + KINGDOMS[i - 1].name + ' to unlock.'}</small><small>${ok ? `Goal: ${k.goal.halls} halls, ${k.goal.nights} nights${cur ? ' &middot; <b style="font-size:.8rem;color:var(--gold)">in progress, day ' + G.day + '</b>' : ''}` : ''}</small></button>`; }).join('') +
+      return `<button class="kitem" data-k="${k.id}" ${ok ? '' : 'disabled'}><span class="kc">${crownStr(c)}</span><b>${i + 1}. ${k.name}</b><small>${ok ? k.place + '. ' + k.twist : 'Restore ' + KINGDOMS[i - 1].name + ' to unlock.'}</small><small>${ok ? `Goal: every hall, ${k.goal.nights} nights${cur ? ' &middot; <b style="font-size:.8rem;color:var(--gold)">in progress, day ' + G.day + '</b>' : ''}` : ''}</small></button>`; }).join('') +
     `</div><div class="menu"><button id="kBack">Back</button></div>`, 'kingdoms');
   $('mcard').classList.add('wide');
   $('mcard').querySelectorAll('.kitem').forEach(b => b.onclick = () => {
@@ -2968,7 +3380,13 @@ function showKingdomEnd(kind) {
   G.done = true;
   if (kind === 'won') {
     const c = crownsFor(G), prev = campaign.crowns[K.id] || 0;
-    campaign.crowns[K.id] = Math.max(prev, c); save();
+    campaign.crowns[K.id] = Math.max(prev, c);
+    stat('wins'); if (G.day <= 12) statMax('fast12', 1);
+    if (K.n >= 6 && G.day <= 13) statMax('swift', 1);
+    if (K.n >= 6 && !G.usedPower && !G.hired) statMax('ironWill', 1);
+    if (K.id === 'hollowthrone' && c === 3) statMax('throne3', 1);
+    save(); checkMedals();
+    if (!next) { post({ type: 'playchain:score', score: score(G) }); setTimeout(() => showEnding(() => showKingdomEnd(kind)), 50); return; }
     Audio.sfx('crown');
     openModal(`<h3>${K.name} restored</h3><h2>Long live the kingdom</h2><div class="crowns">${crownStr(c)}</div><table>
       <tr><td>Kingdom restored</td><td class="good">\u265B</td></tr>
@@ -3002,7 +3420,7 @@ function showEvent() {
   openModal(`<h3>Day ${G.day} &middot; an event</h3><h2>${ev.title}</h2><p>${ev.text}</p><div class="menu">` +
     ev.choices.map((c, i) => { const ok = !c.ok || c.ok(G); return `<button data-i="${i}" ${i === 0 && ok ? 'class="primary"' : ''} ${ok ? '' : 'disabled title="You cannot afford this"'}>${c.label}</button>`; }).join('') + `</div>`, 'event');
   $('mcard').querySelectorAll('button[data-i]').forEach(b => b.onclick = () => {
-    Audio.sfx('select'); const msg = chooseEvent(G, +b.dataset.i); closeModal(); save(); updateHUD(true); if (msg) toast(msg, 'good', 3500);
+    Audio.sfx('select'); stat('events'); const msg = chooseEvent(G, +b.dataset.i); closeModal(); save(); updateHUD(true); if (msg) toast(msg, 'good', 3500);
   });
 }
 /* ---------- how to play (built from CONTENT so numbers stay true) ---------- */
@@ -3020,9 +3438,9 @@ const BEAT = {
 };
 function openHowTo(back) {
   const C = CONTENT, cost = h => Object.keys(h.cost).map(k => h.cost[k] + ' ' + CKEY[k]).join(', ') || 'free';
-  const K = KINGDOMS.map(k => `<tr><td>${k.name}</td><td>${k.twist} Goal: ${k.goal.halls} halls, ${k.goal.nights} nights.</td></tr>`).join('');
+  const K = KINGDOMS.map(k => `<tr><td>${k.name}</td><td>${k.twist} Goal: every hall, ${k.goal.nights} nights.</td></tr>`).join('');
   openModal(`<h3>Guide</h3><h2>How to play</h2><div class="howto">
-    <p>Each kingdom is a castle gone dark. By <b>day</b>, send villagers to work and restore halls. By <b>night</b>, the Hollow attack your two walls. Restore enough halls and survive enough nights to win the kingdom.</p>
+    <p>Each kingdom is a castle gone dark. By <b>day</b>, send villagers to work and restore halls. By <b>night</b>, the Hollow attack your two walls. Restore every hall and survive the kingdom's nights to win it and unlock the next. There are ${KINGDOMS.length} kingdoms, each harder than the last.</p>
     <h4>Day and night</h4><ul><li>A day lasts ${C.timing.dayLen / 60 | 0}:${String(C.timing.dayLen % 60).padStart(2, '0')}. The bell rings ${C.timing.bellAt} seconds before dusk: put guards on the walls.</li><li>Nights last up to ${C.timing.nightLen} seconds, in ${C.night.waves.length} waves. A banner warns you before each wave and red markers show where Hollow are off screen. They come at both walls from the very first night.</li><li>Every ${C.night.bloodEvery}th night (sooner in Ashfall) a Blood Moon brings the Hollow Knight, and a big reward at dawn.</li><li>At dawn: walls mend a little, villagers eat grain, you collect taxes, and sometimes an event asks you to choose.</li></ul>
     <h4>Resources</h4><table>
     <tr><td>Stone</td><td>From the quarry. Restores halls; guards on the walls use it to repair by day.</td></tr>
@@ -3047,6 +3465,7 @@ function openHowTo(back) {
   $('mcard').classList.add('wide');
   $('hBack').onclick = () => { Audio.sfx('back'); back ? back() : closeModal(); };
 }
+$('tMedals').onclick = () => { firstInput(); Audio.sfx('select'); openMedals(); };
 $('tHow').onclick = () => { firstInput(); Audio.sfx('select'); openHowTo(); };
 $('tNew').onclick = () => { firstInput(); Audio.sfx('select'); if (!G && saved && saved.game) G = deserialize(saved.game); openKingdoms(); };
 $('tContinue').onclick = () => { firstInput(); Audio.sfx('select'); if (!G && saved && saved.game) G = deserialize(saved.game); if (!G) { startNew(); return; } enterPlay(); };
@@ -3101,6 +3520,6 @@ loadAll().then(d => {
   if (state === 'title') toTitle();
 });
 // debug/test hook (harmless)
-window.__hk = { get G() { return G; }, render, waveWatch, startKingdom, openKingdoms, openHowTo, showEvent, afterReport, get campaign() { return campaign; }, chooseEvent, kingdomCheck, get W() { return W; }, simStep, CONTENT, startNew, castPower, assign, startRestore, cam, VIS, setSpeed, score, finishHall };
+window.__hk = { get G() { return G; }, render, checkMedals, openMedals, showEnding, MEDALS, waveWatch, startKingdom, openKingdoms, openHowTo, showEvent, afterReport, get campaign() { return campaign; }, chooseEvent, kingdomCheck, get W() { return W; }, simStep, CONTENT, startNew, castPower, assign, startRestore, cam, VIS, setSpeed, score, finishHall };
 </script>
 </body></html>
