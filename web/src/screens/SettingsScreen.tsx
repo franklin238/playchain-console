@@ -70,7 +70,7 @@ export default function SettingsScreen() {
         <Section title="Display">
           <Toggle
             label="Open in fullscreen"
-            description="PlayChain goes fullscreen on your first click or key press. Use the ✕ in the corner to return to a window."
+            description="PlayChain goes fullscreen on your first click or key press. Esc always means back, in menus and in games. To return to a window, use the fullscreen button in the top bar, the ✕ in the corner, or the PlayChain menu in a game (or hold Esc for two seconds)."
             checked={s.autoFullscreen}
             onChange={(autoFullscreen) => s.set({ autoFullscreen })}
           />

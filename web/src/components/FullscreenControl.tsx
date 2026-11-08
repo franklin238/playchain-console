@@ -4,6 +4,22 @@ import { useSettings } from "../stores/settings";
 const isFull = () => !!document.fullscreenElement;
 let declined = false; // the player left fullscreen with the X: don't pull them back in this visit
 
+/*
+ * Esc means "back" in PlayChain and in every game, so while fullscreen we ask the browser to give
+ * us the Esc key (Keyboard Lock, Chrome and Edge). Fullscreen is then left with the on-screen
+ * buttons instead; holding Esc down for about two seconds still leaves it, as a browser safety net.
+ * Other browsers ignore this and keep their usual Esc behaviour.
+ */
+type KeyboardLock = { lock?: (keys?: string[]) => Promise<void>; unlock?: () => void };
+const keyboard = (): KeyboardLock | undefined => (navigator as Navigator & { keyboard?: KeyboardLock }).keyboard;
+function syncEscLock() {
+  const kb = keyboard();
+  if (!kb) return;
+  if (isFull()) void kb.lock?.(["Escape"]).catch(() => {});
+  else kb.unlock?.();
+}
+if (typeof document !== "undefined") document.addEventListener("fullscreenchange", syncEscLock);
+
 /** Live fullscreen state for buttons. */
 export function useIsFullscreen(): boolean {
   const [full, setFull] = useState(isFull);

@@ -3087,7 +3087,7 @@ window.addEventListener('keydown', e => {
   firstInput();
   if (state === 'title') { if (e.key === 'Enter') { const b = !$('tContinue').classList.contains('hidden') ? $('tContinue') : $('tNew'); b.click(); } return; }
   if (state !== 'play') return;
-  if (e.key === 'Escape') { e.preventDefault(); if (menuOpen) { if (modalKind !== 'report') { Audio.sfx('back'); closeModal(); } } else if (VIS.armed) { VIS.armed = null; cv.classList.remove('target'); } else if (!$('panel').classList.contains('hidden')) closePanel(); else openPause(); return; }
+  if (e.key === 'Escape') { e.preventDefault(); if (menuOpen) { if (modalKind !== 'report') { Audio.sfx('back'); closeModal(); } } else if (VIS.armed) { VIS.armed = null; cv.classList.remove('target'); } else if (!$('panel').classList.contains('hidden')) closePanel(); else if (state === 'title') { if (inFrame) { save(); post({ type: 'playchain:exit' }); } } else openPause(); return; }
   if (menuOpen) { if (e.key === 'Enter' && modalKind === 'report') $('mContinue').click(); return; }
   if (e.key === ' ') { e.preventDefault(); if (paused) setSpeed(lastSpeed); else if (speed === 3) setSpeed(0); else setSpeed(speed + 1); Audio.sfx('click'); }
   else if (['1', '2', '3', '4'].includes(e.key)) { const p = CONTENT.powers.find(p => p.key === e.key); if (p) { if (p.target && G.phase === 'night') { const wx = nearestEnemyX(); if (VIS.armed === p.id || wx == null) pickPower(p.id); else { VIS.armed = p.id; castAt(wx); } } else pickPower(p.id); } }

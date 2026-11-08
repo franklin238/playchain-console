@@ -1593,6 +1593,7 @@ body.rm #banner.show{animation:none}
     else if (screens.settings.classList.contains('on')) { audio.sfx('back'); closeSettings(); }
     else if (state === 'pause') { audio.sfx('back'); resumeGame(); }
     else if (state === 'results') { activate('menu'); }
+    else if (state === 'title' && screens.title.classList.contains('on')) post({ type: 'playchain:exit' });   // Esc on the title goes back to PlayChain
   }
   var settingsFrom = null;
   function openSettings() { settingsFrom = curScreen(); if (settingsFrom) settingsFrom.classList.remove('on'); screens.settings.classList.add('on'); renderSettings(); focusIdx = 0; setFocus(0); }

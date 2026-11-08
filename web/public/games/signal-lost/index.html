@@ -1584,7 +1584,8 @@ function backAction() {
   if (modalKind === 'complete') return;
   if (modalOpen()) { Audio.play('back'); closeModal(); return; }
   if (screen === 'puzzle') { openPause(); return; }
-  if (screen === 'map') { Audio.play('back'); setScreen('title'); }
+  if (screen === 'map') { Audio.play('back'); setScreen('title'); return; }
+  if (screen === 'title' && inFrame) post({ type: 'playchain:exit' });   // Esc on the title goes back to PlayChain
 }
 
 /* ------------------------------------------------------------------ input: pointer */
