@@ -15,6 +15,8 @@ import { useWallpaper } from "./stores/wallpaper";
 import { Wallpaper } from "./wallpapers/Wallpaper";
 import { restoreWallet } from "./web3/wallet";
 import { duckMusic, playSfx } from "./audio/engine";
+import { FullscreenControl } from "./components/FullscreenControl";
+import { applyTheme } from "./theme/themes";
 
 const GameScreen = lazy(() => import("./screens/GameScreen"));
 const PlayerScreen = lazy(() => import("./screens/PlayerScreen"));
@@ -89,6 +91,8 @@ function Shell() {
   const inPlayer = location.pathname.startsWith("/play/");
   const [booting, bootDone] = useBoot();
   useMotionPreference();
+  const theme = useSettings((s) => s.theme);
+  useEffect(() => applyTheme(theme), [theme]);
 
   useEffect(() => {
     void useWallpaper.getState().load();
@@ -147,6 +151,7 @@ function Shell() {
       <WalletSheet />
       <GuideMenu />
       <Toasts />
+      <FullscreenControl hidden={inPlayer} />
       {booting && <BootScreen onDone={bootDone} />}
     </InputProvider>
   );

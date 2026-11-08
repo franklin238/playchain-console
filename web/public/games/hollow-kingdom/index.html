@@ -1911,6 +1911,25 @@ function drawWalls(G) {
   R(-WALL_X + 32, -36, WALL_X - 552, 36, 'rgba(18,18,20,.0)');
 }
 
+/* Wall-walks: a raised stone walkway on arches from each outer wall to the castle, at the height
+   guards walk, so nobody crossing to the other wall walks on air. Sized to each kingdom's castle. */
+function drawWalkways() {
+  let x0 = -536, x1 = 536;
+  if (LAY) { const rs = layRows().filter(r => r.fl >= -130); x0 = Math.min(...rs.map(r => r.x0)) - 16; x1 = Math.max(...rs.map(r => r.x1)) + 16; }
+  for (const side of [-1, 1]) {
+    const a = side < 0 ? -WALL_X + 32 : x1, b = side < 0 ? x0 : WALL_X - 32;
+    if (b - a < 4) continue;
+    // arches and piers down to the ground
+    for (let x = a + 24; x < b - 12; x += 64) { R(x, WALL_TOP + 16, 12, -WALL_TOP - 16, STONE2); }
+    for (let x = a + 36; x < b - 24; x += 64) { const [sx, sy] = w2s(x + 26, WALL_TOP + 40); cx.fillStyle = 'rgba(0,0,0,.28)'; cx.beginPath(); cx.arc(sx, sy, 26 * cam.z, Math.PI, 0); cx.lineTo(sx + 26 * cam.z, sy + 16 * cam.z); cx.lineTo(sx - 26 * cam.z, sy + 16 * cam.z); cx.fill(); }
+    // the walkway deck and its parapet
+    R(a, WALL_TOP, b - a, 16, STONE2);
+    R(a, WALL_TOP + 16, b - a, 4, STONE3);
+    crenel(a, WALL_TOP, b - a, STONE2, 9);
+    for (let x = a + 10; x < b - 10; x += 22) line(x, WALL_TOP + 2, x, WALL_TOP + 14, 'rgba(255,255,255,.04)', 1);
+  }
+}
+
 /* ---------- castle ---------- */
 const KEEP = { x: -520, w: 1040, floor: 130 };
 function hallRect(h) { return h.slot; }
@@ -2404,6 +2423,7 @@ function render(G, dt) {
   drawGround(G, L);
   const look = G && !VIS.titleMode && KINGDOM[G.kingdom] ? KINGDOM[G.kingdom].look : null;
   if (look && look.tint) { const t = look.tint; cx.fillStyle = `rgba(${t[0]},${t[1]},${t[2]},${t[3]})`; cx.fillRect(0, 0, VW, VH); }
+  drawWalkways();
   drawWalls(G);
   // no see-through stage: the castle is either solid (zoomed out) or opened up (zoomed in)
   const cut = VIS.titleMode ? 0 : (cam.z >= 0.42 ? 1 : 0);

@@ -1,8 +1,8 @@
 // Console audio, all synthesised with the Web Audio API (no files to download or license).
 //
-// Music: "Lobby", an upbeat 104 BPM synth-pop loop in B minor (Bm, G, D, A) from a 16th-note
-// step sequencer: intro, then kick, claps, hats, driving bass, a pumping pad and an arp, with a
-// lead hook every other 8 bars. It fades out while a game is open (games bring their own music).
+// Music: a choice of menu tracks (Settings > Music). Four calm ones in the spirit of a game-console
+// home screen (slow pads, soft bells, warm keys) and "Pulse", the upbeat 104 BPM synth-pop loop.
+// The chosen track fades out while a game is open (games bring their own music).
 //
 // Sounds: pitched "move" notes that follow the screen position (sliding along the shelf plays a
 // rising melody), clicks, page whooshes, sheet swells, a coin cascade for votes, a launch riser.
@@ -11,7 +11,7 @@
 // silence and the number of sounding voices is capped, so it stays clean when it gets busy.
 // Browsers only allow audio after a user gesture, so the context starts on the first one.
 
-import { useSettings } from "../stores/settings";
+import { useSettings, type MusicTrackId } from "../stores/settings";
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
@@ -28,8 +28,7 @@ let nextT = 0;
 let voices = 0;
 const VOICE_CAP = 64;
 
-const BPM = 104;
-const S16 = 60 / BPM / 4;
+let S16 = 60 / 104 / 4;
 const mtof = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 
 // One chord per bar: bass root and pad voicing. B minor: Bm, G, D, A.
@@ -190,8 +189,118 @@ function lead(m: number, t: number, len: number) {
   if (verb) g.connect(verb);
 }
 
+// ---- calm instruments ----
+/** soft pad with a slow attack, for the calm tracks */
+function softPad(notes: number[], t: number, len: number, att: number, peak: number, cut = 1600) {
+  const g = gain(L!.pad), lp = filt("lowpass", cut, 0.4, g);
+  env(g, t, att, peak, Math.max(0.1, len - att - 0.8), 1.6);
+  notes.forEach((n, i) => { osc("sawtooth", mtof(n), t, t + len + 1.8, lp, i % 2 ? 6 : -6); osc("triangle", mtof(n), t, t + len + 1.8, lp, i % 2 ? -3 : 3); });
+  if (verb) g.connect(verb);
+}
+/** glassy bell: sine with a soft FM shimmer */
+function bell(m: number, t: number, v: number, len = 2.2) {
+  const f = mtof(m), g = gain(L!.arp); hit(g, t, v, len);
+  const c = osc("sine", f, t, t + len, g);
+  const mod = ctx!.createOscillator(), mg = ctx!.createGain(); mod.frequency.value = f * 3.5;
+  mg.gain.setValueAtTime(f * 0.8, t); mg.gain.exponentialRampToValueAtTime(1, t + 0.6);
+  mod.connect(mg); mg.connect(c.frequency); mod.start(t); mod.stop(t + len); track(mod);
+  osc("sine", f * 2, t, t + len * 0.6, gain(g, 0.25));
+  if (delay) g.connect(delay);
+  if (verb) g.connect(verb);
+}
+/** electric piano: sine FM with a bright attack that mellows */
+function keys(m: number, t: number, v: number, len: number) {
+  const f = mtof(m), g = gain(L!.lead); env(g, t, 0.004, v, len, 0.6);
+  const c = osc("sine", f, t, t + len + 0.8, g);
+  const mod = ctx!.createOscillator(), mg = ctx!.createGain(); mod.frequency.value = f;
+  mg.gain.setValueAtTime(f * 1.6, t); mg.gain.setTargetAtTime(f * 0.15, t, 0.15);
+  mod.connect(mg); mg.connect(c.frequency); mod.start(t); mod.stop(t + len + 0.8); track(mod);
+  if (verb) g.connect(verb);
+}
+/** warm round bass */
+function sub(m: number, t: number, len: number, v = 0.5) {
+  const g = gain(L!.bass), lp = filt("lowpass", 420, 0.7, g); env(g, t, 0.06, v, len, 0.5);
+  osc("sine", mtof(m), t, t + len + 0.7, lp); osc("triangle", mtof(m), t, t + len + 0.7, gain(lp, 0.3));
+}
+function softKick(t: number, v = 0.45) { const g = gain(L!.drums); hit(g, t, v, 0.3); const o = osc("sine", 110, t, t + 0.32, g); o.frequency.exponentialRampToValueAtTime(42, t + 0.12); }
+function rim(t: number, v = 0.12) { const g = gain(L!.drums), bp = filt("bandpass", 1800, 4, g); hit(g, t, v, 0.06); osc("triangle", 1700, t, t + 0.07, bp); osc("square", 820, t, t + 0.04, bp); }
+
+/* chords: bass root and voicing (MIDI) */
+type Bar = { root: number; pad: number[] };
+// Aurora: D major, Dmaj9 - Bm9 - Gmaj9 - A6sus. Slow pads and falling bells.
+const AURORA: Bar[] = [
+  { root: 38, pad: [62, 66, 69, 73, 76] }, { root: 35, pad: [62, 66, 69, 73, 74] },
+  { root: 31, pad: [62, 66, 67, 71, 74] }, { root: 33, pad: [61, 64, 66, 69, 74] },
+];
+// Glass Garden: F major, Fmaj7 - Am7 - Dm9 - Bbmaj9. Broken-chord electric piano.
+const GLASS: Bar[] = [
+  { root: 41, pad: [60, 64, 65, 69] }, { root: 45, pad: [60, 64, 67, 69] },
+  { root: 38, pad: [60, 62, 65, 69] }, { root: 46, pad: [62, 65, 69, 72] },
+];
+// Nebula: E lydian drift, Emaj9#11 - C#m9 - Amaj9 - Bsus. Very slow swells and sparkles.
+const NEBULA: Bar[] = [
+  { root: 40, pad: [63, 66, 68, 70, 71] }, { root: 37, pad: [63, 64, 68, 71] },
+  { root: 33, pad: [61, 64, 68, 71] }, { root: 35, pad: [61, 64, 66, 71] },
+];
+// Harbor Lights: A minor 9, Am9 - Fmaj7 - Cmaj7 - G6. Lo-fi keys over a soft beat.
+const HARBOR: Bar[] = [
+  { root: 33, pad: [60, 64, 67, 71] }, { root: 29, pad: [60, 64, 65, 69] },
+  { root: 36, pad: [59, 64, 67, 71] }, { root: 31, pad: [59, 62, 64, 67] },
+];
+const rnd = (n: number) => { let x = (n * 2654435761) >>> 0; x ^= x >>> 15; x = Math.imul(x, 2246822519) >>> 0; x ^= x >>> 13; return (x >>> 0) / 4294967296; };
+
+function auroraStep(s: number, t: number) {
+  const i16 = s % 16, bar = Math.floor(s / 16), ch = AURORA[bar % 4], busy = voices > VOICE_CAP;
+  if (i16 === 0) { softPad(ch.pad, t, S16 * 16 + 0.6, 1.4, 0.2, 1500); sub(ch.root, t, S16 * 14, 0.42); }
+  const pat = bar % 2 ? [0, 6, 10, 13] : [0, 3, 8, 12];
+  const k = pat.indexOf(i16);
+  if (k >= 0 && !busy) bell(ch.pad[(k + bar) % ch.pad.length] + 12, t, 0.2 - k * 0.025);
+  if (bar % 4 === 3 && i16 === 14 && !busy) bell(ch.pad[ch.pad.length - 1] + 24, t, 0.09, 3);
+}
+function glassStep(s: number, t: number) {
+  const i16 = s % 16, bar = Math.floor(s / 16), ch = GLASS[bar % 4], busy = voices > VOICE_CAP;
+  if (i16 === 0) { softPad(ch.pad, t, S16 * 16 + 0.4, 0.9, 0.13, 1200); sub(ch.root, t, S16 * 7, 0.45); }
+  if (i16 === 8) sub(ch.root + (bar % 2 ? 7 : 0), t, S16 * 7, 0.38);
+  if (i16 % 2 === 0 && !busy) {
+    const order = [0, 2, 1, 3, 2, 1, 3, 2], n = ch.pad[order[i16 / 2] % ch.pad.length] + 12;
+    keys(n, t, i16 === 0 ? 0.32 : 0.22, S16 * 2.2);
+  }
+  if (bar % 4 === 3 && i16 === 12) bell(ch.pad[3] + 24, t, 0.08, 2.5);
+}
+function nebulaStep(s: number, t: number) {
+  const i16 = s % 16, bar = Math.floor(s / 16), ch = NEBULA[Math.floor(bar / 2) % 4], busy = voices > VOICE_CAP;
+  if (i16 === 0 && bar % 2 === 0) { softPad(ch.pad, t, S16 * 32 + 1, 2.6, 0.2, 1100); sub(ch.root, t, S16 * 30, 0.36); }
+  if (!busy && rnd(s * 7 + 3) < 0.09) bell(ch.pad[Math.floor(rnd(s) * ch.pad.length)] + 12 + (rnd(s + 1) < 0.4 ? 12 : 0), t, 0.11, 3.2);
+}
+function harborStep(s: number, t: number) {
+  const i16 = s % 16, bar = Math.floor(s / 16), ch = HARBOR[bar % 4], busy = voices > VOICE_CAP;
+  if (i16 === 0) softPad(ch.pad, t, S16 * 16 + 0.3, 0.6, 0.09, 1000);
+  if (i16 === 0 || i16 === 10) softKick(t, 0.4);
+  if (i16 === 4 || i16 === 12) rim(t, 0.11);
+  if (i16 % 2 === 0 && !busy) hat(t, i16 % 4 === 2 ? 0.05 : 0.025);
+  if (i16 === 0 || i16 === 6 || i16 === 8) sub(ch.root + (i16 === 6 ? 12 : 0), t, S16 * (i16 === 0 ? 5 : 2), 0.45);
+  if ((i16 === 0 || i16 === 7) && !busy) ch.pad.forEach((n, k) => keys(n + 12, t + k * 0.012, 0.13, S16 * (i16 === 0 ? 6 : 3)));
+  if (bar % 2 === 1 && (i16 === 11 || i16 === 13) && !busy) keys(ch.pad[i16 === 11 ? 3 : 2] + 24, t, 0.09, S16 * 2);
+}
+
+export const MUSIC_TRACKS: { id: MusicTrackId; name: string; description: string; bpm: number }[] = [
+  { id: "aurora", name: "Aurora", description: "Slow pads and falling bells. Calm and spacious.", bpm: 72 },
+  { id: "glass", name: "Glass Garden", description: "Gentle electric piano over warm chords.", bpm: 84 },
+  { id: "nebula", name: "Nebula", description: "Floating ambient swells and distant sparkles.", bpm: 60 },
+  { id: "harbor", name: "Harbor Lights", description: "Soft lo-fi keys over a relaxed beat.", bpm: 80 },
+  { id: "pulse", name: "Pulse", description: "The upbeat synth-pop lobby loop.", bpm: 104 },
+];
+let curTrack: MusicTrackId | null = null;
+
 // ---- sequencer ----
 function playStep(s: number, t: number) {
+  if (curTrack === "aurora") return auroraStep(s, t);
+  if (curTrack === "glass") return glassStep(s, t);
+  if (curTrack === "nebula") return nebulaStep(s, t);
+  if (curTrack === "harbor") return harborStep(s, t);
+  return pulseStep(s, t);
+}
+function pulseStep(s: number, t: number) {
   const i16 = s % 16, bar = Math.floor(s / 16), cyc = bar % 16, ch = PROG[bar % PROG.length];
   const intro = bar < 4, busy = voices > VOICE_CAP;
   if (i16 === 0) pad(ch.pad, t, S16 * 16 + 0.2);
@@ -213,6 +322,15 @@ function playStep(s: number, t: number) {
 function tick() {
   if (!ctx || ctx.state !== "running") return;
   if (volumes().music === 0) { nextT = ctx.currentTime + 0.05; return; } // silent: don't schedule
+  const want = useSettings.getState().musicTrack ?? "aurora";
+  if (want !== curTrack) {
+    // switch tracks: the old notes ring out, the new track starts from its first bar
+    curTrack = want;
+    const tr = MUSIC_TRACKS.find((m) => m.id === want) ?? MUSIC_TRACKS[0];
+    S16 = 60 / tr.bpm / 4; step = 0; nextT = ctx.currentTime + 0.3;
+    delay?.delayTime.setTargetAtTime(S16 * 3, ctx.currentTime, 0.05);
+    pump?.gain.setTargetAtTime(1, ctx.currentTime, 0.05);
+  }
   while (nextT < ctx.currentTime + 0.12) { playStep(step, nextT); nextT += S16; step++; }
 }
 

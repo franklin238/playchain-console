@@ -67,7 +67,7 @@ body {
 :where(button, a[href], input, textarea, select, [tabindex]:not([tabindex="-1"])):focus {
   outline: 2px solid #fff;
   outline-offset: 3px;
-  box-shadow: 0 0 0 7px rgb(200 255 77 / 0.25);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--color-accent) 25%, transparent);
   transition:
     outline-offset 140ms var(--ease-console),
     box-shadow 140ms var(--ease-console);
@@ -216,10 +216,10 @@ html[data-motion="reduce"] .tile[data-active] {
 }
 .tile[data-active],
 .tile:focus {
-  box-shadow: 0 0 0 1px rgb(200 255 77 / 0.6), 0 18px 50px -18px rgb(200 255 77 / 0.45);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 60%, transparent), 0 18px 50px -18px color-mix(in srgb, var(--color-accent) 45%, transparent);
 }
 .glow-text {
-  text-shadow: 0 0 24px rgb(200 255 77 / 0.35);
+  text-shadow: 0 0 24px color-mix(in srgb, var(--color-accent) 35%, transparent);
 }
 .bar-fill {
   transition: width 400ms var(--ease-console);

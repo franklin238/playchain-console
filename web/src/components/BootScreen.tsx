@@ -53,7 +53,7 @@ export function BootScreen({ onDone }: { onDone: () => void }) {
           <defs>
             <linearGradient id="boot-g" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stopColor="#4de1c1" />
-              <stop offset="1" stopColor="#c8ff4d" />
+              <stop offset="1" style={{ stopColor: "var(--color-accent)" }} />
             </linearGradient>
           </defs>
           <path
