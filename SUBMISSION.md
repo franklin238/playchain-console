@@ -24,7 +24,7 @@ Listing fees burn in full. Votes burn half, pay developers 40% and the treasury 
 Developers burn $WIF to list. Players vote with $WIF, half of it burns. Developers earn 40% of every vote, so they bring their players to vote for them and win the Spotlight. A new Spotlight every day gives everyone a reason to come back. More games bring more players, more votes, more burn and more developer income.
 
 **Repo**
-https://github.com/<account>/playchain-flat  (if private: invite the GitHub account `wifonrh`)
+https://github.com/franklin238/playchain-flat  (the repo is private right now: make it public, or invite the GitHub account `wifonrh` before submitting)
 
 **Demo video**
 (link)

@@ -1,6 +1,8 @@
 # Deploy guide (Steeve runs these)
 
-Claude never sees a private key. You run every command that signs. These steps work in **Git Bash** on Windows (install Git for Windows first) or any macOS/Linux terminal.
+Claude never sees a private key. You run every command that signs.
+
+**Timing:** submissions close 12 Nov 2026, 17:30 UTC. Deploy by 10 Nov so your demo votes can land on two different UTC days, which the README needs for the epoch rollover and first Spotlight winner. These steps work in **Git Bash** on Windows (install Git for Windows first) or any macOS/Linux terminal.
 
 ## 0. What you need
 
@@ -80,7 +82,7 @@ forge verify-contract $ARCADE src/PlayChainArcade.sol:PlayChainArcade \
 
 ## 8. Deploy the site on Vercel
 
-1. Push the repo to GitHub (see HOW-TO-OPEN.txt).
+1. Make sure the latest code is on GitHub (https://github.com/franklin238/playchain-flat).
 2. In Vercel: New Project → import the repo → **Root Directory: `web`** → Framework: Vite.
 3. Environment variables (Production):
    - `VITE_ARCADE_ADDRESS` = the address from step 6
@@ -90,6 +92,13 @@ forge verify-contract $ARCADE src/PlayChainArcade.sol:PlayChainArcade \
 4. Deploy. Open the site with no wallet: the shelf, Spotlight and games must load.
 
 If your Vercel URL is not `https://playchain-flat.vercel.app`, update the `cover` and `playUrl` lines in each `web/public/games/*/meta.json` to your URL and redeploy before step 9, because the listing stores the meta.json URL onchain.
+
+## 8b. Let the judges see the repo
+
+The repo is private. Before submitting, do one of these on GitHub:
+
+- Settings → General → Danger Zone → **Change visibility** → Public, or
+- Settings → Collaborators → **Add people** → `wifonrh` (the judges' account, official FAQ).
 
 ## 9. List the three games (burns 3,000 WIF)
 

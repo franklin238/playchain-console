@@ -5,6 +5,7 @@
 - Live site: `https://playchain-flat.vercel.app` (fill in after deploy)
 - Demo video: (fill in)
 - Contract: `PlayChainArcade` at `0x…` on Robinhood Chain (fill in after deploy, link to Blockscout)
+- Repo: https://github.com/franklin238/playchain-flat
 - $WIF: [`0x5173b8eA6923c2d40267890D45C46a3480954773`](https://robinhoodchain.blockscout.com/address/0x5173b8eA6923c2d40267890D45C46a3480954773)
 
 Built for the [World is Flat hackathon](https://worldisflat.fun/build). Categories: games, social and creators, tools and infra.
@@ -43,6 +44,16 @@ Once the contract is deployed and its address configured, the same screens read 
 | `web/public/games/` | The three games: Neon Tide, Hollow Kingdom, Signal Lost |
 | `contracts/` | The `PlayChainArcade` Solidity contract and its Foundry tests |
 | `DEMO_SCRIPT.md`, `DEPLOY.md`, `SUBMISSION.md` | Demo walkthrough, deploy steps, hackathon submission notes |
+
+### The games
+
+All three are original, built during the hackathon, and run sandboxed in the console with no wallet access. Every sound is synthesised in the browser.
+
+| Game | What it is |
+|---|---|
+| **Neon Tide** | A 3D arcade racer on a glowing sea (Three.js). Steer through gates, collect orbs, use boost fuel; 12 levels with star ratings and a music score that builds with your combo. |
+| **Hollow Kingdom** | A day and night castle builder. By day, send villagers to quarry, chop, farm, mine iron and rebuild halls; by night, hold both walls against hordes of Hollow with guards, soldiers, towers, powers and Armory weapons. Five kingdoms, each with its own castle, twist and three crowns to earn. |
+| **Signal Lost** | A relay puzzle game: rotate and place tiles to carry coloured signals to every receiver. 201 solver-verified sectors across 9 regions, a Daily Signal, Static Storm mode, achievements and 8 star awards. |
 
 ---
 
@@ -217,7 +228,7 @@ Full end-to-end rehearsal on a mainnet fork (real $WIF, local test wallets): see
 
 **Existed before the hackathon:** Robinhood Chain, $WIF, OpenZeppelin, Foundry, viem, wagmi, React, Vite, Tailwind. From Steeve's main PlayChain project (a separate, Solana-first console): the console shell this build starts from (keyboard and gamepad focus navigation, boot screen, wallpapers, settings and UI controls) and the three cover artworks.
 
-**Built during the hackathon (this repo):** the `PlayChainArcade` contract and all its tests and scripts; the Robinhood Chain wallet, data and transaction layer; the Spotlight, Live Race, vote sheet, Developers, Activity and About screens; the sandboxed game player and bridge; the security headers for the single-origin deploy; and the three games **Neon Tide**, **Hollow Kingdom** and **Signal Lost**, built from their design specs.
+**Built during the hackathon (this repo):** the `PlayChainArcade` contract and all its tests and scripts; the Robinhood Chain wallet, data and transaction layer; the Spotlight, Live Race, vote sheet, Developers, Activity and About screens; the sandboxed game player and bridge; the security headers for the single-origin deploy; the browser demo mode, burn counter and leaderboards; the console audio; and the three games **Neon Tide**, **Hollow Kingdom** and **Signal Lost**, built from their design specs, including all their music and sound.
 
 ## 9. Roadmap
 
