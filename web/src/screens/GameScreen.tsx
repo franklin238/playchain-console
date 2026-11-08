@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router";
 import { hasVoting, useArcade, useEntry } from "../arcade/store";
 import { Button } from "../components/controls";
 import { Footer } from "../components/Footer";
+import { enterGameFullscreen } from "../components/FullscreenControl";
 import { Screen } from "../components/Screen";
 import { shortAddress } from "../components/TopBar";
 import { localize } from "../games/meta";
@@ -48,7 +49,7 @@ export default function GameScreen() {
           <h1 className="font-display text-[clamp(2rem,3vw,3.2rem)] font-extrabold leading-tight">{m.name}</h1>
           <p className="text-lg text-fg/85">{m.tagline}</p>
           <div className="flex flex-wrap gap-3">
-            <Button variant="primary" icon="play" size="lg" data-nav-default="" onClick={() => navigate(`/play/${game.key}`)}>
+            <Button variant="primary" icon="play" size="lg" data-nav-default="" onClick={() => { enterGameFullscreen(); navigate(`/play/${game.key}`); }}>
               Play
             </Button>
             <Button icon="trophy" size="lg" onClick={() => openVote(game.key)}>

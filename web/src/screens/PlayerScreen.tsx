@@ -8,6 +8,7 @@ import { GAME_ALLOW, GAME_SANDBOX, loadGameSave, parseGameMessage, storeGameSave
 import { isAllowedPlayUrl, localize } from "../games/meta";
 import { useInputLayer } from "../input/hooks";
 import { playSfx } from "../audio/engine";
+import { enterFullscreen, leaveGameFullscreen } from "../components/FullscreenControl";
 import { readJson, writeJson } from "../lib/storage";
 import { useSettings } from "../stores/settings";
 import { useSheets } from "../stores/sheets";
@@ -157,14 +158,27 @@ export default function PlayerScreen() {
     post({ type: "playchain:mute", muted });
   }, [muted, ready, post]);
 
+  // Games always play fullscreen. The Play button already asked for it; if the game opened another
+  // way (a shared link) or the player pressed Esc, a button over the game brings fullscreen back.
+  const [askFs, setAskFs] = useState(false);
   useEffect(() => {
-    const onFs = () => setFullscreen(!!document.fullscreenElement);
+    const onFs = () => {
+      const full = !!document.fullscreenElement;
+      setFullscreen(full);
+      setAskFs(!full && canFullscreen);
+    };
     document.addEventListener("fullscreenchange", onFs);
+    if (!document.fullscreenElement && canFullscreen) {
+      enterFullscreen();
+      const t = window.setTimeout(() => { if (!document.fullscreenElement) setAskFs(true); }, 600);
+      return () => { window.clearTimeout(t); document.removeEventListener("fullscreenchange", onFs); leaveGameFullscreen(); };
+    }
+    setFullscreen(!!document.fullscreenElement);
     return () => {
       document.removeEventListener("fullscreenchange", onFs);
-      if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+      leaveGameFullscreen();
     };
-  }, []);
+  }, [canFullscreen]);
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
@@ -288,6 +302,24 @@ export default function PlayerScreen() {
           <span>Still loading?</span>
           <button type="button" onClick={() => { setReady(false); setAttempt((a) => a + 1); }} className="font-bold text-accent-text">Retry</button>
           <button type="button" onClick={() => leave(key ? `/game/${key}` : "/")} className="font-bold text-muted hover:text-fg">Back</button>
+        </div>
+      )}
+      {askFs && !menuOpen && !leaveTo && (
+        <div className="absolute inset-x-0 top-3 z-20 mx-auto flex w-fit items-center gap-2 rounded-full border border-accent/60 bg-bg-2/95 py-1.5 pl-2 pr-1.5 shadow-2xl backdrop-blur">
+          <button
+            type="button"
+            data-fs-toggle
+            onClick={() => {
+              void document.documentElement.requestFullscreen?.({ navigationUI: "hide" }).catch(() => toast({ title: "Fullscreen isn't available here", tone: "warning" }));
+              requestAnimationFrame(() => frame.current?.focus());
+            }}
+            className="flex min-h-[40px] items-center gap-2 rounded-full bg-accent px-4 font-bold text-on-accent hover:bg-accent-hover"
+          >
+            <FullscreenIcon exit={false} /> Play in fullscreen
+          </button>
+          <button type="button" onClick={() => { setAskFs(false); requestAnimationFrame(() => frame.current?.focus()); }} aria-label="Keep playing in a window" title="Keep playing in a window" className="grid size-10 place-items-center rounded-full text-muted hover:text-fg">
+            <Icon name="x" className="size-5" />
+          </button>
         </div>
       )}
       {(menuOpen || leaveTo) && (

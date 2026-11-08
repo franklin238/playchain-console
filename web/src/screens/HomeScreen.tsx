@@ -7,6 +7,7 @@ import { BurnCounter } from "../components/BurnCounter";
 import { playSfx } from "../audio/engine";
 import { Button } from "../components/controls";
 import { Footer } from "../components/Footer";
+import { enterGameFullscreen } from "../components/FullscreenControl";
 import { GameTile } from "../components/GameTile";
 import { Icon } from "../components/Icon";
 import { EpochCountdown } from "../components/TopBar";
@@ -95,7 +96,7 @@ function SpotlightHero({
         </p>
         {!previewing && <EpochCountdown className="-mt-2 text-sm" label="Next Spotlight in " />}
         <div className="mt-1 flex flex-wrap gap-3">
-          <Button variant="primary" icon="play" data-nav-default={previewing ? undefined : ""} onClick={() => navigate(`/play/${game.key}`)}>
+          <Button variant="primary" icon="play" data-nav-default={previewing ? undefined : ""} onClick={() => { enterGameFullscreen(); navigate(`/play/${game.key}`); }}>
             Play
           </Button>
           <Button icon="trophy" onClick={() => openVote(game.key)}>

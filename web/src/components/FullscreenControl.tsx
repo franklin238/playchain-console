@@ -21,6 +21,21 @@ export function toggleFullscreen() {
   else { declined = false; enterFullscreen(); }
 }
 
+/* Games always run fullscreen. Call this from the Play button's click (browsers only allow
+   fullscreen during a click or key press). */
+let enteredForGame = false;
+export function enterGameFullscreen() {
+  if (isFull()) return;
+  enteredForGame = true;
+  enterFullscreen();
+}
+/** Leaving a game: go back to a window only if the console wasn't meant to be fullscreen. */
+export function leaveGameFullscreen() {
+  const keep = useSettings.getState().autoFullscreen && !declined;
+  if (enteredForGame && !keep && isFull()) void document.exitFullscreen?.().catch(() => {});
+  enteredForGame = false;
+}
+
 export function enterFullscreen() {
   if (isFull() || !document.fullscreenEnabled) return;
   void document.documentElement.requestFullscreen?.({ navigationUI: "hide" }).catch(() => {});
