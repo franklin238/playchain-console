@@ -2,7 +2,7 @@
 
 **A game console on Robinhood Chain where players vote with $WIF, every vote burns $WIF and pays the game's developer, and the top game each day takes the Spotlight.**
 
-- Live site: `https://playchain-flat.vercel.app` (fill in after deploy)
+- Live site: https://playchain-flat.vercel.app (runs in demo mode until the contract address is set)
 - Demo video: (fill in)
 - Contract: `PlayChainArcade` at `0x…` on Robinhood Chain (fill in after deploy, link to Blockscout)
 - Repo: https://github.com/franklin238/playchain-flat
