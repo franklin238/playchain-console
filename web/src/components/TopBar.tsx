@@ -89,6 +89,7 @@ const TABS = [
   { to: "/developers", label: "Developers", end: false },
   { to: "/activity", label: "Activity", end: false },
   { to: "/about", label: "About", end: false },
+  { to: "/settings", label: "Settings", end: false },
 ];
 
 export function TopBar() {
