@@ -48,7 +48,7 @@ export const consoleConfig = {
   bootDurationMs: 1500,
 
   links: {
-    repo: env.VITE_REPO_URL || "https://github.com/franklin238/playchain",
+    repo: env.VITE_REPO_URL || "https://github.com/franklin238/PLAYCHAIN.",
   },
 } as const;
 

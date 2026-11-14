@@ -4,7 +4,7 @@
 
 - Live site: https://playchain-console.vercel.app (runs in demo mode until the contract is deployed)
 - Contract: `PlayChainArcade` on Robinhood Chain (not deployed yet, see `DEPLOY.md`)
-- Repo: https://github.com/franklin238/playchain
+- Repo: [github.com/franklin238/PLAYCHAIN.](https://github.com/franklin238/PLAYCHAIN.) (the name ends in a full stop)
 - $WIF: [`0x5173b8eA6923c2d40267890D45C46a3480954773`](https://robinhoodchain.blockscout.com/address/0x5173b8eA6923c2d40267890D45C46a3480954773)
 - Made by Steeve ([@gamersteeve](https://x.com/gamersteeve))
 
