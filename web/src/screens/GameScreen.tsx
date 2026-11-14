@@ -57,12 +57,13 @@ export default function GameScreen() {
             </Button>
           </div>
           <dl className="grid grid-cols-2 gap-3 rounded-xl border border-line bg-surface p-4 text-sm">
-            <div>
+            <div className="min-w-0">
               <dt className="text-muted">Developer</dt>
               <dd className="font-bold">
                 {m.developer.name}
+                {/* The handle gets its own line, so a long one never runs into the payout wallet beside it. */}
                 {m.developer.x && (
-                  <a className="ml-1.5 font-normal text-accent-text" href={`https://x.com/${m.developer.x}`} target="_blank" rel="noreferrer">
+                  <a className="block break-all font-normal text-accent-text" href={`https://x.com/${m.developer.x}`} target="_blank" rel="noreferrer">
                     @{m.developer.x}
                   </a>
                 )}
