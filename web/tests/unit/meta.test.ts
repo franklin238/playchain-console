@@ -9,8 +9,8 @@ const good = {
   description: "Ride the tide.",
   genre: "Action",
   developer: { name: "Duke", x: "dukedotsol" },
-  cover: "https://playchain-flat.vercel.app/games/neon-tide/cover.png",
-  playUrl: "https://playchain-flat.vercel.app/games/neon-tide/index.html",
+  cover: "https://playchain-console.vercel.app/games/neon-tide/cover.png",
+  playUrl: "https://playchain-console.vercel.app/games/neon-tide/index.html",
   controls: "Space to dive",
   version: "1.0.0",
 };

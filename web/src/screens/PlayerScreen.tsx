@@ -258,7 +258,7 @@ export default function PlayerScreen() {
         <div className="max-w-md">
           <h1 className="mb-2 font-display text-2xl font-extrabold">This game can't be played here</h1>
           <p className="mb-5 text-muted">
-            Its play URL isn't on PlayChain Flat's allowlist yet. Developers can ask for their domain to be added on the Developers page.
+            Its play URL isn't on PlayChain's allowlist yet. Developers can ask for their domain to be added on the Developers page.
           </p>
           <button type="button" onClick={() => navigate("/")} className="rounded-lg bg-accent px-5 py-2.5 font-bold text-on-accent">
             Back home

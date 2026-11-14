@@ -1,4 +1,4 @@
-/** The PlayChain Flat flywheel as one diagram (README, About page and demo video use the same loop, spec section 4). */
+/** The PlayChain flywheel as one diagram (README, About page and demo video use the same loop, spec section 4). */
 const STEPS = [
   { t: "Developers list games", d: "Listing fee burns in full", c: "var(--color-accent-2)" },
   { t: "Players vote with $WIF", d: "Half of every vote burns", c: "var(--color-accent-2)" },

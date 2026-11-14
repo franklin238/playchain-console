@@ -94,7 +94,7 @@ function here(): string {
   return typeof window === "undefined" ? consoleConfig.siteOrigin : window.location.origin;
 }
 
-/** Origins the player may load a game from (official rule: allowlist for the hackathon). */
+/** Origins the player may load a game from (an allowlist, so a listing cannot send players to an arbitrary site). */
 export function playOrigins(): string[] {
   return [...new Set([here(), consoleConfig.siteOrigin, ...consoleConfig.extraPlayOrigins])];
 }

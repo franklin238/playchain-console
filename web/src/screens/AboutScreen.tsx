@@ -51,7 +51,7 @@ export default function AboutScreen() {
   const burn = params ? params.burnBps / 100 : 50;
   const dev = params ? params.devBps / 100 : 40;
   const tre = params ? params.treasuryBps / 100 : 10;
-  const fee = params ? formatWif(params.listingFee, decimals) : "1,000";
+  const fee = params ? formatWif(params.listingFee, decimals) : "100";
   const min = params ? formatWif(params.minVote, decimals) : "100";
   const shelf = games.filter((g) => g.active && g.meta);
   const ex = (amount: number, self = false) => {
@@ -62,10 +62,10 @@ export default function AboutScreen() {
   const n = (v: number) => v.toLocaleString("en-US", { maximumFractionDigits: 1 });
 
   return (
-    <Screen title="About PlayChain Flat">
+    <Screen title="About PlayChain">
       <div className="grid max-w-5xl gap-2">
         <p className="text-lg text-fg/85">
-          PlayChain Flat is a console-style home for web3 games on Robinhood Chain. Developers list games by burning $WIF. Players vote for the
+          PlayChain is a console-style home for web3 games on Robinhood Chain. Developers list games by burning $WIF. Players vote for the
           games they love with $WIF, and the most-voted game of each day becomes tomorrow's Spotlight, the hero on the home screen. Every vote
           burns $WIF, pays the game's developer and funds the platform in one transaction, so players decide what gets seen and developers get
           paid for making games people come back to.
@@ -203,20 +203,19 @@ export default function AboutScreen() {
               Arrow keys move around, Enter opens, Esc goes back, V votes for the selected game and M opens the menu. A gamepad and touch work too. In a game, the round
               PlayChain button in the corner opens the console menu.
             </Faq>
-            <Faq q="Is this affiliated with Robinhood?">No. PlayChain Flat is an independent project that runs on Robinhood Chain, a public network anyone can build on.</Faq>
+            <Faq q="Is this affiliated with Robinhood?">No. PlayChain is an independent project that runs on Robinhood Chain, a public network anyone can build on.</Faq>
           </div>
         </Section>
 
-        <Section title="Built for the World is Flat hackathon">
+        <Section title="Why PlayChain">
           <div className="grid gap-3 md:grid-cols-3">
             <Card icon="trophy" title="A real reason to use $WIF">Voting is the whole game: $WIF decides what gets seen and who gets paid.</Card>
-            <Card icon="clock" title="A flywheel that holds up">A new Spotlight every day brings players back, and developers bring their players to vote.</Card>
-            <Card icon="check" title="Works and built well">Tested contract with no custody, sandboxed games, and a console you can drive with a gamepad.</Card>
+            <Card icon="clock" title="A loop that brings players back">A new Spotlight every day brings players back, and developers bring their players to vote.</Card>
+            <Card icon="check" title="Safe and built well">Tested contract with no custody, sandboxed games, and a console you can drive with a gamepad.</Card>
           </div>
           <p className="text-muted">
-            <a className="font-bold text-accent-text" href={consoleConfig.links.hackathon} target="_blank" rel="noreferrer">World is Flat hackathon</a>
-            {" · "}
-            <a className="font-bold text-accent-text" href={consoleConfig.links.repo} target="_blank" rel="noreferrer">Source code</a>
+            PlayChain is open source.{" "}
+            <a className="font-bold text-accent-text" href={consoleConfig.links.repo} target="_blank" rel="noreferrer">Read the code</a>
           </p>
         </Section>
 
@@ -244,7 +243,7 @@ export default function AboutScreen() {
 
         <Section title="Disclaimer">
           <p className="text-muted">
-            {DISCLAIMER} $WIF is used to vote and comes with no promise of value or return. Built for the World is Flat hackathon.
+            {DISCLAIMER} $WIF is used to vote and comes with no promise of value or return.
           </p>
         </Section>
       </div>

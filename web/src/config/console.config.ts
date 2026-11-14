@@ -1,4 +1,4 @@
-// PlayChain Flat configuration. Public values only: everything in this file
+// PlayChain configuration. Public values only: everything in this file
 // ships in the website bundle. Never put a private key or secret here.
 
 const env = import.meta.env;
@@ -11,7 +11,7 @@ function list(value: string | undefined): string[] {
 }
 
 export const consoleConfig = {
-  name: "PlayChain Flat",
+  name: "PlayChain",
 
   /** Robinhood Chain mainnet. */
   chainId: 4663,
@@ -30,7 +30,7 @@ export const consoleConfig = {
   rpcUrl: env.VITE_RPC_URL || "",
 
   /** Production site. Game URLs on this origin are served from the console's own origin. */
-  siteOrigin: (env.VITE_SITE_ORIGIN || "https://playchain-flat.vercel.app").replace(/\/$/, ""),
+  siteOrigin: (env.VITE_SITE_ORIGIN || "https://playchain-console.vercel.app").replace(/\/$/, ""),
 
   /** Origins games may be played from, besides the console's own origin and siteOrigin. */
   extraPlayOrigins: list(env.VITE_PLAY_ORIGINS),
@@ -48,8 +48,7 @@ export const consoleConfig = {
   bootDurationMs: 1500,
 
   links: {
-    hackathon: "https://worldisflat.fun/build",
-    repo: env.VITE_REPO_URL || "https://github.com/franklin238/playchain-flat",
+    repo: env.VITE_REPO_URL || "https://github.com/franklin238/playchain",
   },
 } as const;
 
@@ -57,4 +56,4 @@ export const GENRES = ["Action", "Strategy", "Puzzle", "Story", "Arcade", "Multi
 export type Genre = (typeof GENRES)[number];
 
 export const DISCLAIMER =
-  "PlayChain Flat is an independent project, not affiliated with, endorsed by, or connected to Robinhood Markets, Inc.";
+  "PlayChain is an independent project, not affiliated with, endorsed by, or connected to Robinhood Markets, Inc.";

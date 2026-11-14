@@ -127,7 +127,7 @@ export function TopBar() {
         >
           <Icon name="menu" />
         </button>
-        <Link to="/" className="shrink-0 rounded-md text-[1.05rem] leading-none sm:text-[1.35rem]" aria-label="PlayChain Flat home">
+        <Link to="/" className="shrink-0 rounded-md text-[1.05rem] leading-none sm:text-[1.35rem]" aria-label="PlayChain home">
           <Logo />
         </Link>
 

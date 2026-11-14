@@ -5,8 +5,8 @@
   "description": "A racing game where the track is a living tide. Dive down the face of each wave, launch off the crest, and chain perfect landings to build your combo while a storm closes in behind you. Race the Daily Tide against every player on the same water.",
   "genre": "Action",
   "developer": { "name": "Steeve", "x": "gamersteeve" },
-  "cover": "https://playchain-flat.vercel.app/games/neon-tide/cover.png",
-  "playUrl": "https://playchain-flat.vercel.app/games/neon-tide/index.html",
+  "cover": "https://playchain-console.vercel.app/games/neon-tide/cover.png",
+  "playUrl": "https://playchain-console.vercel.app/games/neon-tide/index.html",
   "controls": "Hold Space/W/Up, touch or A/RT to dive, release to launch; steer A/D, arrows, drag or left stick; Shift/B to boost",
   "version": "1.0.0"
 }

@@ -43,7 +43,7 @@ export function BootScreen({ onDone }: { onDone: () => void }) {
   return (
     <div
       role="status"
-      aria-label="Starting PlayChain Flat. Press any button to skip."
+      aria-label="Starting PlayChain. Press any button to skip."
       data-testid="boot-screen"
       className={`fixed inset-0 z-[100] grid place-items-center bg-bg transition-opacity duration-300 ${leaving ? "opacity-0" : "opacity-100"}`}
     >

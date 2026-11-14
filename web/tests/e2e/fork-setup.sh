@@ -28,7 +28,7 @@ OUT=$(WIF=$WIF TREASURY=0x90F79bf6EB2c4f870365E785982E1f101E93b906 LISTING_FEE=1
   forge script script/Deploy.s.sol --rpc-url $A --private-key $K0 --broadcast 2>&1)
 ARCADE=$(echo "$OUT" | grep "PlayChainArcade:" | awk '{print $2}')
 echo "$OUT" | grep -E "PlayChainArcade:|Deploy block"
-ARCADE=$ARCADE SITE_URL=https://playchain-flat.vercel.app forge script script/ListDemoGames.s.sol --rpc-url $A --private-key $K0 --broadcast >/dev/null
+ARCADE=$ARCADE SITE_URL=https://playchain-console.vercel.app forge script script/ListDemoGames.s.sol --rpc-url $A --private-key $K0 --broadcast >/dev/null
 cast send $WIF "approve(address,uint256)" $ARCADE 300000000000000000000 --private-key $K1 --rpc-url $A >/dev/null
 cast send $ARCADE "vote(uint256,uint256)" 2 300000000000000000000 --private-key $K1 --rpc-url $A >/dev/null
 echo "Fork ready. Games listed: $(cast call $ARCADE 'gameCount()(uint256)' --rpc-url $A)"

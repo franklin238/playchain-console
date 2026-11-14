@@ -1,6 +1,6 @@
 # Neon Tide credits
 
-Game by Steeve (@gamersteeve) for PlayChain Flat.
+Game by Steeve (@gamersteeve) for PlayChain.
 
 ## Vendored libraries
 

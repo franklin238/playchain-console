@@ -19,7 +19,7 @@ export function Footer() {
         <a className="underline-offset-4 hover:text-accent-text hover:underline" href={consoleConfig.links.repo} target="_blank" rel="noreferrer">
           Source code
         </a>
-        <span>Built on Robinhood Chain for the World is Flat hackathon</span>
+        <span>Built on Robinhood Chain</span>
       </p>
     </footer>
   );

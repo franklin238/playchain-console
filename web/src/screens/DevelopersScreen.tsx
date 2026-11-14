@@ -269,10 +269,10 @@ function MyGames() {
 
 export default function DevelopersScreen() {
   const { params, decimals } = useArcade();
-  const fee = params ? `${formatWif(params.listingFee, decimals)} WIF` : "1,000 WIF";
+  const fee = params ? `${formatWif(params.listingFee, decimals)} WIF` : "100 WIF";
   const dev = params ? params.devBps / 100 : 40;
   return (
-    <Screen title="List your game" subtitle={`Put your browser game on the PlayChain Flat shelf and earn ${dev}% of every $WIF vote it gets.`}>
+    <Screen title="List your game" subtitle={`Put your browser game on the PlayChain shelf and earn ${dev}% of every $WIF vote it gets.`}>
       <div className="grid max-w-5xl gap-2">
         <Section title="How it works">
           <ol className="grid gap-3 sm:grid-cols-3">
@@ -298,7 +298,7 @@ export default function DevelopersScreen() {
         <Section title="meta.json format">
           <pre className="overflow-x-auto rounded-xl border border-line bg-bg-2 p-4 text-sm">{EXAMPLE}</pre>
           <p className="text-sm text-muted">
-            Cover and playUrl must be https. For the hackathon, games can only be played from allowlisted domains: {playOrigins().join(", ")}
+            Cover and playUrl must be https. To keep players safe, games can only be played from approved domains: {playOrigins().join(", ")}
             {consoleConfig.extraPlayOrigins.length ? "" : " (more on request)"}. Games run in a sandboxed frame with no wallet access, and can talk to the console with
             postMessage: playchain:ready, playchain:score, playchain:exit, playchain:save and playchain:load.
           </p>

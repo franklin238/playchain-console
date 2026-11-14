@@ -19,7 +19,7 @@ export default function GameScreen() {
   const openVote = useSheets((s) => s.openVote);
   const gameName = game?.meta?.name;
   useEffect(() => {
-    if (gameName) document.title = `${gameName} · PlayChain Flat`;
+    if (gameName) document.title = `${gameName} · PlayChain`;
   }, [gameName]);
 
   if (!game?.meta) {

@@ -7,7 +7,7 @@ import {PlayChainArcade} from "../src/PlayChainArcade.sol";
 
 /// @notice Approves the exact listing fee and lists each demo game from the broadcaster's wallet.
 ///   ARCADE    deployed PlayChainArcade address
-///   SITE_URL  live site, e.g. https://playchain-flat.vercel.app (no trailing slash)
+///   SITE_URL  live site, e.g. https://playchain-console.vercel.app (no trailing slash)
 ///   SLUGS     comma-separated game folders, default neon-tide,hollow-kingdom,signal-lost
 contract ListDemoGames is Script {
     function run() external {

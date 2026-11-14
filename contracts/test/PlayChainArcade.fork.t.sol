@@ -43,7 +43,7 @@ contract PlayChainArcadeForkTest is Test {
 
         vm.startPrank(dev);
         wif.approve(address(arcade), 1_000e18);
-        uint256 id = arcade.listGame("https://playchain-flat.vercel.app/games/neon-tide/meta.json");
+        uint256 id = arcade.listGame("https://playchain-console.vercel.app/games/neon-tide/meta.json");
         vm.stopPrank();
         assertEq(wif.balanceOf(BURN) - burnStart, 1_000e18);
 

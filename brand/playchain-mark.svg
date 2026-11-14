@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs>
+ <linearGradient id="ag" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8ff4d"/><stop offset="1" stop-color="#4de1c1"/></linearGradient>
+ <linearGradient id="aside" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f2b22"/><stop offset="1" stop-color="#0e1410"/></linearGradient>
+ <radialGradient id="aface" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="#1c2a20"/><stop offset="1" stop-color="#0f1611"/></radialGradient>
+ <radialGradient id="aglow" cx=".5" cy=".62" r=".55"><stop offset="0" stop-color="#c8ff4d" stop-opacity=".16"/><stop offset="1" stop-color="#c8ff4d" stop-opacity="0"/></radialGradient>
+ <filter id="ablur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+ <filter id="asoft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>
+ <mask id="am"><path d="M188 104 L188 312 L372 208 Z" fill="#fff" stroke="#fff" stroke-width="40" stroke-linejoin="round"/></mask>
+ <linearGradient id="agloss" gradientUnits="userSpaceOnUse" x1="168" y1="84" x2="250" y2="320"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".5" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+</defs>
+<rect width="512" height="512" rx="116" fill="#0b0d0c"/><rect width="512" height="512" rx="116" fill="url(#aglow)"/><rect x="3" y="3" width="506" height="506" rx="113" fill="none" stroke="#ffffff" stroke-opacity=".06" stroke-width="2"/>
+<!-- disc: side band, then top face -->
+<path d="M66 334 L66 358 A190 62 0 0 0 446 358 L446 334 A190 62 0 0 1 66 334 Z" fill="url(#aside)" stroke="url(#ag)" stroke-width="6" stroke-linejoin="round"/>
+<ellipse cx="256" cy="334" rx="190" ry="62" fill="url(#aface)" stroke="url(#ag)" stroke-width="10"/>
+<ellipse cx="256" cy="334" rx="129" ry="42" fill="none" stroke="#c8ff4d" stroke-opacity=".16" stroke-width="3"/>
+<ellipse cx="256" cy="334" rx="68" ry="22" fill="none" stroke="#c8ff4d" stroke-opacity=".12" stroke-width="3"/>
+<path d="M91.5 377.0 Q 173.7 414.0 256.0 408.0" fill="none" stroke="url(#ag)" stroke-width="8" stroke-linecap="round" opacity=".0"/><path d="M256.0 408.0 Q 338.3 414.0 420.5 377.0" fill="none" stroke="url(#ag)" stroke-width="8" stroke-linecap="round" opacity=".0"/><circle cx="91.5" cy="377.0" r="15" fill="#0b0d0c" stroke="url(#ag)" stroke-width="8"/><circle cx="256.0" cy="408.0" r="15" fill="#0b0d0c" stroke="url(#ag)" stroke-width="8"/><circle cx="420.5" cy="377.0" r="15" fill="#0b0d0c" stroke="url(#ag)" stroke-width="8"/>
+<!-- play button standing on the disc -->
+<ellipse cx="258" cy="322" rx="104" ry="20" fill="#000" opacity=".6" filter="url(#asoft)"/>
+<path d="M188 104 L188 312 L372 208 Z" fill="#c8ff4d" opacity=".45" filter="url(#ablur)" stroke="#c8ff4d" stroke-width="40" stroke-linejoin="round"/>
+<path d="M188 104 L188 312 L372 208 Z" fill="url(#ag)" stroke="url(#ag)" stroke-width="40" stroke-linejoin="round"/>
+<rect width="512" height="512" fill="url(#agloss)" mask="url(#am)"/>
+</svg>

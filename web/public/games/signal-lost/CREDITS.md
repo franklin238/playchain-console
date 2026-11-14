@@ -1,6 +1,6 @@
 # Signal Lost credits
 
-Game design and development: Steeve (@gamersteeve) for PlayChain Flat.
+Game design and development: Steeve (@gamersteeve) for PlayChain.
 
 All assets generated in code:
 

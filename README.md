@@ -1,14 +1,12 @@
-# PlayChain Flat
+# PlayChain
 
 **A game console on Robinhood Chain where players vote with $WIF, every vote burns $WIF and pays the game's developer, and the top game each day takes the Spotlight.**
 
-- Live site: https://playchain-flat.vercel.app (runs in demo mode until the contract address is set)
-- Demo video: (fill in)
-- Contract: `PlayChainArcade` at `0x…` on Robinhood Chain (fill in after deploy, link to Blockscout)
-- Repo: https://github.com/franklin238/playchain-flat
+- Live site: https://playchain-console.vercel.app (runs in demo mode until the contract is deployed)
+- Contract: `PlayChainArcade` on Robinhood Chain (not deployed yet, see `DEPLOY.md`)
+- Repo: https://github.com/franklin238/playchain
 - $WIF: [`0x5173b8eA6923c2d40267890D45C46a3480954773`](https://robinhoodchain.blockscout.com/address/0x5173b8eA6923c2d40267890D45C46a3480954773)
-
-Built for the [World is Flat hackathon](https://worldisflat.fun/build). Categories: games, social and creators, tools and infra.
+- Made by Steeve ([@gamersteeve](https://x.com/gamersteeve))
 
 ## Quick start
 
@@ -25,9 +23,9 @@ You need [Node.js](https://nodejs.org) 20 or newer.
 
 No wallet or tokens are needed. Until a contract address is set, the site runs in **demo mode** (below) and every game is playable. The three games also open on their own at `/games/neon-tide/`, `/games/hollow-kingdom/` and `/games/signal-lost/`.
 
-### Demo mode (for judges)
+### Demo mode
 
-Before `VITE_ARCADE_ADDRESS` is set, PlayChain Flat runs a simulated arcade in your browser (`web/src/arcade/demo.ts`) with the same rules as the contract:
+Before `VITE_ARCADE_ADDRESS` is set, PlayChain runs a simulated arcade in your browser (`web/src/arcade/demo.ts`) with the same rules as the contract:
 
 - **Demo wallet:** Connect wallet → *Demo wallet* gives you 5,000 test $WIF (and a faucet for more). No extension, nothing real.
 - **Votes split exactly like the contract:** 50% burned, 40% to the game's developer, 10% to the treasury; a developer's vote on their own game burns the developer share too.
@@ -40,14 +38,14 @@ Once the contract is deployed and its address configured, the same screens read 
 
 | Folder | What it is |
 |---|---|
-| `web/` | The PlayChain Flat site (React + Vite) |
+| `web/` | The PlayChain site (React + Vite) |
 | `web/public/games/` | The three games: Neon Tide, Hollow Kingdom, Signal Lost |
 | `contracts/` | The `PlayChainArcade` Solidity contract and its Foundry tests |
-| `DEMO_SCRIPT.md`, `DEPLOY.md`, `SUBMISSION.md` | Demo walkthrough, deploy steps, hackathon submission notes |
+| `DEPLOY.md` | How to deploy the contract and switch the site to live voting |
 
 ### The games
 
-All three are original, built during the hackathon, and run sandboxed in the console with no wallet access. Every sound is synthesised in the browser.
+All three are original and run sandboxed in the console with no wallet access. Every sound is synthesised in the browser.
 
 | Game | What it is |
 |---|---|
@@ -67,9 +65,9 @@ Onchain games have no home where players decide what gets seen and developers ge
 
 ## 2. How it works
 
-PlayChain Flat is a console-style home screen for web3 games. Players browse a shelf, play games inside the console, and vote for the ones they like with $WIF.
+PlayChain is a console-style home screen for web3 games. Players browse a shelf, play games inside the console, and vote for the ones they like with $WIF.
 
-- **Developers list games** by calling `listGame(metadataURI)`. The listing fee (1,000 WIF by default) is burned in full.
+- **Developers list games** by calling `listGame(metadataURI)`. The listing fee (100 WIF at launch) is burned in full.
 - **Players vote** with `vote(gameId, amount)` (minimum 100 WIF). Each vote is split in the same transaction:
   - **50% burned** (sent to `0x…dEaD`)
   - **40% to the game's developer**
@@ -90,7 +88,7 @@ flowchart LR
 
 | Action | Amount | Burned | Developer | Treasury |
 |---|---|---|---|---|
-| Dev lists game #1 | 1,000 WIF | 1,000 | 0 | 0 |
+| Dev lists game #1 | 100 WIF | 100 | 0 | 0 |
 | Player votes for #1 | 300 WIF | 150 | 120 | 30 |
 | Dev of #1 votes for #1 (self-vote) | 200 WIF | 180 | 0 | 20 |
 | Player votes (rounding) | 101 WIF | 50.5 (takes the remainder) | 40.4 | 10.1 |
@@ -122,20 +120,9 @@ Every step pulls people back to $WIF: developers need it to list, players need i
 
 The contract never holds $WIF. Every transfer is `safeTransferFrom(voter, destination)`.
 
-## 4. Real mainnet transactions
+## 4. Going live
 
-Fill in after the mainnet deploy (see `DEPLOY.md`).
-
-| What | Transaction |
-|---|---|
-| Deploy PlayChainArcade | |
-| Source verified on Blockscout | |
-| List Neon Tide (1,000 WIF burned) | |
-| List Hollow Kingdom | |
-| List Signal Lost | |
-| Votes 1 to 10 (3+ wallets) | |
-| Self-vote (developer share burned) | |
-| Epoch rollover: first Spotlight winner | |
+PlayChain runs in demo mode until the contract is deployed. `DEPLOY.md` walks through testing, deploying and verifying the contract, pointing the site at it and listing the three games.
 
 ## 5. Architecture
 
@@ -175,7 +162,7 @@ web/         Vite, React 19, TypeScript, Tailwind, wagmi core + viem
 - **Ties** go to the game that reached the top total first (strictly greater to take the lead).
 - **Exact approvals.** The console approves only the amount being spent, never unlimited.
 - **Games are sandboxed.** Each game runs in `sandbox="allow-scripts allow-pointer-lock"` (never with `allow-same-origin`), so it runs in an opaque origin with no access to the console, the wallet or storage. The console validates every message a game sends and ignores anything else. Scores are display only.
-- **Allowlisted game origins** for the hackathon, so a listing can't point players at an arbitrary site.
+- **Allowlisted game origins**, so a listing can't point players at an arbitrary site.
 - **Strict CSP** on console pages (`frame-ancestors 'none'`, no inline script). Game pages get their own policy that only lets this site frame them.
 - **Test coverage:** 100% lines, statements, branches and functions on `PlayChainArcade.sol`.
 - **Slither:** 2 findings, both informational. `timestamp` flags `voter == dev` in `_split` (a false positive, the comparison is an address check; epochs do use `block.timestamp` by design, with day-long windows). `unindexed-event-address` on `TreasuryUpdated`, which is an admin-only event.
@@ -224,15 +211,13 @@ Full end-to-end rehearsal on a mainnet fork (real $WIF, local test wallets): see
 }
 ```
 
-3. For the hackathon, ask for your domain to be added to the play allowlist.
+3. Ask on X ([@gamersteeve](https://x.com/gamersteeve)) for your domain to be added to the play allowlist.
 4. Open **Developers** on the site, paste the URL, check the tile preview, then Approve and List. The fee burns and your game is on the shelf.
 5. Optional: talk to the console with `postMessage` to `window.parent`: `playchain:ready`, `playchain:score`, `playchain:exit`, `playchain:save`, `playchain:load`. The console answers `playchain:loaded`, and sends `playchain:pause` / `playchain:resume`.
 
-## 8. What existed before, and what was built during the hackathon
+## 8. Built with
 
-**Existed before the hackathon:** Robinhood Chain, $WIF, OpenZeppelin, Foundry, viem, wagmi, React, Vite, Tailwind. From Steeve's main PlayChain project (a separate, Solana-first console): the console shell this build starts from (keyboard and gamepad focus navigation, boot screen, wallpapers, settings and UI controls) and the three cover artworks.
-
-**Built during the hackathon (this repo):** the `PlayChainArcade` contract and all its tests and scripts; the Robinhood Chain wallet, data and transaction layer; the Spotlight, Live Race, vote sheet, Developers, Activity and About screens; the sandboxed game player and bridge; the security headers for the single-origin deploy; the browser demo mode, burn counter and leaderboards; the console audio and its menu music tracks; the colour themes, the new animated backgrounds and fullscreen play; and the three games **Neon Tide**, **Hollow Kingdom** and **Signal Lost**, built from their design specs, including all their music and sound.
+Robinhood Chain, $WIF, OpenZeppelin, Foundry, viem, wagmi, React, Vite and Tailwind. Everything else is original: the `PlayChainArcade` contract and its tests, the console, the sandboxed game player, and the three games **Neon Tide**, **Hollow Kingdom** and **Signal Lost**, including all their music and sound.
 
 ## 9. Roadmap
 
@@ -244,6 +229,6 @@ Full end-to-end rehearsal on a mainnet fork (real $WIF, local test wallets): see
 
 ## 10. Disclaimer and licence
 
-PlayChain Flat is an independent project, not affiliated with, endorsed by, or connected to Robinhood Markets, Inc. $WIF is used to vote here and comes with no promise of value or return.
+PlayChain is an independent project, not affiliated with, endorsed by, or connected to Robinhood Markets, Inc. $WIF is used to vote here and comes with no promise of value or return.
 
 MIT licence. See `LICENSE`. Game assets are generated in code; see each game's `CREDITS.md`.

@@ -23,7 +23,7 @@ contract PlayChainArcadeTest is Test {
     uint256 constant FEE = 1_000e18;
     uint256 constant MIN = 100e18;
     uint256 constant DAY = 86_400;
-    string constant URI = "https://playchain-flat.vercel.app/games/neon-tide/meta.json";
+    string constant URI = "https://playchain-console.vercel.app/games/neon-tide/meta.json";
 
     event GameListed(uint256 indexed id, address indexed developer, string uri, uint256 feeBurned);
     event GameUpdated(uint256 indexed id, string uri);

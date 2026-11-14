@@ -1,4 +1,4 @@
-/** PlayChain Flat mark: a flat disc with a play notch, then the wordmark. Original artwork. */
+/** PlayChain mark: a disc with a play notch, then the wordmark. Original artwork. */
 export function LogoMark({ className = "size-[1.15em]" }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
@@ -19,7 +19,7 @@ export function Logo({ className = "" }: { className?: string }) {
     <span className={`inline-flex items-center gap-2 whitespace-nowrap font-display font-extrabold uppercase tracking-[0.03em] ${className}`}>
       <LogoMark />
       <span>
-        PlayChain <span className="text-accent-text">Flat</span>
+        Play<span className="text-accent-text">Chain</span>
       </span>
     </span>
   );

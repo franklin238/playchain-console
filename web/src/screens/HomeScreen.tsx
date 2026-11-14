@@ -219,7 +219,7 @@ export default function HomeScreen() {
   const previewing = !!previewGame && previewGame.key !== hero?.key;
 
   useEffect(() => {
-    document.title = "PlayChain Flat · play games, vote with $WIF";
+    document.title = "PlayChain · play games, vote with $WIF";
   }, []);
   const setArt = useWallpaper((s) => s.setArt);
   const heroCover = hero?.meta ? localize(hero.meta.cover) : null;

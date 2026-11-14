@@ -1,6 +1,6 @@
 @echo off
-rem Double-click to open PlayChain Flat. First run installs packages (needs internet, about a minute).
-title PlayChain Flat
+rem Double-click to open PlayChain. First run installs packages (needs internet, about a minute).
+title PlayChain
 cd /d "%~dp0web"
 where node >/dev/null 2>nul
 if errorlevel 1 (
@@ -18,7 +18,7 @@ if not exist node_modules (
   )
 )
 echo.
-echo PlayChain Flat is starting at http://localhost:5173
+echo PlayChain is starting at http://localhost:5173
 echo Your browser opens by itself. Keep this window open while you play; close it to stop.
 echo.
 call npm run dev -- --open

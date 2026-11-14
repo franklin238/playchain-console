@@ -1,25 +1,22 @@
-# Deploy guide (Steeve runs these)
+# Going live: deploy guide
 
-Claude never sees a private key. You run every command that signs.
+These steps turn PlayChain from demo mode into real $WIF voting on Robinhood Chain. Run them in **Git Bash** on Windows or any macOS/Linux terminal.
 
-**Timing:** submissions close 12 Nov 2026, 17:30 UTC. Deploy by 10 Nov so your demo votes can land on two different UTC days, which the README needs for the epoch rollover and first Spotlight winner. These steps work in **Git Bash** on Windows (install Git for Windows first) or any macOS/Linux terminal.
+Never paste a private key into a chat, a file or a website. You type it once into Foundry's own prompt (step 3), which stores it encrypted.
 
 ## 0. What you need
 
-- Foundry: `curl -L https://foundry.paradigm.xyz | bash`, then open a new terminal and run `foundryup`.
-- Node.js 20 or newer.
-- A deployer wallet with a little ETH on Robinhood Chain for gas.
-- $WIF for the demo. With the default prices:
-  - 3 game listings: 3 × 1,000 = **3,000 WIF** (all burned)
-  - at least 10 demo votes across 3 wallets: 10 × 150 = **1,500 WIF**
-  - total about **4,500 WIF** plus a buffer, split across your 3 voting wallets.
-- A treasury wallet address (public address only).
+- **Foundry** (forge, cast, anvil). Check with `forge --version`.
+- **Node.js** 20 or newer.
+- **A deployer wallet** with a little ETH on Robinhood Chain for gas. A few dollars' worth is plenty.
+- **$WIF to list the three games.** With the listing fee below that's 3 × 100 = **300 WIF**, all burned.
+- **A treasury address** that receives 10% of every vote. Your deployer address is fine.
 
 ## 1. Get the code
 
 ```bash
-git clone playchain-flat.bundle playchain-flat     # or clone from GitHub once pushed
-cd playchain-flat
+git clone https://github.com/franklin238/playchain.git
+cd playchain
 git submodule update --init --recursive
 ```
 
@@ -33,7 +30,7 @@ forge test --match-path test/PlayChainArcade.fork.t.sol --fork-url https://rpc.m
 
 All tests must pass. The fork test uses the real $WIF on mainnet and checks it has no transfer fee.
 
-## 3. Import your deployer key into an encrypted keystore (once)
+## 3. Import your deployer key (once)
 
 You type the key yourself into Foundry's prompt. It is stored encrypted on your machine.
 
@@ -48,10 +45,12 @@ cast wallet address --account playchain-deployer
 export RPC=https://rpc.mainnet.chain.robinhood.com
 export WIF=0x5173b8eA6923c2d40267890D45C46a3480954773
 export TREASURY=0xYOUR_TREASURY_ADDRESS
-export LISTING_FEE=1000000000000000000000      # 1,000 WIF (18 decimals)
-export MIN_VOTE=100000000000000000000          # 100 WIF
-export EPOCH_LENGTH=86400                      # 1 day
+export LISTING_FEE=100000000000000000000       # 100 WIF to list a game (18 decimals)
+export MIN_VOTE=100000000000000000000          # 100 WIF smallest vote
+export EPOCH_LENGTH=86400                      # 1 day per Spotlight race
 ```
+
+The owner can change the listing fee and minimum vote later with `setFees`, so these aren't permanent.
 
 ## 5. Rehearse on a local fork first
 
@@ -80,45 +79,33 @@ forge verify-contract $ARCADE src/PlayChainArcade.sol:PlayChainArcade \
   --constructor-args $(cast abi-encode "constructor(address,address,uint256,uint256,uint256)" $WIF $TREASURY $LISTING_FEE $MIN_VOTE $EPOCH_LENGTH)
 ```
 
-## 8. Deploy the site on Vercel
+Verified source lets players read the contract before they vote.
 
-1. Make sure the latest code is on GitHub (https://github.com/franklin238/playchain-flat).
-2. In Vercel: New Project → import the repo → **Root Directory: `web`** → Framework: Vite.
-3. Environment variables (Production):
+## 8. Point the site at the contract
+
+1. In Vercel, open the PlayChain project → Settings → Environment Variables (Production):
    - `VITE_ARCADE_ADDRESS` = the address from step 6
    - `VITE_DEPLOY_BLOCK` = the block from step 6
-   - `VITE_SITE_ORIGIN` = your Vercel URL, for example `https://playchain-flat.vercel.app`
-   - `VITE_REPO_URL` = your GitHub repo URL
-4. Deploy. Open the site with no wallet: the shelf, Spotlight and games must load.
+   - `VITE_SITE_ORIGIN` = your Vercel URL, for example `https://playchain-console.vercel.app`
+   - `VITE_REPO_URL` = `https://github.com/franklin238/playchain`
+2. Deployments → latest → **Redeploy**.
+3. Open the site with no wallet: the shelf, Spotlight and games must load, and the demo-mode notice must be gone.
 
-If your Vercel URL is not `https://playchain-flat.vercel.app`, update the `cover` and `playUrl` lines in each `web/public/games/*/meta.json` to your URL and redeploy before step 9, because the listing stores the meta.json URL onchain.
+If your Vercel URL is not `https://playchain-console.vercel.app`, first update the `cover` and `playUrl` lines in each `web/public/games/*/meta.json` to your URL and push. The listing stores the meta.json URL onchain, so it has to be right before step 9.
 
-## 8b. Let the judges see the repo
-
-The repo is private. Before submitting, do one of these on GitHub:
-
-- Settings → General → Danger Zone → **Change visibility** → Public, or
-- Settings → Collaborators → **Add people** → `wifonrh` (the judges' account, official FAQ).
-
-## 9. List the three games (burns 3,000 WIF)
+## 9. List the three games (burns 300 WIF)
 
 ```bash
-export SITE_URL=https://playchain-flat.vercel.app    # your live URL, no trailing slash
+export SITE_URL=https://playchain-console.vercel.app    # your live URL, no trailing slash
 forge script script/ListDemoGames.s.sol --rpc-url $RPC --account playchain-deployer --broadcast
 ```
 
-## 10. Cast the demo votes
+## 10. Check it with one real vote
 
-Use the live site with 3 different wallets (MetaMask or Rabby): connect, pick a game, Vote, Approve and vote. For rule 5 and the README table you need:
+Before you tell anyone, connect your own wallet on the live site and cast one minimum vote. Check on Blockscout that half was burned, 40% went to the developer and 10% to the treasury. Then share the link.
 
-- at least 10 votes from at least 3 wallets
-- at least 1 self-vote (the deployer wallet voting for one of its own games)
-- votes on two different days, so one epoch rolls over and a Spotlight winner appears
+## Running it
 
-Copy each transaction link from the vote sheet into the README table.
-
-## 11. Keep it live until 16 Nov 2026, 17:30 UTC
-
-- Do not pause the contract.
-- Do not push breaking changes after 12 Nov 17:30 UTC. Only the logo may change.
-- Set up a free uptime check (for example UptimeRobot) on the site URL every 15 minutes.
+- `pause` / `unpause` stop and restart voting if something goes wrong. Nobody's tokens are held by the contract, so pausing never locks funds.
+- `setGameActive(id, false)` hides an abusive listing.
+- Add a free uptime check (for example UptimeRobot) on the site URL.

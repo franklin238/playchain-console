@@ -1,4 +1,4 @@
-// Demo arcade: a simulated PlayChainArcade that lives in this browser, so anyone (judges first)
+// Demo arcade: a simulated PlayChainArcade that lives in this browser, so anyone
 // can try listing, voting and the wallet flow with test $WIF before the contract is deployed.
 // Same rules as the contract: listing burns the whole fee, votes split 50/40/10, a developer's
 // vote on their own game burns the developer share too, and each UTC day's most-voted game is
@@ -14,7 +14,7 @@ const KEY = "pcf.demo.v1";
 const DAY = 86_400;
 
 export const DEMO_PARAMS = {
-  listingFee: 1000n * ONE,
+  listingFee: 100n * ONE,
   minVote: 100n * ONE,
   burnBps: 5000,
   devBps: 4000,

@@ -52,7 +52,7 @@ export function Screen({
   const ref = useRef<HTMLElement>(null);
   useAutoFocus(ref);
   useEffect(() => {
-    if (title) document.title = `${title} · PlayChain Flat`;
+    if (title) document.title = `${title} · PlayChain`;
   }, [title]);
   const trail = crumbs ?? (title ? [{ label: "Home", to: "/" }, { label: title }] : []);
   return (
