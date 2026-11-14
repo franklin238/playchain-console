@@ -1,0 +1,15 @@
+{
+  "name": "GLOAM: VESPER",
+  "slug": "gloam-vesper",
+  "tagline": "Deliver the last letters without being read.",
+  "description": "A hand-etched stealth puzzle platformer about private money on public chains. As Vesper, the courier, slip through towns where every wall remembers, keep your letters sealed from readers and front-runners, and deliver what was promised. Narrated story, field notes, keepsakes and a Seal Book of proofs to master.",
+  "genre": "Story",
+  "developer": {
+    "name": "Steeve",
+    "x": "gamersteeve"
+  },
+  "cover": "https://playchain-console.vercel.app/games/gloam-vesper/cover.png",
+  "playUrl": "https://playchain-console.vercel.app/games/gloam-vesper/index.html",
+  "controls": "Arrows to move, Up or Space to jump, Down to hide in shadow, E to interact, Tab: Seal Book, H: hint, Esc: pause. Gamepad and touch work.",
+  "version": "1.0.0"
+}

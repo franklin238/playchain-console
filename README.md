@@ -21,7 +21,7 @@ You need [Node.js](https://nodejs.org) 20 or newer.
   npm run dev -- --open
   ```
 
-No wallet or tokens are needed. Until a contract address is set, the site runs in **demo mode** (below) and every game is playable. The three games also open on their own at `/games/neon-tide/`, `/games/hollow-kingdom/` and `/games/signal-lost/`.
+No wallet or tokens are needed. Until a contract address is set, the site runs in **demo mode** (below) and every game is playable. The four games also open on their own at `/games/neon-tide/`, `/games/hollow-kingdom/`, `/games/signal-lost/` and `/games/gloam-vesper/`.
 
 ### Demo mode
 
@@ -39,19 +39,20 @@ Once the contract is deployed and its address configured, the same screens read 
 | Folder | What it is |
 |---|---|
 | `web/` | The PlayChain site (React + Vite) |
-| `web/public/games/` | The three games: Neon Tide, Hollow Kingdom, Signal Lost |
+| `web/public/games/` | The four games: Neon Tide, Hollow Kingdom, Signal Lost, GLOAM: VESPER |
 | `contracts/` | The `PlayChainArcade` Solidity contract and its Foundry tests |
 | `DEPLOY.md` | How to deploy the contract and switch the site to live voting |
 
 ### The games
 
-All three are original and run sandboxed in the console with no wallet access. Every sound is synthesised in the browser.
+All four are original and run sandboxed in the console with no wallet access. Every sound is synthesised in the browser.
 
 | Game | What it is |
 |---|---|
 | **Neon Tide** | A 3D arcade racer on a glowing sea (Three.js). Steer through gates, collect orbs, use boost fuel; 12 levels with star ratings and a music score that builds with your combo. |
 | **Hollow Kingdom** | A day and night castle builder. By day, send villagers to quarry, chop, farm, mine iron and rebuild halls; by night, hold both walls against hordes of Hollow with guards, soldiers, towers, powers and Armory weapons. Twelve kingdoms, each with its own castle, rooms, weather and twist, each harder than the last; restore every hall to win one and unlock the next. 74 medals (10 Legendary) and an ending after the last kingdom. |
 | **Signal Lost** | A relay puzzle game: rotate and place tiles to carry coloured signals to every receiver. 271 solver-verified sectors across 9 regions (the last 70 are the hardest), two hints per sector, a Daily Signal, Static Storm mode, achievements and 8 star awards. |
+| **GLOAM: VESPER** | A hand-etched stealth puzzle platformer about private money on public chains (Phaser 3). Play Vesper the courier, slip through towns where every wall remembers, and deliver sealed letters past readers and front-runners. Narrated story, field notes, keepsakes and a Seal Book. Its single-file build is wrapped by `web/scripts/wrap-vesper.mjs` so it saves through PlayChain. |
 
 ### The console
 
@@ -122,7 +123,7 @@ The contract never holds $WIF. Every transfer is `safeTransferFrom(voter, destin
 
 ## 4. Going live
 
-PlayChain runs in demo mode until the contract is deployed. `DEPLOY.md` walks through testing, deploying and verifying the contract, pointing the site at it and listing the three games.
+PlayChain runs in demo mode until the contract is deployed. `DEPLOY.md` walks through testing, deploying and verifying the contract, pointing the site at it and listing the four games.
 
 ## 5. Architecture
 
@@ -138,7 +139,7 @@ web/         Vite, React 19, TypeScript, Tailwind, wagmi core + viem
   src/web3/          wallet, RPC with fallback, exact-amount approvals, transactions
   src/games/         meta.json validation, sandboxed game bridge
   src/screens/       Home, Game, Player, Developers, Activity, About, Settings
-  public/games/      Neon Tide, Hollow Kingdom, Signal Lost
+  public/games/      Neon Tide, Hollow Kingdom, Signal Lost, GLOAM: VESPER
   tests/unit/        Spotlight and race logic, meta validation, bridge, security headers, every game's meta.json and cover
   tests/e2e/         mainnet-fork setup + browser test of the full vote flow
 ```
@@ -217,7 +218,7 @@ Full end-to-end rehearsal on a mainnet fork (real $WIF, local test wallets): see
 
 ## 8. Built with
 
-Robinhood Chain, $WIF, OpenZeppelin, Foundry, viem, wagmi, React, Vite and Tailwind. Everything else is original: the `PlayChainArcade` contract and its tests, the console, the sandboxed game player, and the three games **Neon Tide**, **Hollow Kingdom** and **Signal Lost**, including all their music and sound.
+Robinhood Chain, $WIF, OpenZeppelin, Foundry, viem, wagmi, React, Vite and Tailwind. Everything else is original: the `PlayChainArcade` contract and its tests, the console, the sandboxed game player, and the four games **Neon Tide**, **Hollow Kingdom**, **Signal Lost** and **GLOAM: VESPER**, including all their music and sound.
 
 ## 9. Roadmap
 

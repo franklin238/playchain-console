@@ -8,15 +8,16 @@ import {PlayChainArcade} from "../src/PlayChainArcade.sol";
 /// @notice Approves the exact listing fee and lists each demo game from the broadcaster's wallet.
 ///   ARCADE    deployed PlayChainArcade address
 ///   SITE_URL  live site, e.g. https://playchain-console.vercel.app (no trailing slash)
-///   SLUGS     comma-separated game folders, default neon-tide,hollow-kingdom,signal-lost
+///   SLUGS     comma-separated game folders, default neon-tide,hollow-kingdom,signal-lost,gloam-vesper
 contract ListDemoGames is Script {
     function run() external {
         PlayChainArcade arcade = PlayChainArcade(vm.envAddress("ARCADE"));
         string memory site = vm.envString("SITE_URL");
-        string[] memory defaults = new string[](3);
+        string[] memory defaults = new string[](4);
         defaults[0] = "neon-tide";
         defaults[1] = "hollow-kingdom";
         defaults[2] = "signal-lost";
+        defaults[3] = "gloam-vesper";
         string[] memory slugs = vm.envOr("SLUGS", ",", defaults);
         IERC20 wif = arcade.wif();
         uint256 fee = arcade.listingFee();

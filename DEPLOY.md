@@ -9,7 +9,7 @@ Never paste a private key into a chat, a file or a website. You type it once int
 - **Foundry** (forge, cast, anvil). Check with `forge --version`.
 - **Node.js** 20 or newer.
 - **A deployer wallet** with a little ETH on Robinhood Chain for gas. A few dollars' worth is plenty.
-- **$WIF to list the three games.** With the listing fee below that's 3 × 100 = **300 WIF**, all burned.
+- **$WIF to list the four games.** With the listing fee below that's 4 × 100 = **400 WIF**, all burned.
 - **A treasury address** that receives 10% of every vote. Your deployer address is fine.
 
 ## 1. Get the code
@@ -93,7 +93,7 @@ Verified source lets players read the contract before they vote.
 
 If your Vercel URL is not `https://playchain-console.vercel.app`, first update the `cover` and `playUrl` lines in each `web/public/games/*/meta.json` to your URL and push. The listing stores the meta.json URL onchain, so it has to be right before step 9.
 
-## 9. List the three games (burns 300 WIF)
+## 9. List the four games (burns 400 WIF)
 
 ```bash
 export SITE_URL=https://playchain-console.vercel.app    # your live URL, no trailing slash

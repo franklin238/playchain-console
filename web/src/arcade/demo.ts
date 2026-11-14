@@ -178,8 +178,29 @@ function seed(): DemoChain {
   return c;
 }
 
+/** A demo saved before a game shipped with this site doesn't have it yet, so list it now. */
+function addNewGames(c: DemoChain): boolean {
+  const have = new Set(c.games.map((g) => g.uri));
+  const r = rng(c.games.length * 7919 + 1);
+  let added = false;
+  for (const slug of LOCAL_SLUGS) {
+    const uri = localMetaUrl(slug);
+    if (have.has(uri)) continue;
+    const id = Math.max(0, ...c.games.map((g) => g.id)) + 1;
+    const g: DemoGame = { id, uri, developer: DEVS[(id - 1) % DEVS.length], listedAt: nowSec() - 60 };
+    c.games.push(g);
+    c.events.push({ kind: "list", id, who: g.developer, amount: 0n, burned: DEMO_PARAMS.listingFee, toDev: 0n, toTreasury: 0n, epoch: epochOf(g.listedAt), time: g.listedAt, block: ++c.block, tx: fakeHash(r) });
+    added = true;
+  }
+  return added;
+}
+
 export function demoChain(): DemoChain {
-  chain ??= load() ?? seed();
+  if (!chain) {
+    const saved = load();
+    chain = saved ?? seed();
+    if (saved && addNewGames(chain)) save();
+  }
   return chain;
 }
 
