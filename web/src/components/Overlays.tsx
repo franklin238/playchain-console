@@ -166,11 +166,11 @@ function Key({ children }: { children: string }) {
 /** Bottom-left controls hint. Shown for controller and keyboard, hidden for mouse. */
 export function HintBar() {
   return (
-    <div className="pointer-events-none fixed bottom-4 left-4 z-20 hidden gap-6 rounded-lg border border-line bg-bg-2/90 px-4 py-2 text-sm text-muted backdrop-blur sm:left-[calc(3vw+1.5rem)] [html[data-input=gamepad]_&]:flex [html[data-input=keyboard]_&]:flex">
-      <span className="hidden items-center gap-2 [html[data-input=gamepad]_&]:flex">
+    <div className="pointer-events-none fixed bottom-4 left-4 z-20 hidden max-w-[calc(100vw-2rem)] gap-6 rounded-lg border border-line bg-bg-2/90 px-4 py-2 text-sm text-muted backdrop-blur sm:left-[calc(3vw+1.5rem)] [html[data-input=gamepad]_&]:flex [html[data-input=keyboard]_&]:flex">
+      <span className="hidden flex-wrap items-center gap-2 [html[data-input=gamepad]_&]:flex">
         <Key>A</Key> Select <Key>B</Key> Back <Key>☰</Key> Menu
       </span>
-      <span className="hidden items-center gap-2 [html[data-input=keyboard]_&]:flex">
+      <span className="hidden flex-wrap items-center gap-2 [html[data-input=keyboard]_&]:flex">
         <Key>Arrows</Key> Move <Key>Enter</Key> Open <Key>V</Key> Vote <Key>Esc</Key> Back
       </span>
     </div>

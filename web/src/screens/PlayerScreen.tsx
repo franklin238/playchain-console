@@ -179,6 +179,12 @@ export default function PlayerScreen() {
       leaveGameFullscreen();
     };
   }, [canFullscreen]);
+  // On a short landscape phone the pill sits over the game's title, so it steps aside after a while.
+  useEffect(() => {
+    if (!askFs) return;
+    const t = window.setTimeout(() => setAskFs(false), 8000);
+    return () => window.clearTimeout(t);
+  }, [askFs]);
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);

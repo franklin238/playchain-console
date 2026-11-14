@@ -102,7 +102,8 @@ export function FullscreenControl({ hidden }: { hidden?: boolean }) {
       onClick={exitFullscreen}
       aria-label="Leave fullscreen"
       title="Leave fullscreen"
-      className="fixed right-1.5 top-1.5 z-[70] grid size-8 place-items-center rounded-full border border-line-strong bg-bg/85 text-base font-bold text-fg backdrop-blur hover:border-accent hover:text-accent"
+      // On phones the top bar's own fullscreen button sits right here, and this X would cover Connect.
+      className="fixed right-1.5 top-1.5 z-[70] hidden size-8 place-items-center rounded-full sm:grid border border-line-strong bg-bg/85 text-base font-bold text-fg backdrop-blur hover:border-accent hover:text-accent"
     >
       ✕
     </button>

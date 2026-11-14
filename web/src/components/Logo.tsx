@@ -14,11 +14,12 @@ export function LogoMark({ className = "size-[1.15em]" }: { className?: string }
   );
 }
 
-export function Logo({ className = "" }: { className?: string }) {
+/** `compact` drops the word on the narrowest phones (under 360 px), where the top bar has no room for it. */
+export function Logo({ className = "", compact = false }: { className?: string; compact?: boolean }) {
   return (
     <span className={`inline-flex items-center gap-2 whitespace-nowrap font-display font-extrabold uppercase tracking-[0.03em] ${className}`}>
-      <LogoMark />
-      <span>
+      <LogoMark className={compact ? "size-[1.15em] max-[359px]:size-[1.6em]" : undefined} />
+      <span className={compact ? "max-[359px]:hidden" : undefined}>
         Play<span className="text-accent-text">Chain</span>
       </span>
     </span>

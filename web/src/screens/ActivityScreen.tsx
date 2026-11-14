@@ -27,12 +27,12 @@ function ago(t: number): string {
 
 function Board({ title, empty, rows }: { title: string; empty: string; rows: { k: string; label: React.ReactNode; value: string }[] }) {
   return (
-    <section className="rounded-2xl border border-line bg-surface p-4">
+    <section className="min-w-0 rounded-2xl border border-line bg-surface p-4">
       <h3 className="mb-3 font-display text-lg font-extrabold">{title}</h3>
       {rows.length === 0 ? (
         <p className="text-sm text-muted">{empty}</p>
       ) : (
-        <ol className="grid gap-1.5">
+        <ol className="grid grid-cols-1 gap-1.5">
           {rows.map((r, i) => (
             <li key={r.k} className="flex items-center gap-3 rounded-lg bg-bg-2 px-3 py-2 text-sm">
               <span className={`w-5 text-center font-display font-extrabold ${i === 0 ? "text-accent-text" : "text-muted"}`}>{i + 1}</span>
@@ -83,7 +83,7 @@ function Leaderboards() {
     .map((x) => ({ k: x.w, label: <><b className="tabular-nums">{shortAddress(x.w)}</b>{x.w === me ? <span className="ml-1.5 rounded bg-accent px-1.5 text-xs font-bold text-on-accent">YOU</span> : null} <span className="text-muted">{formatWif(x.t, decimals, 0)} WIF voted</span></>, value: `${x.n} day${x.n === 1 ? "" : "s"}` }));
 
   return (
-    <div className="mb-8 grid gap-4 lg:grid-cols-3">
+    <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
       <Board title="Top games today" empty="No votes yet today." rows={today} />
       <Board title="Top developers by earnings" empty="No developer earnings yet." rows={devs} />
       <Board title="Voting streaks" empty="Vote on two days in a row to start a streak." rows={streaks} />
@@ -119,7 +119,7 @@ export default function ActivityScreen() {
       {error && <p className="mb-4 text-danger">Couldn't load all activity: {error}</p>}
       {hasVoting(mode) && rows.length > 0 && <h2 className="mb-3 font-display text-xl font-extrabold">Live feed</h2>}
       {hasVoting(mode) && rows.length === 0 && <p className="text-muted">{loading ? "Reading events…" : "Nothing yet."}</p>}
-      <ol className="grid gap-2">
+      <ol className="grid grid-cols-1 gap-2">
         {rows.slice(0, 200).map((r) => (
           <li key={r.key}>
             <a

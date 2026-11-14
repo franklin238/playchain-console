@@ -57,13 +57,14 @@ function WalletButton() {
         type="button"
         onClick={openWallet}
         aria-label={`Wallet ${address}`}
-        className="flex items-center gap-2.5 whitespace-nowrap rounded-lg border border-line-strong px-3 py-2 font-semibold sm:px-4"
+        className="flex items-center gap-2 whitespace-nowrap rounded-lg border border-line-strong px-2.5 py-2 font-semibold min-[400px]:gap-2.5 min-[400px]:px-3 sm:px-4"
       >
         {balance != null && (
           <span className="hidden tabular-nums text-accent-text sm:inline">{formatWifShort(balance, decimals)} WIF</span>
         )}
         <Icon name="wallet" className="size-[1.15em]" />
-        <span className="tabular-nums">{shortAddress(address)}</span>
+        <span className="hidden tabular-nums min-[400px]:inline">{shortAddress(address)}</span>
+        <span className="tabular-nums min-[400px]:hidden">…{address.slice(-4)}</span>
       </button>
     );
   }
@@ -72,7 +73,7 @@ function WalletButton() {
       type="button"
       onClick={openWallet}
       aria-label="Connect wallet"
-      className="whitespace-nowrap rounded-lg bg-accent px-4 py-2.5 font-bold uppercase tracking-wide text-on-accent hover:bg-accent-hover sm:px-6 sm:py-3"
+      className="whitespace-nowrap rounded-lg bg-accent px-3 py-2.5 font-bold uppercase min-[400px]:px-4 tracking-wide text-on-accent hover:bg-accent-hover sm:px-6 sm:py-3"
     >
       {status === "connecting" ? (
         "Connecting…"
@@ -117,7 +118,7 @@ export function TopBar() {
   const setGuideOpen = useUi((s) => s.setGuideOpen);
   return (
     <header className="fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-bg via-bg/90 to-bg/70 px-2 pb-2 pt-2 backdrop-blur-md sm:px-[3vw] sm:pb-3 sm:pt-5">
-      <div className="mx-auto flex h-16 max-w-[100rem] items-center gap-3 rounded-2xl border border-line bg-bg-2/95 px-3 shadow-[0_10px_40px_-20px_rgb(0_0_0/0.8)] backdrop-blur-md sm:h-[4.75rem] sm:gap-5 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-[100rem] items-center gap-2 rounded-2xl border border-line bg-bg-2/95 px-2.5 min-[400px]:gap-3 min-[400px]:px-3 shadow-[0_10px_40px_-20px_rgb(0_0_0/0.8)] backdrop-blur-md sm:h-[4.75rem] sm:gap-5 sm:px-6">
         <button
           type="button"
           onClick={() => setGuideOpen(true)}
@@ -128,7 +129,7 @@ export function TopBar() {
           <Icon name="menu" />
         </button>
         <Link to="/" className="shrink-0 rounded-md text-[1.05rem] leading-none sm:text-[1.35rem]" aria-label="PlayChain home">
-          <Logo />
+          <Logo compact />
         </Link>
 
         <nav className="ml-auto hidden items-center gap-1 lg:flex xl:gap-3" aria-label="Main">

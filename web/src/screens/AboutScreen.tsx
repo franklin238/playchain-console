@@ -224,7 +224,7 @@ export default function AboutScreen() {
             <li>
               PlayChainArcade:{" "}
               {consoleConfig.arcadeAddress ? (
-                <a className="text-accent-text" href={addressUrl(consoleConfig.arcadeAddress)} target="_blank" rel="noreferrer">
+                <a className="break-all text-accent-text" href={addressUrl(consoleConfig.arcadeAddress)} target="_blank" rel="noreferrer">
                   {consoleConfig.arcadeAddress}
                 </a>
               ) : (
@@ -233,7 +233,7 @@ export default function AboutScreen() {
             </li>
             <li>
               $WIF:{" "}
-              <a className="text-accent-text" href={addressUrl(consoleConfig.wifAddress)} target="_blank" rel="noreferrer">
+              <a className="break-all text-accent-text" href={addressUrl(consoleConfig.wifAddress)} target="_blank" rel="noreferrer">
                 {consoleConfig.wifAddress}
               </a>
             </li>
