@@ -102,12 +102,27 @@ function save() {
   });
 }
 
+/** Sites this console used to live at. A demo saved there points its built-in games at the old
+ * address, which isn't on this site's play allowlist, so move them to this site's own copy. */
+const OLD_ORIGINS = ["https://playchain-flat.vercel.app"];
+
+function fixOldUri(g: DemoGame): DemoGame {
+  try {
+    const u = new URL(g.uri);
+    const slug = /^\/games\/([^/]+)\/meta\.json$/.exec(u.pathname)?.[1];
+    if (OLD_ORIGINS.includes(u.origin) && slug && (LOCAL_SLUGS as readonly string[]).includes(slug)) return { ...g, uri: localMetaUrl(slug) };
+  } catch {
+    /* not a URL: leave it as it is */
+  }
+  return g;
+}
+
 function load(): DemoChain | null {
   const raw = readJson<Record<string, unknown> | null>(KEY, null);
   if (!raw || !Array.isArray(raw.games) || !Array.isArray(raw.events)) return null;
   try {
     return {
-      games: raw.games as DemoGame[],
+      games: (raw.games as DemoGame[]).map(fixOldUri),
       events: (raw.events as Record<string, string | number>[]).map((e) => ({
         kind: e.kind as "vote" | "list",
         id: Number(e.id),
