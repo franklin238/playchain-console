@@ -59,4 +59,8 @@ export function storeGameSave(slug: string, data: unknown): boolean {
 
 /** Sandbox for game frames. Never add allow-same-origin: with allow-scripts it lets a game escape. */
 export const GAME_SANDBOX = "allow-scripts allow-pointer-lock";
-export const GAME_ALLOW = "fullscreen; gamepad; autoplay";
+/**
+ * What a game frame may use. No fullscreen: PlayChain makes the whole player fullscreen itself,
+ * and a game taking fullscreen on its own would cover the PlayChain button (no way back out).
+ */
+export const GAME_ALLOW = "gamepad; autoplay";

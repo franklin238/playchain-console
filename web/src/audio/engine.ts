@@ -26,7 +26,13 @@ let ducked = false;
 let step = 0;
 let nextT = 0;
 let voices = 0;
-const VOICE_CAP = 64;
+/*
+ * Phones crackle when Web Audio has more to do than the phone can keep up with. On a touch screen
+ * PlayChain asks for a steadier (slightly later) audio buffer, uses a shorter reverb, plays fewer
+ * voices at once, and switches its sound off entirely while a game (with its own sound) is playing.
+ */
+const TOUCH = typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches;
+const VOICE_CAP = TOUCH ? 36 : 64;
 
 let S16 = 60 / 104 / 4;
 const mtof = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
@@ -81,7 +87,7 @@ function ensureContext(): AudioContext | null {
   if (ctx) return ctx;
   try {
     const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    ctx = new Ctor({ latencyHint: "interactive" });
+    ctx = new Ctor({ latencyHint: TOUCH ? "playback" : "interactive" });
   } catch {
     return null;
   }
@@ -96,7 +102,7 @@ function ensureContext(): AudioContext | null {
   sfxGain = c.createGain(); sfxGain.connect(master);
 
   // music layers, a short reverb and a dotted-8th delay
-  verb = c.createConvolver(); verb.buffer = impulse(c, 1.6, 2.6);
+  verb = c.createConvolver(); verb.buffer = TOUCH ? impulse(c, 0.8, 2.6) : impulse(c, 1.6, 2.6);
   const verbOut = c.createGain(); verbOut.gain.value = 0.28; verb.connect(verbOut); verbOut.connect(musicGain);
   delay = c.createDelay(1); delay.delayTime.value = S16 * 3;
   const fb = c.createGain(); fb.gain.value = 0.32;
@@ -111,7 +117,7 @@ function ensureContext(): AudioContext | null {
   document.addEventListener("visibilitychange", () => {
     if (!ctx) return;
     if (document.hidden) void ctx.suspend().catch(() => {});
-    else void ctx.resume().catch(() => {});
+    else if (!(TOUCH && ducked)) void ctx.resume().catch(() => {});
   });
   return c;
 }
@@ -345,15 +351,22 @@ function startMusic() {
 export function unlockAudio() {
   const c = ensureContext();
   if (!c) return;
-  if (c.state === "suspended" && !document.hidden) void c.resume().catch(() => {});
+  if (c.state === "suspended" && !document.hidden && !(TOUCH && ducked)) void c.resume().catch(() => {});
   startMusic();
 }
 
 /** Fade the lobby music out while a game is running (and back in afterwards). */
+let sleepTimer = 0;
 export function duckMusic(on: boolean) {
   if (ducked === on) return;
   ducked = on;
   applyVolumes(on ? 0.25 : 0.8);
+  // On phones, two sound engines at once (PlayChain's and the game's) is what makes the audio
+  // crackle, so PlayChain's goes to sleep once the music has faded, and wakes when you leave.
+  if (!TOUCH || !ctx) return;
+  window.clearTimeout(sleepTimer);
+  if (on) sleepTimer = window.setTimeout(() => { if (ducked && ctx) void ctx.suspend().catch(() => {}); }, 900);
+  else if (!document.hidden) void ctx.resume().catch(() => {});
 }
 
 // ---- sound effects ----

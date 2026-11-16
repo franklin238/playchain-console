@@ -14,6 +14,8 @@ export interface GameMeta {
   playUrl: string;
   controls: string;
   version: string;
+  /** How the game is held on a phone. Optional in meta.json; "landscape" when left out. */
+  orientation: "landscape" | "portrait";
 }
 
 export interface MetaCheck {
@@ -70,6 +72,9 @@ export function validateMeta(input: unknown): MetaCheck {
   if (controls === null) errors.push("controls: 160 characters max.");
   const version = str(m.version, 20);
   if (!version || !VERSION_RE.test(version)) errors.push("version is required, for example 1.0.0.");
+  const rawOrientation: unknown = m.orientation ?? "landscape";
+  if (rawOrientation !== "landscape" && rawOrientation !== "portrait") errors.push('orientation must be "landscape" or "portrait".');
+  const orientation: GameMeta["orientation"] = rawOrientation === "portrait" ? "portrait" : "landscape";
 
   if (errors.length) return { ok: false, errors };
   return {
@@ -86,6 +91,7 @@ export function validateMeta(input: unknown): MetaCheck {
       playUrl: playUrl!,
       controls: controls ?? "",
       version: version!,
+      orientation,
     },
   };
 }

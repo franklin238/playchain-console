@@ -11,5 +11,6 @@
   "cover": "https://playchain-console.vercel.app/games/signal-lost/cover.png",
   "playUrl": "https://playchain-console.vercel.app/games/signal-lost/index.html",
   "controls": "Tap or click to rotate, drag tiles to place. Keys: arrows, Space, Ctrl+Z/Y, R, H. Gamepad supported.",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "orientation": "portrait"
 }

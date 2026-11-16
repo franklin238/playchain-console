@@ -127,7 +127,25 @@ body.rm #banner.show{animation:none}
 .item .ctl{display:flex;align-items:center;gap:10px}
 .credit{margin-top:14px;font:500 11px var(--mono);color:rgba(255,255,255,.4);text-align:center;letter-spacing:.06em}
 @media (max-width:600px){#modeTag{display:none}#gap{width:56vw}}
-@media (max-height:520px){#logo{top:12px}#logo h1{font-size:44px}#logo p{margin-top:4px}.item{padding:9px 14px}.panel{padding:16px 20px}#title .foot{display:none}}
+@media (max-height:520px){#logo{top:6px}#logo h1{font-size:34px}#logo p{margin-top:2px;padding:2px 10px;font-size:12px}.menu{gap:5px}.item{padding:7px 12px;font-size:13px;border-radius:10px}#title{padding-bottom:10px}#title .menu{max-width:340px}.panel{padding:14px 18px}#title .foot{display:none}#stats b{font-size:18px}#dist{font-size:16px;margin-bottom:4px}#score{font-size:28px}}
+/* Phones: a real BOOST button instead of a hidden two-finger tap. */
+#tBoost{display:none;position:absolute;right:max(16px,env(safe-area-inset-right));bottom:calc(max(16px,env(safe-area-inset-bottom)) + 64px);width:76px;height:76px;border-radius:50%;border:2px solid rgba(79,179,179,.55);background:rgba(16,10,22,.5);color:#bff4f4;font:800 12px var(--ui);letter-spacing:.14em;place-items:center;touch-action:none;-webkit-user-select:none;user-select:none;pointer-events:auto}
+body.touch #tBoost{display:grid}
+/* Clear of the PlayChain button, which sits in the bottom-left corner. */
+body.touch #stats{left:calc(max(16px,env(safe-area-inset-left)) + 74px)}
+#tBoost.ready{border-color:var(--teal);box-shadow:0 0 18px rgba(79,179,179,.75);color:#fff}
+#tBoost.on{border-color:var(--sun);background:linear-gradient(135deg,rgba(224,69,123,.75),rgba(242,166,90,.75));color:#fff}
+#tBoost.empty{opacity:.45}
+/* The controls card shown once on phones before the first race. */
+#tHelp .panel{max-width:min(560px,94vw);padding:18px 20px}
+#tHelp h2{margin-bottom:10px}
+#tHelp .rows{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:0 0 14px}
+#tHelp .row{display:flex;gap:10px;align-items:center;background:rgba(26,15,30,.55);border:1px solid rgba(138,90,158,.35);border-radius:12px;padding:8px 10px}
+#tHelp .ic{flex:0 0 38px;height:38px;border-radius:50%;display:grid;place-items:center;font:800 15px var(--ui);color:#fff;background:rgba(79,179,179,.25);border:1px solid var(--teal)}
+#tHelp .row b{display:block;font:800 13px var(--ui);letter-spacing:.06em;color:#fff}
+#tHelp .row span{font:500 12px/1.35 var(--ui);color:rgba(255,255,255,.75)}
+#tHelp .note{font:500 12px var(--ui);color:rgba(255,255,255,.6);margin:-4px 0 12px;text-align:center}
+@media (max-width:420px){#tHelp .rows{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -147,6 +165,20 @@ body.rm #banner.show{animation:none}
   <div id="tip"></div>
   <div id="stats">SPEED<b><span id="speed">0</span> <span class="u">KM/H</span></b></div>
   <div id="right"><span id="dist">0 m</span>BOOST<span id="fuelS"></span><div id="boost"><div id="boostfill"></div></div></div>
+  <button id="tBoost" class="empty" aria-label="Boost">BOOST</button>
+</div>
+<div id="tHelp" class="screen dim">
+  <div class="panel">
+    <h2>PHONE CONTROLS</h2>
+    <div class="rows">
+      <div class="row"><div class="ic">&#9995;</div><div><b>HOLD = DIVE</b><span>Press and hold anywhere. Diving down a wave builds speed.</span></div></div>
+      <div class="row"><div class="ic">&#8593;</div><div><b>LET GO = LAUNCH</b><span>Lift your finger at the top of the wave to fly off it.</span></div></div>
+      <div class="row"><div class="ic">&#8596;</div><div><b>DRAG = STEER</b><span>While holding, slide left or right.</span></div></div>
+      <div class="row"><div class="ic" style="border-color:var(--sun)">&#9889;</div><div><b>BOOST BUTTON</b><span>Bottom right. Blue orbs fill it; tap to speed up, tap again to stop.</span></div></div>
+    </div>
+    <p class="note">There is no brake: to slow down, just let go and glide.</p>
+    <div class="menu"><button class="item" id="tHelpGo">GOT IT &mdash; START<span class="val">&#9654;</span></button></div>
+  </div>
 </div>
 
 <div id="title" class="screen">
@@ -245,7 +277,8 @@ body.rm #banner.show{animation:none}
     <h3>PICKUPS</h3>
     <ul>
       <li><b>Blue orbs</b> (+50): each one adds half a second of boost fuel, up to 8 seconds.</li>
-      <li><b>Boost</b>: press SHIFT, (B) or tap with a second finger. It burns fuel until it runs out; press again to stop. The bar under BOOST shows your fuel.</li>
+      <li><b>Boost</b>: press SHIFT or (B), or on a phone tap the round <b>BOOST</b> button at the bottom right. It burns fuel until it runs out; press again to stop. The bar under BOOST shows your fuel.</li>
+      <li><b>There is no brake.</b> To slow down, stop diving: let go and glide.</li>
       <li><b>Magenta gates</b> (+300): fly through them.</li>
       <li><b>White pearls</b> (+2,500): they float high, so you need a strong launch.</li>
     </ul>
@@ -285,7 +318,7 @@ body.rm #banner.show{animation:none}
     { name: 'Clean Landings', intro: 'Land matching the slope for a PERFECT and grow your combo', phases: [0], objs: { orb: 1 }, storm: null, dist: 2200 },
     { name: 'Gates', intro: 'Fly through the magenta gates for 300 points', phases: [0], objs: { orb: 1, gate: 1 }, storm: null, dist: 2500 },
     { name: 'Buoys', intro: 'Steer around the orange buoys. Brush past for a near miss', phases: [0], objs: { orb: 1, gate: 1, buoy: 1 }, storm: null, dist: 2800 },
-    { name: 'Boost', intro: 'Blue orbs fill your fuel. Press SHIFT / (B) / two fingers to boost', phases: [0], objs: { orb: 1, gate: 1, buoy: 1 }, storm: null, dist: 3200, orbBias: 1 },
+    { name: 'Boost', intro: 'Blue orbs fill your fuel. Press SHIFT / (B) or tap BOOST to boost', phases: [0], objs: { orb: 1, gate: 1, buoy: 1 }, storm: null, dist: 3200, orbBias: 1 },
     { name: 'Choppy Water', intro: 'Short, steep waves. Dive late, release early', phases: [0, 1], first: 8, objs: { orb: 1, gate: 1, buoy: 1 }, storm: null, dist: 3000 },
     { name: 'Rocks', intro: 'Grey rocks are bigger than buoys. Give them room', phases: [0, 1], objs: { orb: 1, gate: 1, buoy: 1, rock: 1 }, storm: null, dist: 3400 },
     { name: 'The Storm', intro: 'The storm is behind you. Keep your speed up or it catches you', phases: [0, 1], objs: { orb: 1, gate: 1, buoy: 1, rock: 1 }, storm: { v0: 14, rate: 0.12, max: 42 }, dist: 3800 },
@@ -709,7 +742,9 @@ body.rm #banner.show{animation:none}
     if (this.ctx) { if (this.ctx.state === 'suspended' && !this.hiddenMute) this.ctx.resume(); return; }
     var AC = root.AudioContext || root.webkitAudioContext;
     if (!AC) return;
-    var c; try { c = new AC({ latencyHint: 'interactive' }); } catch (e) { return; }
+    // Phones: a steadier (slightly later) audio buffer, so busy moments don't crackle.
+    var coarse = !!(root.matchMedia && root.matchMedia('(pointer: coarse)').matches);
+    var c; try { c = new AC({ latencyHint: coarse ? 'playback' : 'interactive' }); } catch (e) { return; }
     this.ctx = c;
     // master -> glue compressor -> limiter -> trim -> output. The limiter stops stacked hits from clipping (the crackle).
     var comp = c.createDynamicsCompressor();
@@ -1155,7 +1190,7 @@ body.rm #banner.show{animation:none}
       if (d.settings) for (var k in DEFAULTS) if (d.settings[k] !== undefined && typeof d.settings[k] === typeof DEFAULTS[k]) S[k] = d.settings[k];
       if (d.endless && typeof d.endless.score === 'number') save.endless = { score: d.endless.score | 0, dist: +d.endless.dist || 0, combo: d.endless.combo | 0 || 1 };
       if (d.daily && typeof d.daily.date === 'string') save.daily = { date: d.daily.date, score: d.daily.score | 0, dist: +d.daily.dist || 0 };
-      save.tipsDone = !!d.tipsDone; save.runs = d.runs | 0;
+      save.tipsDone = !!d.tipsDone; save.runs = d.runs | 0; save.touchHelpSeen = !!d.touchHelpSeen;
       if (d.levels && typeof d.levels === 'object') for (var lk in d.levels) { var lv = d.levels[lk]; if (lv && typeof lv.stars === 'number') save.levels[lk] = { stars: Math.max(0, Math.min(3, lv.stars | 0)), best: lv.best | 0 }; }
     } catch (e) {}
     applySettings(); refreshTitle();
@@ -1542,7 +1577,7 @@ body.rm #banner.show{animation:none}
   var hud = $('hud'), elScore = $('score'), elDist = $('dist'), elCombo = $('combo'), elSpeed = $('speed'), elBoost = $('boostfill'), elBoostW = $('boost'), elFuelS = $('fuelS'), elGaplbl = $('gaplbl'),
     elGap = $('gapfill'), elGapW = $('gap'), elPop = $('pop'), elPop2 = $('pop2'), elBanner = $('banner'), elTip = $('tip'), elToast = $('toast');
   var fxCanvas = $('fx'), fxCtx = fxCanvas.getContext('2d');
-  var screens = { title: $('title'), pause: $('pause'), results: $('results'), settings: $('settings'), levels: $('levels'), howto: $('howto') };
+  var screens = { title: $('title'), pause: $('pause'), results: $('results'), settings: $('settings'), levels: $('levels'), howto: $('howto'), tHelp: $('tHelp') };
   var OVERLAYS = ['settings', 'levels', 'howto'];
 
   function fmt(n) { n = Math.floor(n); return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
@@ -1754,7 +1789,10 @@ body.rm #banner.show{animation:none}
     else if (c === 'Enter' || c === 'Space' || c === 'NumpadEnter') navSelect();
     else if (c === 'Escape' || c === 'Backspace' || c === 'KeyP') navBack();
   }
-  // pointer: press and hold anywhere to dive, drag to steer, two-finger tap to boost
+  if (isTouch) document.body.classList.add('touch');
+  var tBoost = $('tBoost');
+  tBoost.addEventListener('pointerdown', function (e) { e.preventDefault(); e.stopPropagation(); audioStart(); if (state === 'play') boostReq = true; });
+  // pointer: press and hold anywhere to dive, drag to steer, two-finger tap (or the BOOST button) to boost
   var ptrs = {}, primary = null, lastDownT = 0;
   canvas.addEventListener('pointerdown', function (e) {
     audioStart();
@@ -1830,7 +1868,18 @@ body.rm #banner.show{animation:none}
   var finishWin = false, dyingT = 0, resultsT = 0, rollScore = 0, comboShown = 1, tip = null;
   function newSeed() { try { var a = new Uint32Array(1); crypto.getRandomValues(a); return a[0]; } catch (e) { return (Date.now() * 2654435761) >>> 0; } }
   var levelNo = 0;
+  /* Phones see the controls card once, before their first race. */
   function startRun(m, ln) {
+    if (isTouch && !save.touchHelpSeen) {
+      audioStart();
+      show('tHelp');
+      $('tHelpGo').onclick = function () { save.touchHelpSeen = true; persist(); audio.sfx('select'); beginRun(m, ln); };
+      setTimeout(function () { $('tHelpGo').focus(); }, 50);
+      return;
+    }
+    beginRun(m, ln);
+  }
+  function beginRun(m, ln) {
     audioStart();
     mode = m; levelNo = m === 'level' ? (ln || 1) : 0;
     var L = m === 'level' ? NT.LEVELS[levelNo - 1] : null;
@@ -1964,7 +2013,7 @@ body.rm #banner.show{animation:none}
         case 'comboLost': if (!isDemo) { audio.sfx('comboLost'); popText(elPop2, 'COMBO LOST x' + e.mult, 'small bad'); } break;
         case 'orb':
           burst(g.s + 1, x, g.y + 1, 8, C.teal, 5, 0.4, 0.4, 3, g.v * 0.8);
-          if (!isDemo) { audio.sfx('orb', e.chain); if (e.full) toast(isTouch ? 'BOOST READY  ·  two-finger tap' : 'BOOST READY  ·  SHIFT / B'); }
+          if (!isDemo) { audio.sfx('orb', e.chain); if (e.full) toast(isTouch ? 'BOOST READY  ·  tap the BOOST button' : 'BOOST READY  ·  SHIFT / B'); }
           break;
         case 'gate':
           var gm = live[OT.GATE * 1e7 + e.id]; if (gm) gm.userData.flash = 1;
@@ -2230,6 +2279,7 @@ body.rm #banner.show{animation:none}
     elFuelS.textContent = g.fuel > 0 ? g.fuel.toFixed(1) + 's' : '';
     elBoostW.classList.toggle('full', g.fuel >= 1 && !g.boostOn);
     elBoostW.classList.toggle('active', g.boostOn);
+    tBoost.classList.toggle('on', g.boostOn); tBoost.classList.toggle('ready', !g.boostOn && g.fuel >= 1); tBoost.classList.toggle('empty', !g.boostOn && g.fuel < 0.05);
     var gp = Math.max(0, Math.min(1, g.gap() / 260));
     elGap.style.width = (gp * 100) + '%';
     elGapW.classList.toggle('danger', gp < 0.35);

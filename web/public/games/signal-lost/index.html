@@ -35,7 +35,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 #title .line{margin:.9em 0 0;font-family:var(--mono);color:var(--teal);font-size:13px;letter-spacing:.08em;min-height:1.3em}
 #title .menu{margin-top:2vh;width:min(520px,92vw);display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 #title .menu .btn{margin:.3em 0}
-@media (max-width:520px){#title .menu{grid-template-columns:1fr}}
+/* Phones held upright: a smaller title starting higher, the menu in two compact columns so all of it fits, and the footer clear of the PlayChain button. */
+@media (max-width:520px){#title{top:40%}#title h1{font-size:40px;margin-top:1.5vh}#title .tag{font-size:13px}#title .line{font-size:11px;letter-spacing:.04em}#title .menu{gap:0 8px;margin-top:1.4vh}#title .menu .btn{padding:.6em .75em;font-size:14px;margin:.22em 0}#title .menu .btn small{font-size:11px}#title .kick{display:none}#title .credit{bottom:calc(10px + env(safe-area-inset-bottom))}}
+@media (max-width:340px){#title .menu{grid-template-columns:1fr}}
 #title .credit{position:absolute;bottom:10px;right:16px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em}
 #title .kick{position:absolute;bottom:10px;left:16px;font-family:var(--mono);font-size:11px;color:var(--dimteal);letter-spacing:.14em;font-weight:700}
 /* hud */
@@ -377,7 +379,9 @@ var Audio = (function () {
   function init() {
     if (ctx) { if (ctx.state === 'suspended' && !muted) ctx.resume(); return; }
     var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-    try { ctx = new AC(); } catch (e) { return; }
+    // Phones: a steadier (slightly later) audio buffer, so the music doesn't crackle.
+    var coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    try { ctx = new AC(coarse ? { latencyHint: 'playback' } : undefined); } catch (e) { return; }
     master = ctx.createGain(); master.gain.value = 0.85;
     var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 8; comp.ratio.value = 4; comp.attack.value = 0.005; comp.release.value = 0.2;
     var lim = ctx.createDynamicsCompressor(); lim.threshold.value = -2; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.08;

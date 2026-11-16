@@ -28,20 +28,33 @@ function cornerStyle(c: Corner): React.CSSProperties {
   return { ...v, ...h };
 }
 
-/** True on a phone held upright (portrait), live as it turns. */
-function useUprightPhone(): boolean {
-  const query = "(orientation: portrait) and (pointer: coarse) and (max-width: 599px)";
-  const [on, setOn] = useState(() => typeof window !== "undefined" && window.matchMedia?.(query).matches && isPhone());
+/** How a phone is being held right now ("portrait" or "landscape"), or null when it isn't a phone. */
+function usePhoneHold(): "portrait" | "landscape" | null {
+  const read = (): "portrait" | "landscape" | null => {
+    if (typeof window === "undefined" || !isPhone()) return null;
+    return window.matchMedia?.("(orientation: portrait)").matches ? "portrait" : "landscape";
+  };
+  const [hold, setHold] = useState(read);
   useEffect(() => {
-    const mq = window.matchMedia?.(query);
+    const mq = window.matchMedia?.("(orientation: portrait)");
     if (!mq) return;
-    const update = () => setOn(mq.matches && isPhone());
+    const update = () => setHold(read());
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
   }, []);
-  return on;
+  return hold;
 }
+
+/**
+ * Turning the player when the phone is held the "wrong" way for the game: +90 degrees shows a
+ * sideways game on an upright phone, -90 degrees shows an upright game on a sideways phone.
+ */
+const TURN_CLASS = {
+  0: "fixed inset-0 z-40 bg-black",
+  90: "fixed left-[100vw] top-0 z-40 h-[100vw] w-[100dvh] origin-top-left rotate-90 bg-black",
+  [-90]: "fixed left-0 top-[100dvh] z-40 h-[100vw] w-[100dvh] origin-top-left -rotate-90 bg-black",
+} as const;
 
 function FullscreenIcon({ exit }: { exit: boolean }) {
   return (
@@ -93,14 +106,18 @@ export default function PlayerScreen() {
   const [ready, setReady] = useState(false);
   const best = useProgress((s) => bestScore(s.runs[game?.meta?.slug ?? ""]));
 
-  // Games are played sideways on phones. Ask the browser to lock landscape (Android, while
-  // fullscreen); where it can't (iPhones, or before fullscreen), a phone held upright gets the
-  // whole player turned 90 degrees, so turning the phone shows the game the right way up.
-  const sideways = useUprightPhone();
+  // On phones each game is held the way it plays best: sideways by default, upright for games
+  // whose meta.json says "orientation": "portrait" (Signal Lost). Ask the browser to lock that
+  // (Android, while fullscreen); where it can't (iPhones, or before fullscreen), a phone held the
+  // other way gets the whole player turned 90 degrees, so turning the phone shows it right.
+  const wants = game?.meta?.orientation ?? "landscape";
+  const hold = usePhoneHold();
+  const turn: 0 | 90 | -90 = hold == null || hold === wants ? 0 : wants === "landscape" ? 90 : -90;
+  const sideways = turn !== 0;
   useEffect(() => {
-    setPhoneOrientation("landscape");
+    setPhoneOrientation(wants);
     return () => setPhoneOrientation("portrait");
-  }, []);
+  }, [wants]);
   const [slow, setSlow] = useState(false);
   useEffect(() => playSfx("launch"), []);
   const [attempt, setAttempt] = useState(0);
@@ -249,7 +266,8 @@ export default function PlayerScreen() {
 
   // Drag the button to another corner; a press without movement opens the menu. When the game is
   // turned sideways, screen positions are turned the same way so the button follows the finger.
-  const at = (e: ReactPointerEvent<HTMLButtonElement>) => (sideways ? { x: e.clientY, y: window.innerWidth - e.clientX } : { x: e.clientX, y: e.clientY });
+  const at = (e: ReactPointerEvent<HTMLButtonElement>) =>
+    turn === 90 ? { x: e.clientY, y: window.innerWidth - e.clientX } : turn === -90 ? { x: window.innerHeight - e.clientY, y: e.clientX } : { x: e.clientX, y: e.clientY };
   const onPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
     dragStart.current = { ...at(e), moved: false };
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -332,8 +350,8 @@ export default function PlayerScreen() {
   return (
     <div
       ref={root}
-      data-sideways={sideways ? "" : undefined}
-      className={sideways ? "fixed left-[100vw] top-0 z-40 h-[100vw] w-[100dvh] origin-top-left rotate-90 bg-black" : "fixed inset-0 z-40 bg-black"}
+      data-turn={turn || undefined}
+      className={TURN_CLASS[turn]}
     >
       <iframe
         ref={frame}

@@ -78,7 +78,7 @@ export default function GameScreen() {
             )}
             {rank > 0 && <span className="rounded-md bg-accent/15 px-2.5 py-1 text-sm font-bold text-accent-text">#{rank} today</span>}
           </div>
-          <h1 className="font-display text-[clamp(2rem,3vw,3.2rem)] font-extrabold leading-tight">{m.name}</h1>
+          <h1 className="font-display text-[clamp(1.6rem,3vw,3.2rem)] font-extrabold leading-tight">{m.name}</h1>
           <p className="text-lg text-fg/85">{m.tagline}</p>
           <div className="flex flex-wrap gap-3">
             <Button variant="primary" icon="play" size="lg" data-nav-default="" onClick={() => { enterGameFullscreen(); navigate(`/play/${game.key}`); }}>

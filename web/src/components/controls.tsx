@@ -24,7 +24,8 @@ export function Button({
   icon?: IconName;
   size?: "md" | "lg";
 }) {
-  const sizing = size === "lg" ? "px-7 py-3.5" : "px-5 py-2.5";
+  // Large buttons are a little smaller on phones, where they would crowd the screen.
+  const sizing = size === "lg" ? "px-5 py-2.5 sm:px-7 sm:py-3.5" : "px-4 py-2 sm:px-5 sm:py-2.5";
   return (
     <button
       type="button"

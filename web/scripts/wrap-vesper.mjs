@@ -35,11 +35,17 @@ const BRIDGE = `<script>(() => {
   };
   if (inFrame && !real) Object.defineProperty(window, "localStorage", { value: shim, configurable: true });
 
+  // Fullscreen belongs to PlayChain: the game going fullscreen by itself would hide the PlayChain
+  // button. Its own request (made on phones when you press Begin) quietly does nothing here.
+  if (inFrame) Element.prototype.requestFullscreen = function () { return Promise.resolve(); };
+
   // Sound: track every AudioContext so the console can pause or mute it.
   const ctxs = [];
   const Real = window.AudioContext || window.webkitAudioContext;
   if (Real) {
-    const Tracked = function (...a) { const c = new Real(...a); ctxs.push(c); return c; };
+    // Phones get a steadier (slightly later) audio buffer, so the sound doesn't crackle.
+    const coarse = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+    const Tracked = function (...a) { const c = new Real(...(a.length || !coarse ? a : [{ latencyHint: "playback" }])); ctxs.push(c); return c; };
     Tracked.prototype = Real.prototype;
     window.AudioContext = Tracked;
   }

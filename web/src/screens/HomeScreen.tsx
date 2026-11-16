@@ -44,7 +44,7 @@ function SpotlightHero({ game, epoch, votes, takeover }: { game: GameEntry; epoc
   return (
     <section
       aria-label="Spotlight"
-      className={`relative mb-8 flex h-[31rem] items-end overflow-hidden rounded-2xl border border-line bg-black sm:h-[clamp(24rem,46vh,31rem)] ${takeover ? "spotlight-takeover" : ""}`}
+      className={`relative mb-6 flex min-h-[23rem] items-end sm:mb-8 overflow-hidden rounded-2xl border border-line bg-black sm:h-[clamp(24rem,46vh,31rem)] ${takeover ? "spotlight-takeover" : ""}`}
     >
       <div key={`art-${game.key}`} aria-hidden="true" className="hero-layer absolute inset-0 opacity-100">
         <img src={src} alt="" className="absolute inset-0 size-full scale-110 object-cover opacity-40 blur-2xl" />
@@ -57,7 +57,7 @@ function SpotlightHero({ game, epoch, votes, takeover }: { game: GameEntry; epoc
       </div>
       <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent sm:h-1/3 sm:from-black/70" />
-      <div key={`text-${game.key}`} className="hero-text relative flex max-w-2xl flex-col gap-4 p-6 sm:p-10">
+      <div key={`text-${game.key}`} className="hero-text relative flex max-w-2xl flex-col gap-3 p-5 sm:gap-4 sm:p-10">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-md bg-accent px-2.5 py-1 text-sm font-extrabold uppercase tracking-wide text-on-accent">
             <Icon name="trophy" className="size-[1.1em]" /> {label}
@@ -69,7 +69,7 @@ function SpotlightHero({ game, epoch, votes, takeover }: { game: GameEntry; epoc
           )}
           <span className="rounded-md bg-white/12 px-2.5 py-1 text-sm font-bold uppercase tracking-wide backdrop-blur">{m.genre}</span>
         </div>
-        <h1 className="glow-text font-display text-[clamp(2.2rem,4.2vw,4.2rem)] font-extrabold leading-[1.02] tracking-tight">{m.name}</h1>
+        <h1 className="glow-text font-display text-[clamp(1.75rem,4.2vw,4.2rem)] font-extrabold leading-[1.02] tracking-tight">{m.name}</h1>
         <p className="line-clamp-2 text-base text-fg/85 sm:text-lg">{m.tagline}</p>
         <p className="text-sm text-muted">
           by {m.developer.name}
@@ -233,7 +233,7 @@ export default function HomeScreen() {
         </div>
       )}
       {mode === "demo" && (
-        <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3 text-sm">
+        <div className="mb-5 flex flex-col items-start gap-2 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3 text-[13px] sm:flex-row sm:items-center sm:gap-4 sm:text-sm">
           <span className="min-w-0 flex-1">
             <b>Demo mode.</b> The arcade contract isn't deployed yet, so everything here runs in your browser with test $WIF: connect the
             demo wallet, vote, and watch the burn, the developer payout and the Live Race update. Nothing touches a real wallet.
@@ -312,9 +312,9 @@ export default function HomeScreen() {
             </button>
           ))}
         </div>
-        <div className="no-scrollbar -mx-2 flex gap-4 overflow-x-auto px-2 pb-6 pt-4 sm:gap-5">
+        <div className="no-scrollbar flex flex-col gap-2.5 pb-6 pt-4 sm:-mx-2 sm:flex-row sm:gap-5 sm:overflow-x-auto sm:px-2">
           {visible.length === 0 && (
-            <div className="flex w-[15rem] shrink-0 items-center justify-center rounded-xl border border-dashed border-line-strong p-6 text-center text-muted sm:w-[17.5rem]">
+            <div className="flex w-full shrink-0 items-center justify-center rounded-xl border border-dashed border-line-strong p-6 text-center text-muted sm:w-[17.5rem]">
               No games match. Try another search or genre.
             </div>
           )}
@@ -331,11 +331,13 @@ export default function HomeScreen() {
           <button
             type="button"
             onClick={() => navigate("/developers")}
-            className="tile flex w-[15rem] shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line-strong p-6 text-center text-muted sm:w-[17.5rem]"
+            className="tile flex w-full shrink-0 flex-row items-center justify-start gap-3 rounded-xl border border-dashed border-line-strong p-3 text-left text-muted sm:w-[17.5rem] sm:flex-col sm:justify-center sm:gap-2 sm:p-6 sm:text-center"
           >
-            <Icon name="plus" className="size-8" />
-            <span className="font-bold text-fg">List your game</span>
-            <span className="text-sm">Earn 40% of every vote it gets</span>
+            <Icon name="plus" className="size-6 shrink-0 sm:size-8" />
+            <span className="flex flex-col sm:items-center sm:gap-2">
+              <span className="font-bold text-fg">List your game</span>
+              <span className="text-xs sm:text-sm">Earn 40% of every vote it gets</span>
+            </span>
           </button>
         </div>
       </section>

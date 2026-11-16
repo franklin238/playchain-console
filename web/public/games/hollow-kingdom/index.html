@@ -219,6 +219,15 @@ svg.medal.off{filter:grayscale(1) brightness(.55);opacity:.55}
   #banner{font-size:2rem}
 }
 @media (max-width:420px){ #tr button{padding:.3rem .45rem} #clock{order:3} }
+/* Phones held sideways (short screens): the whole interface at about 70% of its desktop size, so
+   the castle stays in view and every panel still fits. The tutorial bubble is placed by script, so
+   it is made smaller rather than zoomed. */
+@media (max-height:500px){
+  #hud{zoom:.7}
+  #title,#modal{zoom:.8}
+  #tip{max-width:13rem;font-size:.74rem;padding:.45rem .6rem}
+  #banner{font-size:1.8rem}
+}
 </style>
 </head>
 <body>
@@ -1173,7 +1182,9 @@ const Audio = (() => {
     if (ctx) return;
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
-    try { ctx = new AC(); } catch (e) { ctx = null; return; }
+    // Phones: a steadier (slightly later) audio buffer, so busy nights don't crackle.
+    const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    try { ctx = new AC(coarse ? { latencyHint: 'playback' } : undefined); } catch (e) { ctx = null; return; }
     master = ctx.createGain(); master.gain.value = vols.master;
     // glue compressor, then a limiter so stacked hits can never clip the output
     const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3; comp.knee.value = 8; comp.attack.value = 0.02; comp.release.value = 0.3;

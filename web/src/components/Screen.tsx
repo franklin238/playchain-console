@@ -61,7 +61,7 @@ export function Screen({
       {title && (
         <header className="mb-8 flex flex-wrap items-end justify-between gap-5">
           <div className="max-w-3xl">
-            <h1 className="font-display text-[clamp(1.9rem,2.8vw,3.25rem)] font-extrabold leading-[1.1] tracking-tight">
+            <h1 className="font-display text-[clamp(1.55rem,2.8vw,3.25rem)] font-extrabold leading-[1.1] tracking-tight">
               {title}
             </h1>
             {subtitle && <p className="mt-3 text-base text-fg/80">{subtitle}</p>}
