@@ -48,6 +48,14 @@ function ApprovalRequest() {
         <input
           value={site}
           onChange={(e) => setSite(e.target.value)}
+          // The phone keyboard's Go key sends the request, the same as the Ask on X button.
+          enterKeyHint="go"
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            e.currentTarget.blur();
+            if (origin && !approved) window.open(approvalUrl(origin), "_blank", "noreferrer");
+          }}
           placeholder="https://your-site.com"
           aria-label="Your game's website"
           className="min-w-0 flex-1 rounded-xl border border-line-strong bg-bg-2 px-4 py-2.5 font-mono text-sm outline-none focus:border-accent"
@@ -173,6 +181,14 @@ function ListForm() {
             onChange={(e) => {
               setUri(e.target.value);
               setPhase("idle");
+            }}
+            // Go closes the phone keyboard; the preview below updates as you type.
+            enterKeyHint="done"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                e.currentTarget.blur();
+              }
             }}
             placeholder="https://your-site/games/my-game/meta.json"
             disabled={busy}
@@ -318,6 +334,13 @@ function MyGames() {
               <input
                 value={uri}
                 onChange={(e) => setUri(e.target.value)}
+                enterKeyHint="done"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }
+                }}
                 className="rounded-xl border border-line-strong bg-bg-2 px-4 py-2.5 font-mono text-sm outline-none focus:border-accent"
               />
               {check && !check.ok && <p className="text-sm text-danger">{check.errors.join(" ")}</p>}

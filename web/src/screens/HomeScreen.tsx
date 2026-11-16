@@ -284,6 +284,14 @@ export default function HomeScreen() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              // The list filters as you type, so the keyboard's Search key just closes the keyboard.
+              enterKeyHint="search"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                }
+              }}
               placeholder="Search games"
               aria-label="Search games"
               className="w-40 rounded-lg border border-line bg-bg-2 px-3 py-1.5 text-sm sm:w-52"

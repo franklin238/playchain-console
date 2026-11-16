@@ -250,6 +250,15 @@ export function VoteSheet() {
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     inputMode="decimal"
+                    // The phone keyboard's Go (or Enter) key votes, the same as the Approve and vote button.
+                    enterKeyHint="go"
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter") return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      e.currentTarget.blur();
+                      if (!busy && amount && !belowMin && !tooMuch) void submit();
+                    }}
                     disabled={busy}
                     data-nav-default=""
                     aria-label="Amount of WIF"
