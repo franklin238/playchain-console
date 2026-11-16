@@ -15,7 +15,7 @@ Never paste a private key into a chat, a file or a website. You type it once int
 ## 1. Get the code
 
 ```bash
-git clone https://github.com/franklin238/PLAYCHAIN..git playchain
+git clone https://github.com/franklin238/playchain-console.git playchain
 cd playchain
 git submodule update --init --recursive
 ```
@@ -87,7 +87,7 @@ Verified source lets players read the contract before they vote.
    - `VITE_ARCADE_ADDRESS` = the address from step 6
    - `VITE_DEPLOY_BLOCK` = the block from step 6
    - `VITE_SITE_ORIGIN` = your Vercel URL, for example `https://playchain-console.vercel.app`
-   - `VITE_REPO_URL` = `https://github.com/franklin238/PLAYCHAIN.` (the name ends in a full stop)
+   - `VITE_REPO_URL` = `https://github.com/franklin238/playchain-console`
 2. Deployments → latest → **Redeploy**.
 3. Open the site with no wallet: the shelf, Spotlight and games must load, and the demo-mode notice must be gone.
 
