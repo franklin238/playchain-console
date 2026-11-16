@@ -44,7 +44,7 @@ export const useUi = create<UiState>()((set, get) => ({
     set({ notices: [{ ...n, id: nextId(), time: Date.now(), read: false }, ...get().notices].slice(0, 50) }),
   markAllRead: () => set({ notices: get().notices.map((n) => ({ ...n, read: true })) }),
   toast: (t) => {
-    playSfx(t.tone === "success" || t.tone === "achievement" ? "success" : t.tone === "danger" ? "error" : "toast");
+    playSfx(t.tone === "achievement" ? "unlock" : t.tone === "success" ? "success" : t.tone === "danger" ? "error" : "toast");
     const id = nextId();
     set({ toasts: [...get().toasts, { ...t, id }].slice(-3) });
     window.setTimeout(() => get().dismissToast(id), 4500);

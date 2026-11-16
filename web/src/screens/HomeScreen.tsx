@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { playSfx } from "../audio/engine";
 import { useNavigate } from "react-router";
 import { resetDemo } from "../arcade/demo";
 import { hasVoting, refreshArcade, shelfGames, useArcade, type GameEntry } from "../arcade/store";
@@ -15,8 +16,12 @@ import { useAutoFocus } from "../input/hooks";
 import { useSheets } from "../stores/sheets";
 import { useWallpaper } from "../stores/wallpaper";
 import { formatWif, formatWifShort } from "../web3/tokens";
+import { readJson, writeJson } from "../lib/storage";
 
-function SpotlightHero({ game, epoch, votes }: { game: GameEntry; epoch: bigint | null; votes: bigint }) {
+/** The Spotlight game this browser last showed ("demo:3"), so a change can be celebrated once. */
+const SEEN_KEY = "pc.seenSpotlight";
+
+function SpotlightHero({ game, epoch, votes, takeover }: { game: GameEntry; epoch: bigint | null; votes: bigint; takeover: boolean }) {
   const navigate = useNavigate();
   const openVote = useSheets((s) => s.openVote);
   const decimals = useArcade((s) => s.decimals);
@@ -38,9 +43,9 @@ function SpotlightHero({ game, epoch, votes }: { game: GameEntry; epoch: bigint 
   return (
     <section
       aria-label="Spotlight"
-      className="relative mb-8 flex h-[31rem] items-end overflow-hidden rounded-2xl border border-line bg-black sm:h-[clamp(24rem,46vh,31rem)]"
+      className={`relative mb-8 flex h-[31rem] items-end overflow-hidden rounded-2xl border border-line bg-black sm:h-[clamp(24rem,46vh,31rem)] ${takeover ? "spotlight-takeover" : ""}`}
     >
-      <div key={game.key} aria-hidden="true" className="hero-layer absolute inset-0 opacity-100">
+      <div key={`art-${game.key}`} aria-hidden="true" className="hero-layer absolute inset-0 opacity-100">
         <img src={src} alt="" className="absolute inset-0 size-full scale-110 object-cover opacity-40 blur-2xl" />
         <img
           src={src}
@@ -51,11 +56,16 @@ function SpotlightHero({ game, epoch, votes }: { game: GameEntry; epoch: bigint 
       </div>
       <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent sm:h-1/3 sm:from-black/70" />
-      <div key={game.key} className="hero-text relative flex max-w-2xl flex-col gap-4 p-6 sm:p-10">
+      <div key={`text-${game.key}`} className="hero-text relative flex max-w-2xl flex-col gap-4 p-6 sm:p-10">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-md bg-accent px-2.5 py-1 text-sm font-extrabold uppercase tracking-wide text-on-accent">
             <Icon name="trophy" className="size-[1.1em]" /> {label}
           </span>
+          {takeover && (
+            <span role="status" className="takeover-badge rounded-md bg-accent-2 px-2.5 py-1 text-sm font-extrabold uppercase tracking-wide text-black">
+              New leader!
+            </span>
+          )}
           <span className="rounded-md bg-white/12 px-2.5 py-1 text-sm font-bold uppercase tracking-wide backdrop-blur">{m.genre}</span>
         </div>
         <h1 className="glow-text font-display text-[clamp(2.2rem,4.2vw,4.2rem)] font-extrabold leading-[1.02] tracking-tight">{m.name}</h1>
@@ -186,6 +196,26 @@ export default function HomeScreen() {
   // until anyone votes today). Hovering or focusing shelf tiles never changes it.
   const hero = games.find((g) => g.key === spotlight?.key && g.meta) ?? shelf[0];
 
+  // Takeover: when a different game takes the Spotlight (votes, never hovering), celebrate it
+  // once with a fanfare and a flash. That includes a change that happened while you were away,
+  // even since your last visit, but not the very first Spotlight this browser ever sees.
+  const [takeover, setTakeover] = useState(false);
+  const spotKey = hasVoting(mode) && spotlight?.key && hero?.key === spotlight.key ? `${mode}:${spotlight.key}` : null;
+  useEffect(() => {
+    if (!spotKey) return;
+    const seen = readJson<string | null>(SEEN_KEY, null);
+    if (seen !== spotKey) writeJson(SEEN_KEY, spotKey);
+    if (seen != null && seen !== spotKey && seen.split(":")[0] === spotKey.split(":")[0]) {
+      setTakeover(true);
+      playSfx("fanfare");
+    }
+  }, [spotKey]);
+  useEffect(() => {
+    if (!takeover) return;
+    const t = window.setTimeout(() => setTakeover(false), 4000);
+    return () => window.clearTimeout(t);
+  }, [takeover]);
+
   useEffect(() => {
     document.title = "PlayChain · play games, vote with $WIF";
   }, []);
@@ -228,6 +258,7 @@ export default function HomeScreen() {
           game={hero}
           epoch={spotlight?.key === hero.key ? spotlight.epoch : null}
           votes={spotlight?.votes ?? 0n}
+          takeover={takeover}
         />
       )}
 

@@ -49,6 +49,8 @@ export const consoleConfig = {
 
   links: {
     repo: env.VITE_REPO_URL || "https://github.com/franklin238/playchain-console",
+    /** The console owner on X: developers ask here to have their website approved. */
+    ownerX: "gamersteeve",
   },
 } as const;
 

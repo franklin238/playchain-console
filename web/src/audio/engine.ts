@@ -359,7 +359,7 @@ export function duckMusic(on: boolean) {
 // ---- sound effects ----
 export type Sfx =
   | "move" | "hover" | "select" | "back" | "open" | "close" | "page" | "swap"
-  | "success" | "burn" | "launch" | "toast" | "error" | "unlock";
+  | "success" | "burn" | "launch" | "toast" | "error" | "unlock" | "fanfare";
 
 const lastAt: Partial<Record<Sfx, number>> = {};
 const GAP: Partial<Record<Sfx, number>> = { hover: 0.035, move: 0.03, select: 0.04, page: 0.12, swap: 0.08, toast: 0.1 };
@@ -418,6 +418,12 @@ export function playSfx(kind: Sfx, pitch = 0.5) {
       break;
     }
     case "unlock": [0, 2, 4, 7].forEach((i, k) => blip(PENT[i] + 12, k * 0.07, 0.24, 0.45, "triangle")); break;
+    case "fanfare": { // a new game takes the Spotlight: brass-like rise, then a held chord
+      [0, 2, 4].forEach((i, k) => blip(PENT[i] + 12, k * 0.09, 0.22, 0.2, "sawtooth"));
+      [4, 7, 9].forEach((i) => blip(PENT[i] + 12, 0.3, 0.16, 0.9, "square"));
+      blip(PENT[0], 0.3, 0.3, 0.9, "triangle");
+      break;
+    }
   }
 }
 

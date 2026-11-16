@@ -20,6 +20,35 @@ function syncEscLock() {
 }
 if (typeof document !== "undefined") document.addEventListener("fullscreenchange", syncEscLock);
 
+/*
+ * Phones: the console is used upright (portrait) and games are played sideways (landscape).
+ * Browsers only let a page lock the screen's direction while it is fullscreen, and not at all
+ * on iPhones, so this is best effort. The game player also turns the game itself sideways when
+ * the lock isn't possible (see PlayerScreen).
+ */
+type Orientation = "portrait" | "landscape";
+type LockableOrientation = ScreenOrientation & { lock?: (o: string) => Promise<void> };
+let wantedOrientation: Orientation = "portrait";
+/** A phone-sized touch screen (not a tablet or a laptop with a touch screen). */
+export function isPhone(): boolean {
+  try {
+    return window.matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) < 600;
+  } catch {
+    return false;
+  }
+}
+function applyOrientation() {
+  const so = (typeof screen !== "undefined" ? screen.orientation : undefined) as LockableOrientation | undefined;
+  if (!so?.lock || !isFull() || !isPhone()) return;
+  void so.lock(wantedOrientation).catch(() => {});
+}
+/** Ask for upright menus or sideways games. Takes effect now if fullscreen, or when it becomes so. */
+export function setPhoneOrientation(o: Orientation) {
+  wantedOrientation = o;
+  applyOrientation();
+}
+if (typeof document !== "undefined") document.addEventListener("fullscreenchange", () => isFull() && applyOrientation());
+
 /** Live fullscreen state for buttons. */
 export function useIsFullscreen(): boolean {
   const [full, setFull] = useState(isFull);

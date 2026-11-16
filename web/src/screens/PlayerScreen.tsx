@@ -8,8 +8,9 @@ import { GAME_ALLOW, GAME_SANDBOX, loadGameSave, parseGameMessage, storeGameSave
 import { isAllowedPlayUrl, localize } from "../games/meta";
 import { useInputLayer } from "../input/hooks";
 import { playSfx } from "../audio/engine";
-import { enterFullscreen, leaveGameFullscreen } from "../components/FullscreenControl";
+import { enterFullscreen, isPhone, leaveGameFullscreen, setPhoneOrientation } from "../components/FullscreenControl";
 import { readJson, writeJson } from "../lib/storage";
+import { bestScore, useProgress } from "../stores/progress";
 import { useSettings } from "../stores/settings";
 import { useSheets } from "../stores/sheets";
 import { useUi } from "../stores/ui";
@@ -25,6 +26,21 @@ function cornerStyle(c: Corner): React.CSSProperties {
   const v = c[0] === "t" ? { top: `calc(env(safe-area-inset-top) + ${EDGE}px)` } : { bottom: `calc(env(safe-area-inset-bottom) + ${EDGE}px)` };
   const h = c[1] === "l" ? { left: `calc(env(safe-area-inset-left) + ${EDGE}px)` } : { right: `calc(env(safe-area-inset-right) + ${EDGE}px)` };
   return { ...v, ...h };
+}
+
+/** True on a phone held upright (portrait), live as it turns. */
+function useUprightPhone(): boolean {
+  const query = "(orientation: portrait) and (pointer: coarse) and (max-width: 599px)";
+  const [on, setOn] = useState(() => typeof window !== "undefined" && window.matchMedia?.(query).matches && isPhone());
+  useEffect(() => {
+    const mq = window.matchMedia?.(query);
+    if (!mq) return;
+    const update = () => setOn(mq.matches && isPhone());
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return on;
 }
 
 function FullscreenIcon({ exit }: { exit: boolean }) {
@@ -71,7 +87,20 @@ export default function PlayerScreen() {
   const frame = useRef<HTMLIFrameElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [score, setScore] = useState<number | null>(null);
+  // One play session: its best score is one entry in the game's high scores.
+  const session = useRef(`${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`);
+  const counted = useRef(false);
   const [ready, setReady] = useState(false);
+  const best = useProgress((s) => bestScore(s.runs[game?.meta?.slug ?? ""]));
+
+  // Games are played sideways on phones. Ask the browser to lock landscape (Android, while
+  // fullscreen); where it can't (iPhones, or before fullscreen), a phone held upright gets the
+  // whole player turned 90 degrees, so turning the phone shows the game the right way up.
+  const sideways = useUprightPhone();
+  useEffect(() => {
+    setPhoneOrientation("landscape");
+    return () => setPhoneOrientation("portrait");
+  }, []);
   const [slow, setSlow] = useState(false);
   useEffect(() => playSfx("launch"), []);
   const [attempt, setAttempt] = useState(0);
@@ -118,9 +147,14 @@ export default function PlayerScreen() {
       switch (msg.type) {
         case "playchain:ready":
           setReady(true);
+          if (!counted.current) {
+            counted.current = true;
+            useProgress.getState().recordPlay(slug);
+          }
           break;
         case "playchain:score":
           setScore(msg.score);
+          useProgress.getState().recordScore(slug, session.current, msg.score);
           break;
         case "playchain:exit":
           // The player chose Quit inside the game, so no confirmation here.
@@ -213,24 +247,30 @@ export default function PlayerScreen() {
     90,
   );
 
-  // Drag the button to another corner; a press without movement opens the menu.
+  // Drag the button to another corner; a press without movement opens the menu. When the game is
+  // turned sideways, screen positions are turned the same way so the button follows the finger.
+  const at = (e: ReactPointerEvent<HTMLButtonElement>) => (sideways ? { x: e.clientY, y: window.innerWidth - e.clientX } : { x: e.clientX, y: e.clientY });
   const onPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    dragStart.current = { x: e.clientX, y: e.clientY, moved: false };
+    dragStart.current = { ...at(e), moved: false };
     e.currentTarget.setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
     const s = dragStart.current;
     if (!s) return;
-    if (!s.moved && Math.hypot(e.clientX - s.x, e.clientY - s.y) < 10) return;
+    const p = at(e);
+    if (!s.moved && Math.hypot(p.x - s.x, p.y - s.y) < 10) return;
     s.moved = true;
-    setDrag({ x: e.clientX, y: e.clientY });
+    setDrag(p);
   };
   const onPointerUp = (e: ReactPointerEvent<HTMLButtonElement>) => {
     const s = dragStart.current;
     dragStart.current = null;
     if (!s) return;
     if (s.moved) {
-      const c: Corner = `${e.clientY < window.innerHeight / 2 ? "t" : "b"}${e.clientX < window.innerWidth / 2 ? "l" : "r"}`;
+      const p = at(e);
+      const w = sideways ? window.innerHeight : window.innerWidth;
+      const h = sideways ? window.innerWidth : window.innerHeight;
+      const c: Corner = `${p.y < h / 2 ? "t" : "b"}${p.x < w / 2 ? "l" : "r"}`;
       setCorner(c);
       writeJson(CORNER_KEY, c);
       setDrag(null);
@@ -290,7 +330,11 @@ export default function PlayerScreen() {
   };
 
   return (
-    <div ref={root} className="fixed inset-0 z-40 bg-black">
+    <div
+      ref={root}
+      data-sideways={sideways ? "" : undefined}
+      className={sideways ? "fixed left-[100vw] top-0 z-40 h-[100vw] w-[100dvh] origin-top-left rotate-90 bg-black" : "fixed inset-0 z-40 bg-black"}
+    >
       <iframe
         ref={frame}
         src={playUrl}
@@ -372,13 +416,14 @@ export default function PlayerScreen() {
               closeMenu();
             }
           }}
-          className="fade-in absolute z-10 flex max-h-[calc(100dvh-6rem)] w-[min(19rem,calc(100vw-1.5rem))] flex-col overflow-y-auto rounded-2xl border border-line bg-bg-2/95 p-2 shadow-2xl backdrop-blur-md"
+          className={`fade-in absolute z-10 flex ${sideways ? "max-h-[calc(100vw-6rem)] w-[min(19rem,calc(100dvh-1.5rem))]" : "max-h-[calc(100dvh-6rem)] w-[min(19rem,calc(100vw-1.5rem))]"} flex-col overflow-y-auto rounded-2xl border border-line bg-bg-2/95 p-2 shadow-2xl backdrop-blur-md`}
         >
           <div className="flex items-start gap-2 px-3 pb-2 pt-1">
             <div className="min-w-0 flex-1">
               <div className="truncate font-display font-extrabold">{m.name}</div>
               <div className="text-sm text-muted">
                 Paused{score != null && <> · Score <span className="tabular-nums text-accent-text">{score.toLocaleString("en-US")}</span></>}
+                {best != null && <> · Best <span className="tabular-nums text-fg">{best.toLocaleString("en-US")}</span></>}
               </div>
             </div>
             <button type="button" onClick={closeMenu} aria-label="Close menu" className="grid size-[44px] shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-fg">

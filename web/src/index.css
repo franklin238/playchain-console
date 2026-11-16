@@ -194,6 +194,39 @@ html[data-motion="reduce"] .boot-letter {
   to { opacity: 1; transform: none; }
 }
 
+/* ---- Spotlight takeover: a new leader gets a flash, a glowing ring and a "New leader" badge. */
+.spotlight-takeover {
+  animation: takeover-ring 2.4s var(--ease-console) both;
+}
+.spotlight-takeover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 30% 60%, color-mix(in srgb, var(--color-accent) 55%, transparent), transparent 65%);
+  animation: takeover-flash 1.4s ease-out both;
+}
+.takeover-badge {
+  animation: takeover-pop 600ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+@keyframes takeover-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 80%, transparent); border-color: var(--color-accent); }
+  35% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--color-accent) 25%, transparent), 0 0 60px 6px color-mix(in srgb, var(--color-accent) 35%, transparent); border-color: var(--color-accent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes takeover-flash {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes takeover-pop {
+  from { opacity: 0; transform: scale(0.6) rotate(-6deg); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spotlight-takeover, .spotlight-takeover::after, .takeover-badge { animation: none; }
+}
+
 /* ---- Flywheel: a slow pulse on the $WIF core shows the burn loop. */
 .flywheel-core {
   transform-box: fill-box;

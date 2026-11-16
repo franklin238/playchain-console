@@ -17,6 +17,8 @@ import { restoreWallet } from "./web3/wallet";
 import { duckMusic, playSfx } from "./audio/engine";
 import { FullscreenControl } from "./components/FullscreenControl";
 import { applyTheme } from "./theme/themes";
+import { startAnalytics } from "./lib/analytics";
+import { watchStyleChanges } from "./stores/progress";
 
 const GameScreen = lazy(() => import("./screens/GameScreen"));
 const PlayerScreen = lazy(() => import("./screens/PlayerScreen"));
@@ -25,6 +27,7 @@ const ActivityScreen = lazy(() => import("./screens/ActivityScreen"));
 const AboutScreen = lazy(() => import("./screens/AboutScreen"));
 const SettingsScreen = lazy(() => import("./screens/SettingsScreen"));
 const ControllerTestScreen = lazy(() => import("./screens/ControllerTestScreen"));
+const AchievementsScreen = lazy(() => import("./screens/AchievementsScreen"));
 
 /** A page that throws shows a way out instead of a blank screen. */
 class PageBoundary extends Component<{ children: ReactNode; resetKey: string }, { failed: boolean }> {
@@ -97,6 +100,8 @@ function Shell() {
   useEffect(() => {
     void useWallpaper.getState().load();
     void restoreWallet();
+    watchStyleChanges();
+    startAnalytics();
     return startArcadePolling();
   }, []);
 
@@ -140,6 +145,7 @@ function Shell() {
           <Route path="/activity" element={<ActivityScreen />} />
           <Route path="/about" element={<AboutScreen />} />
           <Route path="/settings" element={<SettingsScreen />} />
+          <Route path="/achievements" element={<AchievementsScreen />} />
           <Route path="/settings/controller" element={<ControllerTestScreen />} />
           <Route path="*" element={<HomeScreen />} />
         </Routes>

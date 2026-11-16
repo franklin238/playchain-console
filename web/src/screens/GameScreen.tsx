@@ -7,9 +7,41 @@ import { enterGameFullscreen } from "../components/FullscreenControl";
 import { Screen } from "../components/Screen";
 import { shortAddress } from "../components/TopBar";
 import { localize } from "../games/meta";
+import { useProgress } from "../stores/progress";
 import { useSheets } from "../stores/sheets";
 import { addressUrl } from "../web3/client";
 import { formatWif } from "../web3/tokens";
+
+/** Your five best play sessions in this game, kept in this browser. */
+function HighScores({ slug }: { slug: string }) {
+  const runs = useProgress((s) => s.runs[slug]);
+  const plays = useProgress((s) => s.plays[slug] ?? 0);
+  const top = (runs ?? []).slice(0, 5);
+  return (
+    <section aria-label="Your high scores" className="min-w-0 rounded-2xl border border-line bg-surface p-5">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h2 className="font-display text-xl font-extrabold">Your high scores</h2>
+        <span className="text-sm text-muted">{plays === 1 ? "1 play" : `${plays} plays`}</span>
+      </div>
+      {top.length === 0 ? (
+        <p className="text-sm text-muted">
+          {plays > 0 ? "This game hasn't reported a score yet. Scores appear here once it does." : "Play to set your first score. Your best runs show up here."}
+        </p>
+      ) : (
+        <ol className="grid grid-cols-1 gap-1.5">
+          {top.map((r, i) => (
+            <li key={r.session} className="flex items-center gap-3 rounded-lg bg-bg-2 px-3 py-2 text-sm">
+              <span className={`w-5 text-center font-display font-extrabold ${i === 0 ? "text-accent-text" : "text-muted"}`}>{i + 1}</span>
+              <span className="min-w-0 flex-1 truncate font-bold tabular-nums">{r.score.toLocaleString("en-US")}</span>
+              <span className="shrink-0 text-muted">{new Date(r.at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+      <p className="mt-3 text-xs text-muted">Kept in this browser only.</p>
+    </section>
+  );
+}
 
 export default function GameScreen() {
   const { key } = useParams();
@@ -96,11 +128,14 @@ export default function GameScreen() {
           </dl>
         </div>
       </div>
-      <section className="mt-8 max-w-3xl">
-        <h2 className="mb-2 font-display text-xl font-extrabold">About this game</h2>
-        <p className="text-fg/85">{m.description}</p>
-        <p className="mt-3 text-sm text-muted">Version {m.version}. Runs in a sandbox with no access to your wallet.</p>
-      </section>
+      <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+        <section className="min-w-0">
+          <h2 className="mb-2 font-display text-xl font-extrabold">About this game</h2>
+          <p className="text-fg/85">{m.description}</p>
+          <p className="mt-3 text-sm text-muted">Version {m.version}. Runs in a sandbox with no access to your wallet.</p>
+        </section>
+        <HighScores slug={m.slug} />
+      </div>
       <Footer />
     </Screen>
   );

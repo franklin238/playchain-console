@@ -15,6 +15,8 @@ import { friendlyError, switchToRobinhood, useWallet, useWrongNetwork } from "..
 import { Button } from "./controls";
 import { Icon } from "./Icon";
 import { playSfx } from "../audio/engine";
+import { saveVoteCard, shareOnXUrl } from "../lib/shareCard";
+import { useProgress } from "../stores/progress";
 
 type Phase = "input" | "approving" | "voting" | "done";
 
@@ -34,6 +36,10 @@ export function VoteSheet() {
   const [approveTx, setApproveTx] = useState<string | null>(null);
   const [voteTx, setVoteTx] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ burned: bigint; toDev: bigint; toTreasury: bigint } | null>(null);
+  // The vote just made, for the share card, and the game's place before it (for Kingmaker).
+  const [lastVote, setLastVote] = useState<{ amount: bigint; burned: bigint; toDev: bigint } | null>(null);
+  const rankBefore = useRef(0);
+  const [saving, setSaving] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const open = !!key;
   useRestoreFocus(open);
@@ -77,6 +83,12 @@ export function VoteSheet() {
     return () => window.clearTimeout(t);
   }, [open, amount, params, game?.id, address, selfVote]);
 
+  // Kingmaker: this vote moved the game into first place for the day.
+  const leaderId = race[0]?.id;
+  useEffect(() => {
+    if (phase === "done" && game?.id != null && leaderId === game.id && rankBefore.current !== 1) useProgress.getState().recordKingmaker();
+  }, [phase, leaderId, game?.id]);
+
   if (!open || !game?.meta) return null;
   const m = game.meta;
 
@@ -87,6 +99,7 @@ export function VoteSheet() {
   async function submit() {
     if (!amount || game?.id == null) return;
     setError(null);
+    rankBefore.current = rank;
     try {
       setPhase("approving");
       const a = await approveExact(amount, (h) => setApproveTx(h));
@@ -94,8 +107,11 @@ export function VoteSheet() {
       setPhase("voting");
       const v = await sendVote(BigInt(game.id), amount, (h) => setVoteTx(h));
       setVoteTx(v);
+      const split = preview ?? splitLocal(amount, params?.devBps ?? 4000, params?.treasuryBps ?? 2500, selfVote);
+      setLastVote({ amount, burned: split.burned, toDev: split.toDev });
       setPhase("done");
       toast({ title: `Voted ${formatWif(amount, decimals)} WIF for ${m.name}`, tone: "success" });
+      useProgress.getState().recordVote(Number(amount / 10n ** BigInt(Math.max(0, decimals - 2))) / 100);
       window.setTimeout(() => playSfx("burn"), 450);
       void refreshArcade();
       void refreshBalance();
@@ -171,6 +187,51 @@ export function VoteSheet() {
                   View vote on Blockscout
                 </a>
               )}
+              {lastVote && params && (() => {
+                const card = {
+                  game: m.name,
+                  cover: localize(m.cover),
+                  amount: formatWif(lastVote.amount, decimals),
+                  burned: `${formatWif(lastVote.burned, decimals)} WIF`,
+                  toDev: `${formatWif(lastVote.toDev, decimals)} WIF`,
+                  burnPct: params.burnBps / 100,
+                  devPct: params.devBps / 100,
+                  link: `${consoleConfig.siteOrigin}/game/${game.key}`,
+                };
+                return (
+                  <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
+                    <div className="text-sm font-bold">Tell people about it</div>
+                    <div className="flex flex-wrap gap-2">
+                      <a
+                        href={shareOnXUrl(card)}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => useProgress.getState().recordShare()}
+                        className="inline-flex items-center gap-2 rounded-lg border border-line-strong px-4 py-2 font-bold hover:border-accent hover:text-accent-text"
+                      >
+                        <Icon name="send" className="size-[1.1em]" /> Share on X
+                      </a>
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={async () => {
+                          setSaving(true);
+                          const r = await saveVoteCard(card, `playchain-vote-${m.slug}.png`);
+                          setSaving(false);
+                          if (r === "failed") toast({ title: "Couldn't make the image", tone: "danger" });
+                          else {
+                            useProgress.getState().recordShare();
+                            if (r === "saved") toast({ title: "Vote card saved", body: "Attach it to your post on X.", tone: "success" });
+                          }
+                        }}
+                        className="inline-flex items-center gap-2 rounded-lg border border-line-strong px-4 py-2 font-bold hover:border-accent hover:text-accent-text disabled:opacity-60"
+                      >
+                        <Icon name="image" className="size-[1.1em]" /> {saving ? "Making image…" : "Save image"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
               <Button variant="primary" data-nav-default="" onClick={close}>
                 Done
               </Button>

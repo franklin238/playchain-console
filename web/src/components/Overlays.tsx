@@ -25,6 +25,7 @@ export function GuideMenu() {
     { icon: "home", label: "Home", to: "/" },
     { icon: "upload", label: "Developers", to: "/developers" },
     { icon: "clock", label: "Activity", to: "/activity" },
+    { icon: "trophy", label: "Achievements", to: "/achievements" },
     { icon: "eye", label: "About", to: "/about" },
     { icon: "settings", label: "Settings", to: "/settings" },
   ];
