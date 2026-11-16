@@ -182,7 +182,7 @@ html[data-motion="reduce"] .boot-letter {
   opacity: 1;
 }
 
-/* ---- Spotlight hero: shelf previews cross-fade the poster and slide the text in. */
+/* ---- Spotlight hero: the poster fades in and the text slides in. */
 .hero-layer {
   transition: opacity 320ms var(--ease-console);
 }
@@ -205,7 +205,7 @@ html[data-motion="reduce"] .boot-letter {
   50% { transform: scale(1.04); }
 }
 
-/* Focused tile, or the tile the hero is previewing, glows in the accent. */
+/* The focused tile glows in the accent. */
 .tile[data-active] {
   transform: translateY(-4px);
   border-color: var(--color-accent);

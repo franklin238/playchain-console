@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { resetDemo } from "../arcade/demo";
 import { hasVoting, refreshArcade, shelfGames, useArcade, type GameEntry } from "../arcade/store";
 import { refreshActivity } from "../arcade/activity";
 import { BurnCounter } from "../components/BurnCounter";
-import { playSfx } from "../audio/engine";
 import { Button } from "../components/controls";
 import { Footer } from "../components/Footer";
 import { enterGameFullscreen } from "../components/FullscreenControl";
@@ -17,21 +16,7 @@ import { useSheets } from "../stores/sheets";
 import { useWallpaper } from "../stores/wallpaper";
 import { formatWif, formatWifShort } from "../web3/tokens";
 
-function SpotlightHero({
-  game,
-  covers,
-  previewing,
-  epoch,
-  votes,
-}: {
-  game: GameEntry;
-  /** Every shelf game, stacked and preloaded so a preview swap is instant. */
-  covers: GameEntry[];
-  /** True while the hero shows a hovered shelf game instead of the real Spotlight. */
-  previewing: boolean;
-  epoch: bigint | null;
-  votes: bigint;
-}) {
+function SpotlightHero({ game, epoch, votes }: { game: GameEntry; epoch: bigint | null; votes: bigint }) {
   const navigate = useNavigate();
   const openVote = useSheets((s) => s.openVote);
   const decimals = useArcade((s) => s.decimals);
@@ -45,41 +30,29 @@ function SpotlightHero({
       : epoch === current - 1n
         ? "Spotlight · yesterday's winner"
         : `Spotlight · winner of day ${(epoch + 1n).toString()}`;
-  const layers = covers.some((g) => g.key === game.key) ? covers : [...covers, game];
+  const src = localize(m.cover);
 
   return (
     <section
-      aria-label={previewing ? `Preview: ${m.name}` : "Spotlight"}
+      aria-label="Spotlight"
       className="relative mb-8 flex h-[31rem] items-end overflow-hidden rounded-2xl border border-line bg-black sm:h-[clamp(24rem,46vh,31rem)]"
     >
-      {layers.map((g) => {
-        const on = g.key === game.key;
-        const src = localize(g.meta!.cover);
-        return (
-          <div key={g.key} aria-hidden="true" className={`hero-layer absolute inset-0 ${on ? "opacity-100" : "opacity-0"}`}>
-            <img src={src} alt="" className="absolute inset-0 size-full scale-110 object-cover opacity-40 blur-2xl" />
-            <img
-              src={src}
-              alt=""
-              fetchPriority={on ? "high" : "low"}
-              className="absolute inset-0 size-full object-cover sm:left-auto sm:aspect-video sm:w-auto sm:max-w-none sm:[mask-image:linear-gradient(to_right,transparent,black_35%)]"
-            />
-          </div>
-        );
-      })}
+      <div key={game.key} aria-hidden="true" className="hero-layer absolute inset-0 opacity-100">
+        <img src={src} alt="" className="absolute inset-0 size-full scale-110 object-cover opacity-40 blur-2xl" />
+        <img
+          src={src}
+          alt=""
+          fetchPriority="high"
+          className="absolute inset-0 size-full object-cover sm:left-auto sm:aspect-video sm:w-auto sm:max-w-none sm:[mask-image:linear-gradient(to_right,transparent,black_35%)]"
+        />
+      </div>
       <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent sm:h-1/3 sm:from-black/70" />
       <div key={game.key} className="hero-text relative flex max-w-2xl flex-col gap-4 p-6 sm:p-10">
         <div className="flex flex-wrap items-center gap-2">
-          {previewing ? (
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-accent px-2.5 py-1 text-sm font-extrabold uppercase tracking-wide text-accent-text">
-              <Icon name="play" className="size-[0.9em]" /> Preview
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-accent px-2.5 py-1 text-sm font-extrabold uppercase tracking-wide text-on-accent">
-              <Icon name="trophy" className="size-[1.1em]" /> {label}
-            </span>
-          )}
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-accent px-2.5 py-1 text-sm font-extrabold uppercase tracking-wide text-on-accent">
+            <Icon name="trophy" className="size-[1.1em]" /> {label}
+          </span>
           <span className="rounded-md bg-white/12 px-2.5 py-1 text-sm font-bold uppercase tracking-wide backdrop-blur">{m.genre}</span>
         </div>
         <h1 className="glow-text font-display text-[clamp(2.2rem,4.2vw,4.2rem)] font-extrabold leading-[1.02] tracking-tight">{m.name}</h1>
@@ -89,14 +62,14 @@ function SpotlightHero({
           {game.id != null && (
             <>
               {" · "}
-              {!previewing && epoch != null ? `${formatWif(votes, decimals)} WIF that day · ` : ""}
+              {epoch != null ? `${formatWif(votes, decimals)} WIF that day · ` : ""}
               {formatWif(game.totalVotes, decimals)} WIF all time
             </>
           )}
         </p>
-        {!previewing && <EpochCountdown className="-mt-2 text-sm" label="Next Spotlight in " />}
+        <EpochCountdown className="-mt-2 text-sm" label="Next Spotlight in " />
         <div className="mt-1 flex flex-wrap gap-3">
-          <Button variant="primary" icon="play" data-nav-default={previewing ? undefined : ""} onClick={() => { enterGameFullscreen(); navigate(`/play/${game.key}`); }}>
+          <Button variant="primary" icon="play" data-nav-default="" onClick={() => { enterGameFullscreen(); navigate(`/play/${game.key}`); }}>
             Play
           </Button>
           <Button icon="trophy" onClick={() => openVote(game.key)}>
@@ -182,9 +155,6 @@ function HowItWorks() {
   );
 }
 
-/** The game last touched on the shelf, kept for the session so coming back home shows it again. */
-let lastPreviewKey: string | null = null;
-
 export default function HomeScreen() {
   const navigate = useNavigate();
   const { games, spotlight, mode, decimals, error, race } = useArcade();
@@ -204,19 +174,10 @@ export default function HomeScreen() {
     );
     return sort === "new" ? [...list].sort((a, b) => b.listedAt - a.listedAt) : list;
   }, [shelf, query, genre, sort]);
+  // The hero is always the Spotlight: the game with the most votes on the last finished day.
+  // Hovering or focusing shelf tiles never changes it. Before any day has votes, the most-voted
+  // game on the shelf stands in.
   const hero = games.find((g) => g.key === spotlight?.key && g.meta) ?? shelf[0];
-
-  // Hovering, focusing or touching a shelf tile puts that game in the hero, and it
-  // stays there until another tile is touched. The real Spotlight stays in `hero`.
-  const [previewKey, setPreviewKey] = useState<string | null>(lastPreviewKey);
-  const preview = useCallback((key: string) => {
-    if (key !== lastPreviewKey) playSfx("swap");
-    lastPreviewKey = key;
-    setPreviewKey(key);
-  }, []);
-  const previewGame = previewKey ? shelf.find((g) => g.key === previewKey) : undefined;
-  const shown = previewGame ?? hero;
-  const previewing = !!previewGame && previewGame.key !== hero?.key;
 
   useEffect(() => {
     document.title = "PlayChain · play games, vote with $WIF";
@@ -255,11 +216,9 @@ export default function HomeScreen() {
 
       {/* Nothing focusable until data arrives, so autofocus lands on Play. */}
       {(mode === "loading" || !hero) && <div className="h-[46vh] animate-pulse rounded-2xl border border-line bg-surface" />}
-      {mode !== "loading" && hero && shown && (
+      {mode !== "loading" && hero && (
         <SpotlightHero
-          game={shown}
-          covers={shelf}
-          previewing={previewing}
+          game={hero}
           epoch={spotlight?.key === hero.key ? spotlight.epoch : null}
           votes={spotlight?.votes ?? 0n}
         />
@@ -316,9 +275,6 @@ export default function HomeScreen() {
               decimals={decimals}
               eager={i < 5}
               badge={race[0]?.id != null && race[0].id === g.id ? "Leading today" : undefined}
-              active={previewKey === g.key}
-              onFocus={() => preview(g.key)}
-              onTouchStart={() => preview(g.key)}
               onSelect={() => navigate(`/game/${g.key}`)}
             />
           ))}
