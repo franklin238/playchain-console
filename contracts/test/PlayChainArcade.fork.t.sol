@@ -53,9 +53,9 @@ contract PlayChainArcadeForkTest is Test {
         arcade.vote(id, 300e18);
         vm.stopPrank();
 
-        assertEq(wif.balanceOf(BURN) - burnStart, 1_150e18);
+        assertEq(wif.balanceOf(BURN) - burnStart, 1_105e18);
         assertEq(wif.balanceOf(dev) - devBefore, 120e18);
-        assertEq(wif.balanceOf(treasury), 30e18);
+        assertEq(wif.balanceOf(treasury), 75e18);
         assertEq(wif.balanceOf(address(arcade)), 0);
         assertEq(arcade.leaderOf(0), id);
     }

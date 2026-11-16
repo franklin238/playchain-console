@@ -1,6 +1,6 @@
 // Demo arcade: a simulated PlayChainArcade that lives in this browser, so anyone
 // can try listing, voting and the wallet flow with test $WIF before the contract is deployed.
-// Same rules as the contract: listing burns the whole fee, votes split 50/40/10, a developer's
+// Same rules as the contract: listing burns the whole fee, votes split 35/40/25, a developer's
 // vote on their own game burns the developer share too, and each UTC day's most-voted game is
 // the Spotlight (yesterday's winner until anyone votes today). Nothing here touches a real wallet or chain.
 
@@ -16,9 +16,9 @@ const DAY = 86_400;
 export const DEMO_PARAMS = {
   listingFee: 100n * ONE,
   minVote: 100n * ONE,
-  burnBps: 5000,
+  burnBps: 3500,
   devBps: 4000,
-  treasuryBps: 1000,
+  treasuryBps: 2500,
   treasury: "0x7ea5000000000000000000000000000000000001" as `0x${string}`,
   paused: false,
 };

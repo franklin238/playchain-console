@@ -1,7 +1,7 @@
 /** The PlayChain flywheel as one diagram (README, About page and demo video use the same loop, spec section 4). */
 const STEPS = [
   { t: "Developers list games", d: "Listing fee burns in full", c: "var(--color-accent-2)" },
-  { t: "Players vote with $WIF", d: "Half of every vote burns", c: "var(--color-accent-2)" },
+  { t: "Players vote with $WIF", d: "35% of every vote burns", c: "var(--color-accent-2)" },
   { t: "Developers earn 40%", d: "Paid in the same vote", c: "var(--color-accent)" },
   { t: "Developers promote", d: "To win the daily Spotlight", c: "var(--color-accent)" },
   { t: "New Spotlight daily", d: "Players come back to vote", c: "var(--color-teal)" },
@@ -42,7 +42,7 @@ const arrows = points.map((p, i) => {
 });
 
 const LABEL =
-  "Flywheel: developers burn $WIF to list games, players vote with $WIF and half burns, developers earn 40% of each vote, developers promote to win the daily Spotlight, and a new Spotlight each day brings players back to vote.";
+  "Flywheel: developers burn $WIF to list games, players vote with $WIF and 35% burns, developers earn 40% of each vote, developers promote to win the daily Spotlight, and a new Spotlight each day brings players back to vote.";
 
 export function Flywheel() {
   return (

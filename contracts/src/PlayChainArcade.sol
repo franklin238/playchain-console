@@ -17,7 +17,7 @@ contract PlayChainArcade is Ownable2Step, Pausable, ReentrancyGuard {
 
     address public constant BURN = 0x000000000000000000000000000000000000dEaD;
     uint16 public constant BPS = 10_000;
-    uint16 public constant MAX_TREASURY_BPS = 2_000;
+    uint16 public constant MAX_TREASURY_BPS = 4_000;
     uint16 public constant MIN_BURN_BPS = 2_000;
     uint256 public constant MAX_URI_LENGTH = 256;
     uint256 public constant MAX_PAGE = 100;
@@ -88,9 +88,9 @@ contract PlayChainArcade is Ownable2Step, Pausable, ReentrancyGuard {
         minVote = minVote_;
         epochLength = epochLength_;
         startTime = block.timestamp;
-        burnBps = 5_000;
+        burnBps = 3_500;
         devBps = 4_000;
-        treasuryBps = 1_000;
+        treasuryBps = 2_500;
     }
 
     // ------------------------------------------------------------------ games

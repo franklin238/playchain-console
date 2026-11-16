@@ -65,9 +65,9 @@ contract PlayChainArcadeTest is Test {
         assertEq(arcade.minVote(), MIN);
         assertEq(arcade.epochLength(), DAY);
         assertEq(arcade.startTime(), block.timestamp);
-        assertEq(arcade.burnBps(), 5_000);
+        assertEq(arcade.burnBps(), 3_500);
         assertEq(arcade.devBps(), 4_000);
-        assertEq(arcade.treasuryBps(), 1_000);
+        assertEq(arcade.treasuryBps(), 2_500);
         assertEq(arcade.owner(), owner);
     }
 
@@ -191,18 +191,18 @@ contract PlayChainArcadeTest is Test {
 
     // ------------------------------------------------------------ voting
 
-    function test_vote_split_50_40_10() public {
+    function test_vote_split_35_40_25() public {
         _list(dev);
         uint256 burnBefore = wif.balanceOf(BURN);
         uint256 devBefore = wif.balanceOf(dev);
         uint256 aliceBefore = wif.balanceOf(alice);
         vm.expectEmit(true, true, true, true);
-        emit Voted(0, 1, alice, 300e18, 150e18, 120e18, 30e18);
+        emit Voted(0, 1, alice, 300e18, 105e18, 120e18, 75e18);
         vm.prank(alice);
         arcade.vote(1, 300e18);
-        assertEq(wif.balanceOf(BURN) - burnBefore, 150e18);
+        assertEq(wif.balanceOf(BURN) - burnBefore, 105e18);
         assertEq(wif.balanceOf(dev) - devBefore, 120e18);
-        assertEq(wif.balanceOf(treasury), 30e18);
+        assertEq(wif.balanceOf(treasury), 75e18);
         assertEq(aliceBefore - wif.balanceOf(alice), 300e18);
         assertEq(wif.balanceOf(address(arcade)), 0);
         assertEq(arcade.getGame(1).totalVotes, 300e18);
@@ -226,12 +226,12 @@ contract PlayChainArcadeTest is Test {
         uint256 burnBefore = wif.balanceOf(BURN);
         uint256 devBefore = wif.balanceOf(dev);
         vm.expectEmit(true, true, true, true);
-        emit Voted(0, 1, dev, 200e18, 180e18, 0, 20e18);
+        emit Voted(0, 1, dev, 200e18, 150e18, 0, 50e18);
         vm.prank(dev);
         arcade.vote(1, 200e18);
-        assertEq(wif.balanceOf(BURN) - burnBefore, 180e18);
+        assertEq(wif.balanceOf(BURN) - burnBefore, 150e18);
         assertEq(devBefore - wif.balanceOf(dev), 200e18);
-        assertEq(wif.balanceOf(treasury), 20e18);
+        assertEq(wif.balanceOf(treasury), 50e18);
     }
 
     function test_vote_zeroLegsSkipped() public {
@@ -382,13 +382,23 @@ contract PlayChainArcadeTest is Test {
         vm.expectRevert(PlayChainArcade.InvalidFees.selector);
         arcade.setFees(FEE, MIN, 5_000, 4_000, 999); // sum != 10000
         vm.expectRevert(PlayChainArcade.InvalidFees.selector);
-        arcade.setFees(FEE, MIN, 5_000, 2_900, 2_100); // treasury > 20%
+        arcade.setFees(FEE, MIN, 2_000, 3_900, 4_100); // treasury > 40%
         vm.expectRevert(PlayChainArcade.InvalidFees.selector);
         arcade.setFees(FEE, MIN, 1_999, 6_001, 2_000); // burn < 20%
         vm.expectRevert(PlayChainArcade.InvalidFees.selector);
         arcade.setFees(FEE, 0, 5_000, 4_000, 1_000); // minVote 0
         vm.expectRevert(PlayChainArcade.InvalidFees.selector);
         arcade.setFees(FEE, MIN, type(uint16).max, type(uint16).max, 2); // overflow-safe sum
+    }
+
+    function test_setFees_treasuryUpTo40() public {
+        arcade.setFees(FEE, MIN, 2_000, 4_000, 4_000); // 20 / 40 / 40: the most the treasury can take
+        _list(dev);
+        uint256 devBefore = wif.balanceOf(dev);
+        vm.prank(alice);
+        arcade.vote(1, 300e18);
+        assertEq(wif.balanceOf(treasury), 120e18);
+        assertEq(wif.balanceOf(dev) - devBefore, 120e18);
     }
 
     function test_admin_nonOwnerReverts() public {
@@ -495,8 +505,8 @@ contract PlayChainArcadeTest is Test {
         assertEq(wif.balanceOf(treasury), t);
         (b, d, t) = arcade.previewSplit(dev, 1, 100e18);
         assertEq(d, 0);
-        assertEq(b, 90e18);
-        assertEq(t, 10e18);
+        assertEq(b, 75e18);
+        assertEq(t, 25e18);
         vm.expectRevert(abi.encodeWithSelector(PlayChainArcade.GameNotFound.selector, 9));
         arcade.previewSplit(alice, 9, 1);
     }
@@ -504,7 +514,7 @@ contract PlayChainArcadeTest is Test {
     // ------------------------------------------------------------ fuzz
 
     function testFuzz_splitConserves(uint256 amount, uint16 burnBps, uint16 treasuryBps, bool selfVote) public {
-        treasuryBps = uint16(bound(treasuryBps, 0, 2_000));
+        treasuryBps = uint16(bound(treasuryBps, 0, 4_000));
         burnBps = uint16(bound(burnBps, 2_000, 10_000 - treasuryBps));
         uint16 devBps = 10_000 - burnBps - treasuryBps;
         amount = bound(amount, 1, 900_000e18);

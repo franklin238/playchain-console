@@ -48,9 +48,9 @@ function Faq({ q, children }: { q: string; children: ReactNode }) {
 
 export default function AboutScreen() {
   const { params, decimals, games } = useArcade();
-  const burn = params ? params.burnBps / 100 : 50;
+  const burn = params ? params.burnBps / 100 : 35;
   const dev = params ? params.devBps / 100 : 40;
-  const tre = params ? params.treasuryBps / 100 : 10;
+  const tre = params ? params.treasuryBps / 100 : 25;
   const fee = params ? formatWif(params.listingFee, decimals) : "100";
   const min = params ? formatWif(params.minVote, decimals) : "100";
   const shelf = games.filter((g) => g.active && g.meta);
@@ -175,7 +175,7 @@ export default function AboutScreen() {
               Tokens move straight from your wallet to the burn address, the developer and the treasury. The contract never holds $WIF, and its owner can't move anyone's tokens.
             </Card>
             <Card icon="shield" title="Capped fees">
-              Fee changes are limited onchain: the treasury can never take more than 20%, and at least 20% of every vote always burns.
+              Fee changes are limited onchain: the treasury can never take more than 40%, and at least 20% of every vote always burns.
             </Card>
             <Card icon="eye" title="Sandboxed games">
               Every game runs in a locked-down frame with no access to your wallet. Only the console asks you to sign, and it always shows the split first.

@@ -28,7 +28,7 @@ No wallet or tokens are needed. Until a contract address is set, the site runs i
 Before `VITE_ARCADE_ADDRESS` is set, PlayChain runs a simulated arcade in your browser (`web/src/arcade/demo.ts`) with the same rules as the contract:
 
 - **Demo wallet:** Connect wallet → *Demo wallet* gives you 5,000 test $WIF (and a faucet for more). No extension, nothing real.
-- **Votes split exactly like the contract:** 50% burned, 40% to the game's developer, 10% to the treasury; a developer's vote on their own game burns the developer share too.
+- **Votes split exactly like the contract:** 35% burned, 40% to the game's developer, 25% to the treasury; a developer's vote on their own game burns the developer share too.
 - **Live Race and Spotlight:** the game with the most votes today (UTC day) holds the Spotlight, and loses it the moment another game out-votes it. The demo starts with three days of history, and other players keep voting while you watch.
 - **Activity:** the feed, the total burned and paid out, and leaderboards for games, developers and voting streaks all update as you vote. *Reset demo* on the home page starts it fresh.
 
@@ -70,29 +70,29 @@ PlayChain is a console-style home screen for web3 games. Players browse a shelf,
 
 - **Developers list games** by calling `listGame(metadataURI)`. The listing fee (100 WIF at launch) is burned in full.
 - **Players vote** with `vote(gameId, amount)` (minimum 100 WIF). Each vote is split in the same transaction:
-  - **50% burned** (sent to `0x…dEaD`)
+  - **35% burned** (sent to `0x…dEaD`)
   - **40% to the game's developer**
-  - **10% to the PlayChain treasury**
+  - **25% to the PlayChain treasury** (the owner can change the split later within onchain caps: treasury at most 40%, burn at least 20%)
 - **Self-votes:** if the developer votes for their own game, the 40% developer share is burned too. They can still push their game, but never at a discount.
 - **Spotlight:** the contract tracks the leading game of each daily epoch on every vote. Today's leader is the Spotlight, the hero on the home screen, and it changes as soon as another game takes the lead; until anyone votes on a new day, yesterday's winner keeps it. Today's ranking shows as the Live Race.
 
 ```mermaid
 flowchart LR
-  V[Player votes 300 WIF] --> B[150 WIF burned]
+  V[Player votes 300 WIF] --> B[105 WIF burned]
   V --> D[120 WIF to the developer]
-  V --> T[30 WIF to the treasury]
+  V --> T[75 WIF to the treasury]
   V --> L[Live Race +300 for that game]
   L -->|most votes today| S[Spotlight]
 ```
 
-### Worked example (default 50/40/10)
+### Worked example (launch split 35/40/25)
 
 | Action | Amount | Burned | Developer | Treasury |
 |---|---|---|---|---|
 | Dev lists game #1 | 100 WIF | 100 | 0 | 0 |
-| Player votes for #1 | 300 WIF | 150 | 120 | 30 |
-| Dev of #1 votes for #1 (self-vote) | 200 WIF | 180 | 0 | 20 |
-| Player votes (rounding) | 101 WIF | 50.5 (takes the remainder) | 40.4 | 10.1 |
+| Player votes for #1 | 300 WIF | 105 | 120 | 75 |
+| Dev of #1 votes for #1 (self-vote) | 200 WIF | 150 | 0 | 50 |
+| Player votes (rounding) | 101 WIF | 35.35 (takes the remainder) | 40.4 | 25.25 |
 
 In code every amount is in base units: `toDev = amount * devBps / 10_000`, `toTreasury = amount * treasuryBps / 10_000`, `burned = amount - toDev - toTreasury`.
 
@@ -100,7 +100,7 @@ In code every amount is in base units: `toDev = amount * devBps / 10_000`, `toTr
 
 ```mermaid
 flowchart TB
-  A[Developers list games<br/>listing fee burns] --> B[Players play and vote<br/>half of every vote burns]
+  A[Developers list games<br/>listing fee burns] --> B[Players play and vote<br/>35% of every vote burns]
   B --> C[Developers earn 40%<br/>of every vote]
   C --> D[Developers promote their game<br/>to win the daily Spotlight]
   D --> E[A new Spotlight every day<br/>gives players a reason to return]
@@ -117,7 +117,7 @@ Every step pulls people back to $WIF: developers need it to list, players need i
 | Listing a game | `listGame(uri)` | 100% to the burn address |
 | Voting | `vote(id, amount)` | burn / developer / treasury, straight from the voter |
 | Developer income | inside `vote` | developer wallet, same transaction |
-| Treasury | inside `vote` | treasury wallet, capped at 20% onchain |
+| Treasury | inside `vote` | treasury wallet, 25% at launch, capped at 40% onchain |
 
 The contract never holds $WIF. Every transfer is `safeTransferFrom(voter, destination)`.
 
@@ -130,7 +130,7 @@ PlayChain runs in demo mode until the contract is deployed. `DEPLOY.md` walks th
 ```
 contracts/   Solidity 0.8.24, Foundry, OpenZeppelin v5
   src/PlayChainArcade.sol           listings, votes, epochs, Spotlight
-  test/PlayChainArcade.t.sol        41 unit + fuzz tests
+  test/PlayChainArcade.t.sol        42 unit + fuzz tests
   test/PlayChainArcade.invariant.t.sol   4 invariants
   test/PlayChainArcade.fork.t.sol   runs against the real $WIF on a mainnet fork
   script/Deploy.s.sol, ListDemoGames.s.sol
@@ -158,7 +158,7 @@ web/         Vite, React 19, TypeScript, Tailwind, wagmi core + viem
 ### Security notes
 
 - **No custody.** Tokens go from the voter straight to the burn address, developer and treasury. An invariant test checks the contract balance is always 0.
-- **Capped owner powers.** Fee changes must sum to 100%, treasury share at most 20%, burn share at least 20%, minimum vote above 0. The owner can pause, hide abusive listings and change the treasury address. The owner can never move anyone's tokens. Ownership uses two-step transfer.
+- **Capped owner powers.** Fee changes must sum to 100%, treasury share at most 40%, burn share at least 20%, minimum vote above 0. The owner can pause, hide abusive listings and change the treasury address. The owner can never move anyone's tokens. Ownership uses two-step transfer.
 - **Self-vote rule** stops developers from buying the Spotlight at a 40% discount.
 - **Ties** go to the game that reached the top total first (strictly greater to take the lead).
 - **Exact approvals.** The console approves only the amount being spent, never unlimited.

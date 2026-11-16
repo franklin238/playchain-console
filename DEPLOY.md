@@ -10,7 +10,7 @@ Never paste a private key into a chat, a file or a website. You type it once int
 - **Node.js** 20 or newer.
 - **A deployer wallet** with a little ETH on Robinhood Chain for gas. A few dollars' worth is plenty.
 - **$WIF to list the four games.** With the listing fee below that's 4 × 100 = **400 WIF**, all burned.
-- **A treasury address** that receives 10% of every vote. Your deployer address is fine.
+- **A treasury address** that receives 25% of every vote. Your deployer address is fine.
 
 ## 1. Get the code
 
@@ -102,7 +102,7 @@ forge script script/ListDemoGames.s.sol --rpc-url $RPC --account playchain-deplo
 
 ## 10. Check it with one real vote
 
-Before you tell anyone, connect your own wallet on the live site and cast one minimum vote. Check on Blockscout that half was burned, 40% went to the developer and 10% to the treasury. Then share the link.
+Before you tell anyone, connect your own wallet on the live site and cast one minimum vote. Check on Blockscout that 35% was burned, 40% went to the developer and 25% to the treasury. Then share the link.
 
 ## Running it
 

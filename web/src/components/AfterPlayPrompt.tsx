@@ -22,7 +22,7 @@ export function AfterPlayPrompt() {
       <div ref={ref} data-nav-scope="modal" className="fade-in flex w-full max-w-xl flex-wrap items-center gap-4 rounded-2xl border border-accent/40 bg-bg-2 p-4 shadow-2xl sm:p-5">
         <div className="min-w-0 flex-1">
           <div className="font-display text-lg font-extrabold">Did you enjoy {game!.meta!.name}?</div>
-          <div className="text-sm text-muted">Vote with $WIF. 40% goes to its developer, half burns.</div>
+          <div className="text-sm text-muted">Vote with $WIF. 40% goes to its developer, 35% burns.</div>
         </div>
         <div className="flex gap-2">
           <Button variant="primary" data-nav-default="" onClick={() => openVote(key!)}>

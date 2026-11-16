@@ -141,9 +141,9 @@ function LiveRace() {
 
 function HowItWorks() {
   const params = useArcade((s) => s.params);
-  const burn = params ? params.burnBps / 100 : 50;
+  const burn = params ? params.burnBps / 100 : 35;
   const dev = params ? params.devBps / 100 : 40;
-  const tre = params ? params.treasuryBps / 100 : 10;
+  const tre = params ? params.treasuryBps / 100 : 25;
   return (
     <section aria-label="How votes work" className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
       <BurnCounter className="mb-4" />
