@@ -17,6 +17,7 @@ import { useSheets } from "../stores/sheets";
 import { useWallpaper } from "../stores/wallpaper";
 import { formatWif, formatWifShort } from "../web3/tokens";
 import { readJson, writeJson } from "../lib/storage";
+import { ACHIEVEMENTS, useProgress } from "../stores/progress";
 
 /** The Spotlight game this browser last showed ("demo:3"), so a change can be celebrated once. */
 const SEEN_KEY = "pc.seenSpotlight";
@@ -175,6 +176,7 @@ function HowItWorks() {
 
 export default function HomeScreen() {
   const navigate = useNavigate();
+  const got = useProgress((s) => ACHIEVEMENTS.filter((a) => s.unlocked[a.id]).length);
   const { games, spotlight, mode, decimals, error, race } = useArcade();
   const ref = useRef<HTMLElement>(null);
   useAutoFocus(ref, [mode, games.length > 0]);
@@ -266,7 +268,17 @@ export default function HomeScreen() {
       <>
       <section aria-label="Games" className="mb-8">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-xl font-extrabold sm:text-2xl">Game shelf</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="font-display text-xl font-extrabold sm:text-2xl">Game shelf</h2>
+            <button
+              type="button"
+              onClick={() => navigate("/achievements")}
+              aria-label={`Achievements: ${got} of ${ACHIEVEMENTS.length} unlocked`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-sm font-bold tabular-nums hover:border-accent hover:text-accent-text sm:hidden"
+            >
+              <Icon name="trophy" className="size-[1.1em]" /> Achievements {got}/{ACHIEVEMENTS.length}
+            </button>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <input
               type="search"

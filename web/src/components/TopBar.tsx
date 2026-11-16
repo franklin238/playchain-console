@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router";
 import { countdown } from "../arcade/logic";
 import { hasVoting, useArcade } from "../arcade/store";
+import { ACHIEVEMENTS, useProgress } from "../stores/progress";
 import { useSheets } from "../stores/sheets";
 import { useUi } from "../stores/ui";
 import { formatWifShort } from "../web3/tokens";
@@ -60,7 +61,7 @@ function WalletButton() {
         className="flex items-center gap-2 whitespace-nowrap rounded-lg border border-line-strong px-2.5 py-2 font-semibold min-[400px]:gap-2.5 min-[400px]:px-3 sm:px-4"
       >
         {balance != null && (
-          <span className="hidden tabular-nums text-accent-text sm:inline">{formatWifShort(balance, decimals)} WIF</span>
+          <span className="hidden tabular-nums text-accent-text xl:inline">{formatWifShort(balance, decimals)} WIF</span>
         )}
         <Icon name="wallet" className="size-[1.15em]" />
         <span className="hidden tabular-nums min-[400px]:inline">{shortAddress(address)}</span>
@@ -79,7 +80,7 @@ function WalletButton() {
         "Connecting…"
       ) : (
         <>
-          Connect<span className="hidden sm:inline"> wallet</span>
+          Connect<span className="hidden xl:inline"> wallet</span>
         </>
       )}
     </button>
@@ -93,6 +94,28 @@ const TABS = [
   { to: "/about", label: "About", end: false },
   { to: "/settings", label: "Settings", end: false },
 ];
+
+/** Trophy with the unlocked count. Phones reach Achievements from the menu and the home page. */
+function AchievementsButton() {
+  const got = useProgress((s) => ACHIEVEMENTS.filter((a) => s.unlocked[a.id]).length);
+  return (
+    <NavLink
+      to="/achievements"
+      aria-label={`Achievements: ${got} of ${ACHIEVEMENTS.length} unlocked`}
+      title="Achievements"
+      className={({ isActive }) =>
+        `hidden h-10 min-w-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-sm font-bold tabular-nums hover:border-accent hover:text-accent-text sm:flex ${
+          isActive ? "border-accent text-accent-text" : "border-line text-fg"
+        }`
+      }
+    >
+      <Icon name="trophy" className="size-[1.25em]" />
+      <span className="hidden xl:inline">
+        {got}/{ACHIEVEMENTS.length}
+      </span>
+    </NavLink>
+  );
+}
 
 /** Press once for fullscreen, press again to go back to the window. */
 function FullscreenButton() {
@@ -150,7 +173,8 @@ export function TopBar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-3 lg:ml-2">
-          <EpochCountdown className="hidden text-sm md:inline" />
+          <EpochCountdown className="hidden text-sm 2xl:inline" />
+          <AchievementsButton />
           <FullscreenButton />
           <WalletButton />
         </div>
