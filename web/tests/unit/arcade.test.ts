@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 import { countdown, liveRace, pickSpotlight, splitLocal, spotlightEpochs } from "../../src/arcade/logic";
 
 describe("spotlightEpochs", () => {
-  it("walks back from the previous epoch, never below 0", () => {
-    expect(spotlightEpochs(0n, 30)).toEqual([]);
-    expect(spotlightEpochs(3n, 30)).toEqual([2n, 1n, 0n]);
-    expect(spotlightEpochs(100n, 3)).toEqual([99n, 98n, 97n]);
+  it("starts with today and walks back, never below 0", () => {
+    expect(spotlightEpochs(0n, 30)).toEqual([0n]);
+    expect(spotlightEpochs(3n, 30)).toEqual([3n, 2n, 1n, 0n]);
+    expect(spotlightEpochs(100n, 3)).toEqual([100n, 99n, 98n]);
+  });
+  it("puts today's leader in the Spotlight, and yesterday's only while today has no votes", () => {
+    const games = [{ id: 1, active: true }, { id: 2, active: true }];
+    expect(pickSpotlight(spotlightEpochs(5n, 2), [2n, 1n], games)).toEqual({ id: 2, epoch: 5n });
+    expect(pickSpotlight(spotlightEpochs(5n, 2), [0n, 1n], games)).toEqual({ id: 1, epoch: 4n });
   });
 });
 

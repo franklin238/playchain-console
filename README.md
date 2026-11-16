@@ -29,7 +29,7 @@ Before `VITE_ARCADE_ADDRESS` is set, PlayChain runs a simulated arcade in your b
 
 - **Demo wallet:** Connect wallet → *Demo wallet* gives you 5,000 test $WIF (and a faucet for more). No extension, nothing real.
 - **Votes split exactly like the contract:** 50% burned, 40% to the game's developer, 10% to the treasury; a developer's vote on their own game burns the developer share too.
-- **Live Race and Spotlight:** today's most-voted game (UTC day) becomes tomorrow's Spotlight. The demo starts with three days of history, and other players keep voting while you watch.
+- **Live Race and Spotlight:** the game with the most votes today (UTC day) holds the Spotlight, and loses it the moment another game out-votes it. The demo starts with three days of history, and other players keep voting while you watch.
 - **Activity:** the feed, the total burned and paid out, and leaderboards for games, developers and voting streaks all update as you vote. *Reset demo* on the home page starts it fresh.
 
 Once the contract is deployed and its address configured, the same screens read and write Robinhood Chain instead.
@@ -74,7 +74,7 @@ PlayChain is a console-style home screen for web3 games. Players browse a shelf,
   - **40% to the game's developer**
   - **10% to the PlayChain treasury**
 - **Self-votes:** if the developer votes for their own game, the 40% developer share is burned too. They can still push their game, but never at a discount.
-- **Spotlight:** the contract tracks the leading game of each daily epoch on every vote. Yesterday's winner is today's Spotlight, the hero on the home screen. Today's ranking shows as the Live Race.
+- **Spotlight:** the contract tracks the leading game of each daily epoch on every vote. Today's leader is the Spotlight, the hero on the home screen, and it changes as soon as another game takes the lead; until anyone votes on a new day, yesterday's winner keeps it. Today's ranking shows as the Live Race.
 
 ```mermaid
 flowchart LR
@@ -82,7 +82,7 @@ flowchart LR
   V --> D[120 WIF to the developer]
   V --> T[30 WIF to the treasury]
   V --> L[Live Race +300 for that game]
-  L -->|end of day| S[Tomorrow's Spotlight]
+  L -->|most votes today| S[Spotlight]
 ```
 
 ### Worked example (default 50/40/10)

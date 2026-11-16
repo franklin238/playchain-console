@@ -2,7 +2,7 @@
 // can try listing, voting and the wallet flow with test $WIF before the contract is deployed.
 // Same rules as the contract: listing burns the whole fee, votes split 50/40/10, a developer's
 // vote on their own game burns the developer share too, and each UTC day's most-voted game is
-// the next day's Spotlight. Nothing here touches a real wallet or chain.
+// the Spotlight (yesterday's winner until anyone votes today). Nothing here touches a real wallet or chain.
 
 import { readJson, writeJson } from "../lib/storage";
 import { LOCAL_SLUGS, localMetaUrl } from "../games/meta";

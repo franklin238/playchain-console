@@ -23,13 +23,16 @@ function SpotlightHero({ game, epoch, votes }: { game: GameEntry; epoch: bigint 
   const mode = useArcade((s) => s.mode);
   const current = useArcade((s) => s.epoch);
   const m = game.meta!;
+  const today = epoch != null && epoch === current;
   const label = !hasVoting(mode)
     ? "Featured"
     : epoch == null
       ? "Newest game"
-      : epoch === current - 1n
-        ? "Spotlight · yesterday's winner"
-        : `Spotlight · winner of day ${(epoch + 1n).toString()}`;
+      : today
+        ? "Spotlight · leading today"
+        : epoch === current - 1n
+          ? "Spotlight · yesterday's winner"
+          : `Spotlight · winner of day ${(epoch + 1n).toString()}`;
   const src = localize(m.cover);
 
   return (
@@ -62,12 +65,17 @@ function SpotlightHero({ game, epoch, votes }: { game: GameEntry; epoch: bigint 
           {game.id != null && (
             <>
               {" · "}
-              {epoch != null ? `${formatWif(votes, decimals)} WIF that day · ` : ""}
+              {epoch != null ? `${formatWif(votes, decimals)} WIF ${today ? "today" : "that day"} · ` : ""}
               {formatWif(game.totalVotes, decimals)} WIF all time
             </>
           )}
         </p>
-        <EpochCountdown className="-mt-2 text-sm" label="Next Spotlight in " />
+        {hasVoting(mode) && (
+          <p className="-mt-2 text-sm text-muted">
+            {today ? "Out-vote it to take the Spotlight. " : "No votes yet today: the first one takes the Spotlight. "}
+            <EpochCountdown label="Today's race ends in " />
+          </p>
+        )}
         <div className="mt-1 flex flex-wrap gap-3">
           <Button variant="primary" icon="play" data-nav-default="" onClick={() => { enterGameFullscreen(); navigate(`/play/${game.key}`); }}>
             Play
@@ -95,12 +103,12 @@ function LiveRace() {
         <EpochCountdown className="text-sm" />
       </div>
       <p className="mb-4 text-sm text-muted">
-        Today's most-voted game becomes tomorrow's Spotlight.
+        The game with the most votes today holds the Spotlight.
         {hasVoting(mode) && epochTotal > 0n ? ` ${formatWifShort(epochTotal, decimals)} WIF voted today.` : ""}
       </p>
       {race.length === 0 ? (
         <div className="rounded-xl border border-dashed border-line-strong p-5 text-center text-muted">
-          {hasVoting(mode) ? "No votes yet today. Yours could decide tomorrow's Spotlight." : "The race starts when the arcade goes live onchain."}
+          {hasVoting(mode) ? "No votes yet today. Yours puts a game in the Spotlight." : "The race starts when the arcade goes live onchain."}
         </div>
       ) : (
         <ol className="grid gap-2">
@@ -174,9 +182,8 @@ export default function HomeScreen() {
     );
     return sort === "new" ? [...list].sort((a, b) => b.listedAt - a.listedAt) : list;
   }, [shelf, query, genre, sort]);
-  // The hero is always the Spotlight: the game with the most votes on the last finished day.
-  // Hovering or focusing shelf tiles never changes it. Before any day has votes, the most-voted
-  // game on the shelf stands in.
+  // The hero is always the Spotlight: the game with the most votes today (yesterday's winner
+  // until anyone votes today). Hovering or focusing shelf tiles never changes it.
   const hero = games.find((g) => g.key === spotlight?.key && g.meta) ?? shelf[0];
 
   useEffect(() => {

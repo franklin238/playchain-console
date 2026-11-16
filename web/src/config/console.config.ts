@@ -35,7 +35,7 @@ export const consoleConfig = {
   /** Origins games may be played from, besides the console's own origin and siteOrigin. */
   extraPlayOrigins: list(env.VITE_PLAY_ORIGINS),
 
-  /** How far back the Spotlight looks for a previous epoch with votes. */
+  /** How many days the Spotlight looks at, today first, to find one with votes. */
   spotlightLookback: 30,
   /** Contract views refresh this often, and after every confirmed transaction. */
   refreshMs: 15_000,

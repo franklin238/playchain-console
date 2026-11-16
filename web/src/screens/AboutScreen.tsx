@@ -66,7 +66,7 @@ export default function AboutScreen() {
       <div className="grid max-w-5xl gap-2">
         <p className="text-lg text-fg/85">
           PlayChain is a console-style home for web3 games on Robinhood Chain. Developers list games by burning $WIF. Players vote for the
-          games they love with $WIF, and the most-voted game of each day becomes tomorrow's Spotlight, the hero on the home screen. Every vote
+          games they love with $WIF, and whichever game has the most votes today holds the Spotlight, the hero on the home screen. Every vote
           burns $WIF, pays the game's developer and funds the platform in one transaction, so players decide what gets seen and developers get
           paid for making games people come back to.
         </p>
@@ -83,9 +83,9 @@ export default function AboutScreen() {
             <div className="text-sm text-muted">{dev}% to the developer, {tre}% to the treasury</div>
           </div>
           <div className="rounded-2xl border border-line bg-surface/90 p-5">
-            <div className="text-sm font-bold uppercase tracking-[0.14em] text-muted">New Spotlight</div>
-            <div className="mt-1 font-display text-4xl font-extrabold text-teal">Every day</div>
-            <div className="text-sm text-muted">Yesterday's most-voted game takes the hero spot</div>
+            <div className="text-sm font-bold uppercase tracking-[0.14em] text-muted">Spotlight</div>
+            <div className="mt-1 font-display text-4xl font-extrabold text-teal">Live</div>
+            <div className="text-sm text-muted">Today's most-voted game holds the hero spot</div>
           </div>
         </div>
 
@@ -96,7 +96,7 @@ export default function AboutScreen() {
             <Step n={1} title="Browse and play">Pick a game from the shelf and play it full screen. No wallet, no sign-up, nothing to install.</Step>
             <Step n={2} title="Vote with $WIF">Liked it? Vote with {min} $WIF or more. You see exactly where every token goes before you sign.</Step>
             <Step n={3} title="Burn and pay, in one go">Your vote burns {burn}% of the $WIF, sends {dev}% to the game's developer and {tre}% to the treasury, straight from your wallet.</Step>
-            <Step n={4} title="Crown the Spotlight">At the end of each day the most-voted game becomes tomorrow's Spotlight. Then a new race begins.</Step>
+            <Step n={4} title="Take the Spotlight">The game with the most votes today holds the Spotlight, and loses it the moment another game out-votes it. A new race starts every day.</Step>
           </ol>
         </Section>
 
@@ -105,7 +105,7 @@ export default function AboutScreen() {
             <Card icon="gamepad" title="Players">
               <ul className="grid list-disc gap-1 pl-5">
                 <li>Play every game for free, with keyboard, mouse, touch or a gamepad.</li>
-                <li>Your vote decides what everyone sees on the home screen tomorrow.</li>
+                <li>Your vote decides what everyone sees on the home screen today.</li>
                 <li>Watch the Live Race, the burn counter and the leaderboards move as people vote.</li>
                 <li>Make it yours: themes, backgrounds and menu music in Settings.</li>
               </ul>
@@ -114,7 +114,7 @@ export default function AboutScreen() {
               <ul className="grid list-disc gap-1 pl-5">
                 <li>List any browser game by burning {fee} $WIF. No approval queue for the listing itself.</li>
                 <li>Earn {dev}% of every vote your game gets, paid straight to your wallet.</li>
-                <li>Win the Spotlight to put your game in front of every player for a day.</li>
+                <li>Lead the day's votes to put your game in the Spotlight, in front of every player.</li>
                 <li>
                   See <Link to="/developers" className="font-bold text-accent-text">the Developers page</Link> for the metadata format and the listing flow.
                 </li>
@@ -191,7 +191,7 @@ export default function AboutScreen() {
               contract. Nothing touches a real wallet.
             </Faq>
             <Faq q="How is the Spotlight chosen?">
-              Each day (an epoch) the contract tracks which game has the most $WIF voted for it. When the day ends, that game becomes the Spotlight for the next day.
+              Each day (an epoch) the contract tracks which game has the most $WIF voted for it. That game holds the Spotlight right away, until another game out-votes it. Before anyone votes on a new day, yesterday's winner keeps the spot.
               If two games tie, the one that reached the top total first keeps it.
             </Faq>
             <Faq q="What happens to burned $WIF?">It is sent to the dead address 0x…dEaD, where nobody can ever spend it, so it leaves the supply for good.</Faq>

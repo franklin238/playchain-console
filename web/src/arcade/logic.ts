@@ -9,10 +9,13 @@ export interface ChainGame {
   metadataURI: string;
 }
 
-/** Epochs to check for the Spotlight, newest first: current-1 down to current-lookback (never below 0). */
+/**
+ * Epochs to check for the Spotlight, newest first: today (the current epoch), then back
+ * day by day, `lookback` epochs in all, never below 0.
+ */
 export function spotlightEpochs(current: bigint, lookback: number): bigint[] {
   const out: bigint[] = [];
-  for (let e = current - 1n; e >= 0n && out.length < lookback; e--) out.push(e);
+  for (let e = current; e >= 0n && out.length < lookback; e--) out.push(e);
   return out;
 }
 
@@ -23,9 +26,10 @@ export interface SpotlightPick {
 }
 
 /**
- * The previous epoch's leader is the Spotlight. Epochs with no votes are
- * skipped, up to the lookback. Hidden games are skipped too. If nothing is
- * found, the newest active game is shown.
+ * Today's leader (the game with the most votes so far in the current epoch) is the
+ * Spotlight, and it changes the moment another game overtakes it. Until anyone votes
+ * today, the most recent day with votes keeps its leader in the Spotlight. Hidden games
+ * are skipped. If no day had votes, the newest active game is shown.
  */
 export function pickSpotlight(
   epochs: bigint[],
