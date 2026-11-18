@@ -225,7 +225,7 @@ function ListForm() {
           </Button>
         ) : wrong ? (
           <Button variant="primary" className="self-start" onClick={() => void switchToRobinhood()}>
-            Switch to Robinhood Chain
+            Switch to {consoleConfig.networkName}
           </Button>
         ) : (
           <>
@@ -368,7 +368,7 @@ export default function DevelopersScreen() {
           <ol className="grid gap-3 sm:grid-cols-3">
             {[
               ["Host your game", "Any HTML5 build that runs in a browser: canvas, Phaser, Godot or Unity WebGL. Add a meta.json next to it."],
-              ["List it onchain", `One transaction burns the ${fee} listing fee and gives your game an id on Robinhood Chain.`],
+              ["List it onchain", `One transaction burns the ${fee} listing fee and gives your game an id on ${consoleConfig.networkName}.`],
               ["Get paid per vote", `Players vote with $WIF. ${dev}% of each vote goes straight to your wallet in the same transaction.`],
             ].map(([t, d], i) => (
               <li key={t} className="rounded-xl border border-line bg-surface p-4">

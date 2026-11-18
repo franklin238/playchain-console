@@ -2,11 +2,11 @@
 // Reads use a public client with RPC fallback; writes go through the connected wallet.
 
 import { createConfig, injected, type Config } from "@wagmi/core";
-import { createPublicClient, fallback, http, type PublicClient, type Transport } from "viem";
-import { robinhood } from "viem/chains";
+import { createPublicClient, fallback, http, type Chain, type PublicClient, type Transport } from "viem";
+import { robinhood, robinhoodTestnet } from "viem/chains";
 import { consoleConfig } from "../config/console.config";
 
-export const CHAIN = robinhood;
+export const CHAIN: Chain = consoleConfig.testnet ? robinhoodTestnet : robinhood;
 
 function transport(): Transport {
   const urls = [consoleConfig.rpcUrl, ...CHAIN.rpcUrls.default.http].filter(Boolean);

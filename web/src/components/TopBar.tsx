@@ -5,6 +5,7 @@ import { hasVoting, useArcade } from "../arcade/store";
 import { ACHIEVEMENTS, useProgress } from "../stores/progress";
 import { useSheets } from "../stores/sheets";
 import { useUi } from "../stores/ui";
+import { consoleConfig } from "../config/console.config";
 import { formatWifShort } from "../web3/tokens";
 import { switchToRobinhood, useWallet, useWrongNetwork } from "../web3/wallet";
 import { toggleFullscreen, useIsFullscreen } from "./FullscreenControl";
@@ -49,7 +50,7 @@ function WalletButton() {
           onClick={() => void switchToRobinhood()}
           className="whitespace-nowrap rounded-lg bg-warn px-4 py-2.5 font-bold text-on-accent"
         >
-          Switch to Robinhood Chain
+          Switch to {consoleConfig.testnet ? "testnet" : "Robinhood Chain"}
         </button>
       );
     }

@@ -5,12 +5,14 @@ import { Button } from "../components/controls";
 import { Footer } from "../components/Footer";
 import { enterGameFullscreen } from "../components/FullscreenControl";
 import { Screen } from "../components/Screen";
+import { TipPanel } from "../components/TipPanel";
 import { shortAddress } from "../components/TopBar";
 import { localize } from "../games/meta";
 import { useProgress } from "../stores/progress";
 import { useSheets } from "../stores/sheets";
 import { addressUrl } from "../web3/client";
 import { formatWif } from "../web3/tokens";
+import { tipsEnabled } from "../web3/tips";
 
 /** Your five best play sessions in this game, kept in this browser. */
 function HighScores({ slug }: { slug: string }) {
@@ -134,7 +136,10 @@ export default function GameScreen() {
           <p className="text-fg/85">{m.description}</p>
           <p className="mt-3 text-sm text-muted">Version {m.version}. Runs in a sandbox with no access to your wallet.</p>
         </section>
-        <HighScores slug={m.slug} />
+        <div className="flex min-w-0 flex-col gap-8">
+          {mode === "live" && game.id != null && tipsEnabled() && <TipPanel id={game.id} developerName={m.developer.name} />}
+          <HighScores slug={m.slug} />
+        </div>
       </div>
       <Footer />
     </Screen>

@@ -237,7 +237,7 @@ export default function AboutScreen() {
                 {consoleConfig.wifAddress}
               </a>
             </li>
-            <li>Network: Robinhood Chain mainnet (chain id {consoleConfig.chainId})</li>
+            <li>Network: {consoleConfig.testnet ? "Robinhood Chain Testnet" : "Robinhood Chain mainnet"} (chain id {consoleConfig.chainId})</li>
           </ul>
         </Section>
 

@@ -2,11 +2,21 @@
 
 **A game console on Robinhood Chain where players vote with $WIF, every vote burns $WIF and pays the game's developer, and the top game each day takes the Spotlight.**
 
-- Live site: https://playchain-console.vercel.app (runs in demo mode until the contract is deployed)
-- Contract: `PlayChainArcade` on Robinhood Chain (not deployed yet, see `DEPLOY.md`)
-- Repo: https://github.com/franklin238/playchain-console
-- $WIF: [`0x5173b8eA6923c2d40267890D45C46a3480954773`](https://robinhoodchain.blockscout.com/address/0x5173b8eA6923c2d40267890D45C46a3480954773)
-- Made by Steeve ([@gamersteeve](https://x.com/gamersteeve))
+- **Live site:** https://playchain-console.vercel.app, live on **Robinhood Chain Testnet** with real onchain voting
+- **Judges:** [HACKATHON.md](HACKATHON.md) has a 3-minute test path
+- **Repo:** https://github.com/franklin238/playchain-console
+- **Made by** Steeve ([@gamersteeve](https://x.com/gamersteeve))
+
+### Deployed on Robinhood Chain Testnet (chain 46630), source verified
+
+| Contract | Address |
+|---|---|
+| `PlayChainArcade`: listings, votes, daily Spotlight | [`0x9883Ab79132e1f0A29cAaEB434Fa80eA1bfc30B4`](https://explorer.testnet.chain.robinhood.com/address/0x9883Ab79132e1f0A29cAaEB434Fa80eA1bfc30B4) |
+| `PlayChainTips`: developer tips in Paxos USDG | [`0xe874A9BC72e60c3f2feA280443bBC0C0A13F67A6`](https://explorer.testnet.chain.robinhood.com/address/0xe874A9BC72e60c3f2feA280443bBC0C0A13F67A6) |
+| `TestWIF` (tWIF): stand-in for $WIF, public faucet | [`0x5c7DB26AdD41cdEADff4C8256cc895ED480C8e9D`](https://explorer.testnet.chain.robinhood.com/address/0x5c7DB26AdD41cdEADff4C8256cc895ED480C8e9D) |
+| Paxos USDG (testnet, by Paxos) | [`0x7E955252E15c84f5768B83c41a71F9eba181802F`](https://explorer.testnet.chain.robinhood.com/address/0x7E955252E15c84f5768B83c41a71F9eba181802F) |
+
+On mainnet the arcade uses the real $WIF ([`0x5173…4773`](https://robinhoodchain.blockscout.com/address/0x5173b8eA6923c2d40267890D45C46a3480954773)); `DEPLOY.md` covers the mainnet launch.
 
 ## Quick start
 
@@ -21,7 +31,7 @@ You need [Node.js](https://nodejs.org) 20 or newer.
   npm run dev -- --open
   ```
 
-No wallet or tokens are needed. Until a contract address is set, the site runs in **demo mode** (below) and every game is playable. The four games also open on their own at `/games/neon-tide/`, `/games/hollow-kingdom/`, `/games/signal-lost/` and `/games/gloam-vesper/`.
+No wallet or tokens are needed to browse and play. `npm run dev` runs **demo mode** (below); `npm run dev -- --mode production` uses `web/.env.production` and talks to the testnet contracts and every game is playable. The four games also open on their own at `/games/neon-tide/`, `/games/hollow-kingdom/`, `/games/signal-lost/` and `/games/gloam-vesper/`.
 
 ### Demo mode
 
@@ -121,19 +131,28 @@ Every step pulls people back to $WIF: developers need it to list, players need i
 
 The contract never holds $WIF. Every transfer is `safeTransferFrom(voter, destination)`.
 
+### USDG tips (Paxos)
+
+Votes decide the Spotlight in $WIF. Alongside them, players can **tip a game's developer in Paxos USDG** from the game page with `PlayChainTips.tip(gameId, amount)`: 90% goes straight to the developer and 10% to the treasury (owner-adjustable, capped at 20% onchain), nothing is burned, and the contract never holds funds. Developers get paid in stable dollars, not only in a volatile token, and tips never change the race, so the Spotlight can't be bought with dollars.
+
 ## 4. Going live
 
-PlayChain runs in demo mode until the contract is deployed. `DEPLOY.md` walks through testing, deploying and verifying the contract, pointing the site at it and listing the four games.
+The site is live on Robinhood Chain Testnet. `contracts/script/DeployTestnet.s.sol` deployed everything in one run (test token, arcade, tips, the four listings and the opening votes). `DEPLOY.md` walks through the mainnet launch with the real $WIF.
 
 ## 5. Architecture
 
 ```
 contracts/   Solidity 0.8.24, Foundry, OpenZeppelin v5
   src/PlayChainArcade.sol           listings, votes, epochs, Spotlight
+  src/PlayChainTips.sol             USDG tips to developers (90/10, no custody)
+  src/testnet/TestWIF.sol           testnet stand-in for $WIF with a public faucet; refuses mainnet
   test/PlayChainArcade.t.sol        42 unit + fuzz tests
   test/PlayChainArcade.invariant.t.sol   4 invariants
+  test/PlayChainTips.t.sol          11 unit + fuzz tests
+  test/TestWIF.t.sol                faucet, mainnet guard, full deploy-script dry run
   test/PlayChainArcade.fork.t.sol   runs against the real $WIF on a mainnet fork
-  script/Deploy.s.sol, ListDemoGames.s.sol
+  test/Testnet.fork.t.sol           a new player's journey on the live testnet deployment, with real Paxos USDG
+  script/Deploy.s.sol, ListDemoGames.s.sol, DeployTestnet.s.sol
 web/         Vite, React 19, TypeScript, Tailwind, wagmi core + viem
   src/arcade/        onchain state (games, epoch, Spotlight, Live Race), activity feed from events
   src/web3/          wallet, RPC with fallback, exact-amount approvals, transactions
@@ -165,7 +184,9 @@ web/         Vite, React 19, TypeScript, Tailwind, wagmi core + viem
 - **Games are sandboxed.** Each game runs in `sandbox="allow-scripts allow-pointer-lock"` (never with `allow-same-origin`), so it runs in an opaque origin with no access to the console, the wallet or storage. The console validates every message a game sends and ignores anything else. Scores are display only.
 - **Allowlisted game origins**, so a listing can't point players at an arbitrary site.
 - **Strict CSP** on console pages (`frame-ancestors 'none'`, no inline script). Game pages get their own policy that only lets this site frame them.
-- **Test coverage:** 100% lines, statements, branches and functions on `PlayChainArcade.sol`.
+- **Test coverage:** 100% lines, statements, branches and functions on `PlayChainArcade.sol`; 100% lines and functions on `PlayChainTips.sol` and `TestWIF.sol`.
+- **Tips can't buy the Spotlight.** USDG tips are tracked separately and never touch the $WIF race; a test checks it.
+- **Source verified** on the testnet explorer for all three contracts.
 - **Slither:** 2 findings, both informational. `timestamp` flags `voter == dev` in `_split` (a false positive, the comparison is an address check; epochs do use `block.timestamp` by design, with day-long windows). `unindexed-event-address` on `TreasuryUpdated`, which is an admin-only event.
 - **Token check.** The fork test confirmed $WIF charges no fee on transfer, so the split math holds.
 
@@ -178,6 +199,7 @@ git submodule update --init --recursive
 cd contracts
 forge test
 forge test --match-path test/PlayChainArcade.fork.t.sol --fork-url https://rpc.mainnet.chain.robinhood.com
+forge test --match-path test/Testnet.fork.t.sol --fork-url https://rpc.testnet.chain.robinhood.com
 forge coverage --report summary --no-match-path test/PlayChainArcade.fork.t.sol
 ```
 
@@ -218,7 +240,7 @@ Full end-to-end rehearsal on a mainnet fork (real $WIF, local test wallets): see
 
 ## 8. Built with
 
-Robinhood Chain, $WIF, OpenZeppelin, Foundry, viem, wagmi, React, Vite and Tailwind. Everything else is original: the `PlayChainArcade` contract and its tests, the console, the sandboxed game player, and the four games **Neon Tide**, **Hollow Kingdom**, **Signal Lost** and **GLOAM: VESPER**, including all their music and sound.
+Robinhood Chain, $WIF, Paxos USDG, OpenZeppelin, Foundry, viem, wagmi, React, Vite and Tailwind. Everything else is original: the `PlayChainArcade` contract and its tests, the console, the sandboxed game player, and the four games **Neon Tide**, **Hollow Kingdom**, **Signal Lost** and **GLOAM: VESPER**, including all their music and sound.
 
 ## 9. Roadmap
 

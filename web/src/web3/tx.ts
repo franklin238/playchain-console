@@ -24,8 +24,31 @@ function arcade(): `0x${string}` {
 function account(): `0x${string}` {
   const conn = getConnection(wagmiConfig());
   if (conn.status !== "connected") throw new Error("Connect a wallet first.");
-  if (conn.chainId !== CHAIN.id) throw new Error("Switch your wallet to Robinhood Chain (chain does not match).");
+  if (conn.chainId !== CHAIN.id) throw new Error(`Switch your wallet to ${CHAIN.name} (chain does not match).`);
   return conn.address;
+}
+
+const testWifAbi = [
+  { type: "function", name: "faucet", stateMutability: "nonpayable", inputs: [], outputs: [] },
+  { type: "error", name: "FaucetCooldown", inputs: [{ name: "nextAt", type: "uint256" }] },
+] as const;
+
+/** Testnet only: claim 5,000 tWIF from the TestWIF faucet (once an hour per address). */
+export async function claimTestWif(): Promise<`0x${string}`> {
+  if (!consoleConfig.testnet) throw new Error("The test $WIF faucet only exists on testnet.");
+  const owner = account();
+  const hash = await writeContract(wagmiConfig(), {
+    address: consoleConfig.wifAddress,
+    abi: testWifAbi,
+    functionName: "faucet",
+    chainId: CHAIN.id,
+    account: owner,
+  }).catch((err: unknown) => {
+    if (/FaucetCooldown/.test(String(err))) throw new Error("You already claimed test $WIF this hour. Try again later.");
+    throw err;
+  });
+  await confirm(hash);
+  return hash;
 }
 
 async function confirm(hash: `0x${string}`) {

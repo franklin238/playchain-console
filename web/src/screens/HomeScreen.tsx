@@ -5,6 +5,7 @@ import { resetDemo } from "../arcade/demo";
 import { hasVoting, refreshArcade, shelfGames, useArcade, type GameEntry } from "../arcade/store";
 import { refreshActivity } from "../arcade/activity";
 import { BurnCounter } from "../components/BurnCounter";
+import { consoleConfig } from "../config/console.config";
 import { Button } from "../components/controls";
 import { Footer } from "../components/Footer";
 import { enterGameFullscreen } from "../components/FullscreenControl";
@@ -245,6 +246,12 @@ export default function HomeScreen() {
           >
             Reset demo
           </button>
+        </div>
+      )}
+      {mode === "live" && consoleConfig.testnet && (
+        <div className="mb-5 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3 text-[13px] sm:text-sm">
+          <b>Live on {consoleConfig.networkName}.</b> Votes are real onchain transactions using test $WIF (tWIF), which has no value. Connect a
+          wallet, then claim free test ETH and 5,000 tWIF from the wallet menu to vote.
         </div>
       )}
       {error && mode === "live" && (

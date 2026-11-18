@@ -142,7 +142,7 @@ export function VoteSheet() {
   else if (wrong)
     blocker = (
       <Button variant="primary" data-nav-default="" onClick={() => void switchToRobinhood()}>
-        Switch to Robinhood Chain
+        Switch to {consoleConfig.networkName}
       </Button>
     );
   else if (!game.active) blocker = <p className="text-warn">This game is hidden and can't take votes.</p>;

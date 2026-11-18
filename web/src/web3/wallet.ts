@@ -69,8 +69,8 @@ export function friendlyError(err: unknown): string {
   if (/EnforcedPause|paused/i.test(msg)) return "Voting and listing are paused right now.";
   if (/InsufficientBalance|exceeds balance/i.test(msg)) return "Not enough $WIF in this wallet.";
   if (/InsufficientAllowance/i.test(msg)) return "The approval was too small. Approve again.";
-  if (/insufficient funds/i.test(msg)) return "Not enough ETH on Robinhood Chain to pay for gas.";
-  if (/chain|network/i.test(msg) && /mismatch|switch|does not match/i.test(msg)) return "Switch your wallet to Robinhood Chain.";
+  if (/insufficient funds/i.test(msg)) return `Not enough ETH on ${CHAIN.name} to pay for gas.`;
+  if (/chain|network/i.test(msg) && /mismatch|switch|does not match/i.test(msg)) return `Switch your wallet to ${CHAIN.name}.`;
   return e?.shortMessage || e?.message?.split("\n")[0] || "Something went wrong.";
 }
 
@@ -144,7 +144,7 @@ export async function switchToRobinhood(): Promise<boolean> {
               chainName: CHAIN.name,
               nativeCurrency: CHAIN.nativeCurrency,
               rpcUrls: CHAIN.rpcUrls.default.http,
-              blockExplorerUrls: [CHAIN.blockExplorers.default.url],
+              blockExplorerUrls: [consoleConfig.explorer],
             },
           ],
         });

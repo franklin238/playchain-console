@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { demoFaucet } from "../arcade/demo";
+import { consoleConfig } from "../config/console.config";
 import { refreshBalance, useArcade } from "../arcade/store";
 import { useAutoFocus, useBackHandler, useRestoreFocus } from "../input/hooks";
 import { useSheets } from "../stores/sheets";
 import { addressUrl, CHAIN } from "../web3/client";
 import { formatWif } from "../web3/tokens";
+import { claimTestWif } from "../web3/tx";
 import {
   connectDemoWallet,
+  friendlyError,
   connectWallet,
   disconnectWallet,
   listWallets,
@@ -70,6 +73,7 @@ export function WalletSheet() {
                 Get 5,000 test $WIF
               </Button>
             )}
+            {consoleConfig.testnet && !isDemo && !wrong && <TestnetFaucets />}
             {wrong && (
               <Button variant="primary" data-nav-default="" onClick={() => void switchToRobinhood()}>
                 Switch to {CHAIN.name}
@@ -99,6 +103,12 @@ export function WalletSheet() {
               </button>
             )}
             {isDemo && <p className="mt-2 text-sm text-muted">The arcade contract isn't deployed yet, so real wallets can't vote here.</p>}
+            {consoleConfig.testnet && !isDemo && (
+              <p className="mb-2 text-sm text-muted">
+                This is {CHAIN.name}: votes are real onchain transactions with test $WIF (tWIF), which has no value. After connecting you can
+                claim free test ETH for gas and 5,000 tWIF.
+              </p>
+            )}
             {!isDemo && wallets.length === 0 && (
               <div className="rounded-xl border border-line bg-surface p-4 text-muted">
                 No browser wallet found. Install MetaMask or Rabby, then reload this page.
@@ -121,6 +131,41 @@ export function WalletSheet() {
         )}
         {error && <p className="mt-4 rounded-lg bg-danger/15 px-3 py-2 text-danger" role="alert">{error}</p>}
       </div>
+    </div>
+  );
+}
+
+/** Testnet: free gas from the official faucet, and 5,000 tWIF from the TestWIF contract. */
+function TestnetFaucets() {
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+  const claim = async () => {
+    setBusy(true); setNote(null);
+    try {
+      await claimTestWif();
+      await refreshBalance();
+      setNote({ ok: true, text: "5,000 test $WIF added to your wallet." });
+    } catch (err) {
+      setNote({ ok: false, text: friendlyError(err) });
+    } finally { setBusy(false); }
+  };
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+      <div className="text-sm text-muted">Testnet: everything here is free test money.</div>
+      <a href={consoleConfig.gasFaucet} target="_blank" rel="noreferrer"
+        className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong px-4 py-2.5 font-bold hover:border-fg">
+        <Icon name="plus" /> Get free test ETH (gas)
+      </a>
+      {consoleConfig.tipsAddress && (
+        <a href={consoleConfig.usdgFaucet} target="_blank" rel="noreferrer"
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong px-4 py-2.5 font-bold hover:border-fg">
+          <Icon name="plus" /> Get free test USDG (Paxos)
+        </a>
+      )}
+      <Button icon="plus" disabled={busy} onClick={() => void claim()}>
+        {busy ? "Confirm in your wallet…" : "Get 5,000 test $WIF"}
+      </Button>
+      {note && <p className={note.ok ? "text-sm text-accent-text" : "text-sm text-danger"} role="status">{note.text}</p>}
     </div>
   );
 }
