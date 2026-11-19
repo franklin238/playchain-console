@@ -62,6 +62,9 @@ export function watchWallets(cb: () => void): () => void {
 export function friendlyError(err: unknown): string {
   const e = err as { shortMessage?: string; message?: string; name?: string; cause?: unknown };
   const msg = `${e?.shortMessage ?? ""} ${e?.message ?? String(err)}`;
+  // EIP-1193 4100: the wallet hasn't granted this site the account or network (common after a MetaMask alert).
+  if (/not been authorized|unauthorized/i.test(msg))
+    return "Your wallet hasn't allowed this site to use this account or network. Disconnect, connect again and approve both in your wallet.";
   if (/reject|denied|declined|cancel/i.test(msg)) return "You cancelled the request in your wallet.";
   if (/VoteTooSmall/.test(msg)) return "That vote is below the minimum.";
   if (/GameInactive/.test(msg)) return "This game is hidden and can't take votes.";
